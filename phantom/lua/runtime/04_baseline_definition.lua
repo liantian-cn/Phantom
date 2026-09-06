@@ -22,20 +22,20 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
-local CreateColor = CreateColor -- 根据 RGBA 分量创建颜色对象
+local CreateColor = CreateColor  -- 根据 RGBA 分量创建颜色对象
 local insert      = table.insert -- 将尺寸初始化函数加入 UI 初始化队列
 
 --[[  variable reference  ]]
 
-local DEBUG            = addonTable.DEBUG -- 调试开关，用于选择定位标记配色
+local DEBUG            = addonTable.DEBUG            -- 调试开关，用于选择定位标记配色
 local GetUIScaleFactor = addonTable.GetUIScaleFactor -- 将物理像素尺寸换算为 UI 尺寸
-local scale            = addonTable.SCALE -- Cell 的显示倍率，调试时放大
-local UIInitFuncs      = addonTable.UIInitFuncs -- 按注册顺序执行的 UI 初始化队列
+local scale            = addonTable.SCALE            -- Cell 的显示倍率，调试时放大
+local UIInitFuncs      = addonTable.UIInitFuncs      -- 按注册顺序执行的 UI 初始化队列
 
 
 --[[  logical code  ]]
 
-addonTable.COLOR = { -- 供其他运行时文件共用的颜色定义
+addonTable.COLOR = {                                                        -- 供其他运行时文件共用的颜色定义
     AURA_TYPE = {                                                           -- 光环
         MAGIC = CreateColor(60 / 255, 100 / 255, 220 / 255, 1),             -- 魔法
         CURSE = CreateColor(100 / 255, 0, 120 / 255, 1),                    -- 诅咒
@@ -47,33 +47,33 @@ addonTable.COLOR = { -- 供其他运行时文件共用的颜色定义
         BUFF_ON_FRIENDLY = CreateColor(80 / 255, 220 / 255, 120 / 255, 1),  -- 在友方身上的增益,不属于上述状态
         DEBUFF_ON_ENEMY = CreateColor(105 / 255, 105 / 255, 210 / 255, 1),  -- 在敌方身上的减益,不属于上述状态
     },
-    SPELL_TYPE = { -- 施法状态配色
-        PLAYER_SPELL = CreateColor(64 / 255, 158 / 255, 210 / 255, 1),     -- 友方施法
-        INTERRUPTIBLE = CreateColor(255 / 255, 255 / 255, 60 / 255, 1),    -- 可打断
-        NOT_INTERRUPTIBLE = CreateColor(200 / 255, 0, 0, 1),               -- 不可打断
+    SPELL_TYPE = {                                                          -- 施法状态配色
+        PLAYER_SPELL = CreateColor(64 / 255, 158 / 255, 210 / 255, 1),      -- 友方施法
+        INTERRUPTIBLE = CreateColor(255 / 255, 255 / 255, 60 / 255, 1),     -- 可打断
+        NOT_INTERRUPTIBLE = CreateColor(200 / 255, 0, 0, 1),                -- 不可打断
     },
-    NONE = CreateColor(0, 0, 0, 0),                                        -- 无
-    RED = CreateColor(255 / 255, 0, 0, 1),                                 -- 红色
-    GREEN = CreateColor(0, 255 / 255, 0, 1),                               -- 绿色
-    BLUE = CreateColor(0, 0, 255 / 255, 1),                                -- 蓝色
-    BLACK = CreateColor(0, 0, 0, 1),                                       -- 黑色
-    WHITE = CreateColor(1, 1, 1, 1),                                       -- 白色
-    TRANSPARENT = CreateColor(0, 0, 0, 0),                                 -- 透明
-    PANEL = {                                                              -- 面板的UI配色
-        Black           = CreateColor(0 / 255, 0 / 255, 0 / 255, 1),       -- 纯黑
-        WindowBg        = CreateColor(30 / 255, 30 / 255, 30 / 255, 1),    -- 窗口背景色
-        WindowText      = CreateColor(0 / 255, 0 / 255, 0 / 255, 1),       -- 窗口文字色（备用）
-        WindowBorder    = CreateColor(83 / 255, 88 / 255, 91 / 255, 1),    -- 窗口边框色
-        Base            = CreateColor(255 / 255, 255 / 255, 255 / 255, 1), -- 基础白
-        ButtonBorder    = CreateColor(52 / 255, 52 / 255, 52 / 255, 1),    -- 按钮边框色
-        ButtonHighlight = CreateColor(86 / 255, 86 / 255, 86 / 255, 1),    -- 按钮悬停高亮
-        ButtonMouseUp   = CreateColor(43 / 255, 43 / 255, 43 / 255, 1),    -- 按钮正常底色
-        ButtonMouseDown = CreateColor(37 / 255, 37 / 255, 37 / 255, 1),    -- 按钮按下底色
-        SliderLeft      = CreateColor(73 / 255, 179 / 255, 234 / 255, 1),  -- 滑块已填充色
-        SliderRight     = CreateColor(159 / 255, 159 / 255, 159 / 255, 1), -- 滑块未填充色
-        RowHover        = CreateColor(50 / 255, 50 / 255, 50 / 255, 1),    -- 行悬停色
-        Text            = CreateColor(230 / 255, 230 / 255, 230 / 255, 1), -- 文本颜色
-        DropdownBg      = CreateColor(34 / 255, 34 / 255, 34 / 255, 1),    -- 下拉列表背景色
+    NONE = CreateColor(0, 0, 0, 0),                                         -- 无
+    RED = CreateColor(255 / 255, 0, 0, 1),                                  -- 红色
+    GREEN = CreateColor(0, 255 / 255, 0, 1),                                -- 绿色
+    BLUE = CreateColor(0, 0, 255 / 255, 1),                                 -- 蓝色
+    BLACK = CreateColor(0, 0, 0, 1),                                        -- 黑色
+    WHITE = CreateColor(1, 1, 1, 1),                                        -- 白色
+    TRANSPARENT = CreateColor(0, 0, 0, 0),                                  -- 透明
+    PANEL = {                                                               -- 面板的UI配色
+        Black           = CreateColor(0 / 255, 0 / 255, 0 / 255, 1),        -- 纯黑
+        WindowBg        = CreateColor(30 / 255, 30 / 255, 30 / 255, 1),     -- 窗口背景色
+        WindowText      = CreateColor(0 / 255, 0 / 255, 0 / 255, 1),        -- 窗口文字色（备用）
+        WindowBorder    = CreateColor(83 / 255, 88 / 255, 91 / 255, 1),     -- 窗口边框色
+        Base            = CreateColor(255 / 255, 255 / 255, 255 / 255, 1),  -- 基础白
+        ButtonBorder    = CreateColor(52 / 255, 52 / 255, 52 / 255, 1),     -- 按钮边框色
+        ButtonHighlight = CreateColor(86 / 255, 86 / 255, 86 / 255, 1),     -- 按钮悬停高亮
+        ButtonMouseUp   = CreateColor(43 / 255, 43 / 255, 43 / 255, 1),     -- 按钮正常底色
+        ButtonMouseDown = CreateColor(37 / 255, 37 / 255, 37 / 255, 1),     -- 按钮按下底色
+        SliderLeft      = CreateColor(73 / 255, 179 / 255, 234 / 255, 1),   -- 滑块已填充色
+        SliderRight     = CreateColor(159 / 255, 159 / 255, 159 / 255, 1),  -- 滑块未填充色
+        RowHover        = CreateColor(50 / 255, 50 / 255, 50 / 255, 1),     -- 行悬停色
+        Text            = CreateColor(230 / 255, 230 / 255, 230 / 255, 1),  -- 文本颜色
+        DropdownBg      = CreateColor(34 / 255, 34 / 255, 34 / 255, 1),     -- 下拉列表背景色
     }
 }
 
@@ -83,13 +83,13 @@ addonTable.COLOR = { -- 供其他运行时文件共用的颜色定义
 常规模式使用两种接近黑色的颜色作为定位标记。
 
 ]]
-if DEBUG then -- 调试模式以高对比度展示定位标记
-    addonTable.COLOR.MARK = { -- 画布定位标记配色
-        POINT_0 = CreateColor(0, 255 / 255, 0, 1), -- 定位标记的第一种颜色：亮绿色
-        POINT_1 = CreateColor(255 / 255, 0, 0, 1), -- 定位标记的第二种颜色：亮红色
+if DEBUG then                                                   -- 调试模式以高对比度展示定位标记
+    addonTable.COLOR.MARK = {                                   -- 画布定位标记配色
+        POINT_0 = CreateColor(0, 255 / 255, 0, 1),              -- 定位标记的第一种颜色：亮绿色
+        POINT_1 = CreateColor(255 / 255, 0, 0, 1),              -- 定位标记的第二种颜色：亮红色
     }
-else -- 常规模式降低定位标记的视觉亮度
-    addonTable.COLOR.MARK = { -- 画布定位标记配色
+else                                                            -- 常规模式降低定位标记的视觉亮度
+    addonTable.COLOR.MARK = {                                   -- 画布定位标记配色
         POINT_0 = CreateColor(15 / 255, 25 / 255, 20 / 255, 1), -- 接近黑色的定位标记
         POINT_1 = CreateColor(25 / 255, 15 / 255, 20 / 255, 1), -- 接近黑色的定位标记
     }
@@ -102,8 +102,11 @@ end
 
 
 addonTable.FrameLevel = { -- 供界面组件统一使用的框架层级
-    Background = 9500,     -- 背景底板层级为 9500
-    CellBackground = 9510, -- Cell、Status Bar 与 Icon 的底板共用层级 9510
+    Background = 9500,    -- 背景底板层级为 9500
+    Cell = 9600,          -- Cell 层级 9600
+    BarFrame = 9500,      -- Value Bar 与 Icon 的底板共用
+    Bar = 9600            -- Value Bar 与 Icon 的材质层
+
 }
 
 
@@ -112,7 +115,7 @@ addonTable.FrameLevel = { -- 供界面组件统一使用的框架层级
 ]]
 addonTable.SIZE = {}                                              -- 尺寸表
 local function InitializeSize()                                   -- 初始化尺寸
-    local SIZE = addonTable.SIZE -- 执行初始化时取得当前共享尺寸表
+    local SIZE = addonTable.SIZE                                  -- 执行初始化时取得当前共享尺寸表
     SIZE.CELL = GetUIScaleFactor(scale * 4)                       -- Cell 边长，包含调试显示倍率
     SIZE.PANEL = {                                                -- 游戏内设置面板尺寸
         MainFrame = {                                             -- 主框体尺寸

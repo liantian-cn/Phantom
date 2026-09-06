@@ -60,7 +60,7 @@ end
 
 
 -- 缩放
-if addonTable.DEBUG then
+if addonTable.DEBUG then -- 按调试开关选择显示倍率
     addonTable.SCALE = 8 -- 调试时放大显示以便观察像素布局
 else
     addonTable.SCALE = 1 -- 常规显示使用原始尺寸

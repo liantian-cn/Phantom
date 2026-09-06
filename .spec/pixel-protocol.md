@@ -8,12 +8,12 @@
 | --- | --- | ---: | --- |
 | 1 | 通用 Cell | 4 | 按通用字段声明顺序从左到右紧密排列 |
 | 2 | 条件 Cell | 4 | 按条件声明顺序从左到右紧密排列 |
-| 3 | Status Bar | 4 | 按条件声明顺序从左到右紧密排列 |
+| 3 | Value Bar | 4 | 按条件声明顺序从左到右紧密排列 |
 | 4 | Icon | 8 | 按条件声明顺序从左到右紧密排列 |
 
 每一行独立从左侧起排，不因其他行的区域宽度产生空洞。画布总宽度取四行占用宽度的最大值。
 
-一个条件实例只能选择 `cell`、`status_bar`、`icon` 三种输出类型中的一种，但可以连续占用多个同类区域。区域数量在插件参数通过校验后计算，并在布局完成时冻结；运行中不得改变。
+一个条件实例只能选择 `cell`、`value_bar`、`icon` 三种输出类型中的一种，但可以连续占用多个同类区域。区域数量在插件参数通过校验后计算，并在布局完成时冻结；运行中不得改变。
 
 ## Cell
 
@@ -23,7 +23,7 @@
 
 边缘像素不参与计算，因为游戏渲染、抗锯齿和缩放可能污染边缘。
 
-## Status Bar
+## Value Bar
 
 - 高度固定为 4，宽度为 `4n`；`n` 由插件输出描述决定。
 - 只读取中间两行：`inner_pix_array = bar_pix_array[1:3, :]`。
@@ -53,7 +53,7 @@ result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 
 每个条件实例必须分别声明：
 
-- `output_type`：`cell`、`status_bar` 或 `icon`。
+- `output_type`：`cell`、`value_bar` 或 `icon`。
 - `output_count`：连续占用的同类区域数量。
 - `value_type`：`bool`、`int`、`float` 或 `str`。
 - `value_shape`：`scalar` 或 `list`。
@@ -65,4 +65,4 @@ result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 - 第一行通用 Cell 的最终字段及各字段语义；启停、延迟、职业、专精和战斗状态只是候选项。
 - 截图数据的 RGB/BGR 等通道顺序归一化位置。
 - Cell 的通用颜色约定和各条件的精度分段。
-- Status Bar 百分比到具体业务值的编码规则。
+- Value Bar 百分比到具体业务值的编码规则。

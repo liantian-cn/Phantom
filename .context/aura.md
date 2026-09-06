@@ -35,7 +35,7 @@ For a deterministic condition plugin:
 1. Choose a managed group or fixed slot only after checking the target source revision.
 2. Allocate a stable pixel region before runtime.
 3. Connect supported Aura display properties to that region without Lua-side inspection.
-4. Decode the rendered Cell, Status Bar, or Icon on the Python side.
+4. Decode the rendered Cell, Value Bar, or Icon on the Python side.
 5. Document empty output, fallback behavior, and version-specific assumptions.
 
 Fixed slots are generally easier to map to stable pixel coordinates. Dynamic groups require a fixed maximum frame count and a documented ordering contract.

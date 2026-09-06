@@ -18,9 +18,9 @@ A Cell is a 4×4 solid-color region. The Python side reads only `[1:3, 1:3]`. A 
 
 Do not assume grayscale unless the plugin contract says so.
 
-## Status Bar
+## Value Bar
 
-A Status Bar is four pixels high and `4n` pixels wide. Python reads the middle two rows, counts pixels exactly equal to white `(255, 255, 255)`, and returns the white percentage in the range 0–100.
+A Value Bar is four pixels high and `4n` pixels wide. Python reads the middle two rows, counts pixels exactly equal to white `(255, 255, 255)`, and returns the white percentage in the range 0–100.
 
 This pattern is useful when WoW can display a secret value as bar fill but Lua cannot inspect the number. The plugin still owns the mapping between the rendered percentage and its business value.
 
