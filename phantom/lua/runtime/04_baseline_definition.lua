@@ -1,7 +1,7 @@
 --[[
-{original}: runtime\04_baseline_definition.lua
-{uuid}: d9cf2e29-674c-4ad5-828a-d61d47fbed0d
-{runtime_index}: 4
+original: runtime\04_baseline_definition.lua
+uuid: d9cf2e29-674c-4ad5-828a-d61d47fbed0d
+runtime_index: 4
 摘要：
 
 

@@ -1,7 +1,7 @@
 --[[
-{original}: runtime\03_rotation_variable.lua
-{uuid}: becdc27d-385d-4d99-b757-50c9bc5ff327
-{runtime_index}: 3
+original: runtime\03_rotation_variable.lua
+uuid: becdc27d-385d-4d99-b757-50c9bc5ff327
+runtime_index: 3
 摘要：
 
 

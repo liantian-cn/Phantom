@@ -1,7 +1,7 @@
 --[[
-{original}: runtime\02_config.lua
-{uuid}: 623444a0-7dad-4fe6-8554-21d6753c6773
-{runtime_index}: 2
+original: runtime\02_config.lua
+uuid: 623444a0-7dad-4fe6-8554-21d6753c6773
+runtime_index: 2
 摘要：第2个加载的lua，为插件提供config/profile和对应的逻辑。
 
 

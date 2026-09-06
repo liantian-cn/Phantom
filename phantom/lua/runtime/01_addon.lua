@@ -1,7 +1,7 @@
 --[[
-{original}: runtime\01_addon.lua
-{uuid}: 20d63786-5c32-4c07-8c5f-c8f0420844a8
-{runtime_index}: 1
+original: runtime\01_addon.lua
+uuid: 20d63786-5c32-4c07-8c5f-c8f0420844a8
+runtime_index: 1
 摘要：定义插件默认业务配置、公共日志函数与基础运行参数。
 
 

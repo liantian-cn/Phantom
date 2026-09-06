@@ -1,7 +1,7 @@
 --[[
-{original}: runtime\06_panel.lua
-{uuid}: 5ed52a3e-bf75-40de-b28f-858a1cd5954c
-{runtime_index}: 6
+original: runtime\06_panel.lua
+uuid: 5ed52a3e-bf75-40de-b28f-858a1cd5954c
+runtime_index: 6
 摘要：
 
 

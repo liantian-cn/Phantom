@@ -1,7 +1,7 @@
 --[[
-{original}: runtime\05_background.lua
-{uuid}: daff1721-dbdd-4c7f-ab23-40701e1e82ab
-{runtime_index}: 5
+original: runtime\05_background.lua
+uuid: daff1721-dbdd-4c7f-ab23-40701e1e82ab
+runtime_index: 5
 摘要：
 
 
