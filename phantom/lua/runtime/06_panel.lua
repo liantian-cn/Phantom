@@ -3,12 +3,13 @@ original: runtime\06_panel.lua
 uuid: 5ed52a3e-bf75-40de-b28f-858a1cd5954c
 runtime_index: 6
 摘要：
-
-
+    创建插件启停控制条、爆发倒计时和配置面板，提供滑块、下拉选项及法术列表编辑。
 
 描述：
-    -
-
+    先定义边框、按钮和悬停提示等 UI 工具，再按初始化队列顺序创建控制条与配置行。
+    控制条切换插件启用状态和设置面板显示，并在累计帧时间超过 0.1 秒时刷新爆发倒计时。
+    配置行按 ConfigRows 中的类型生成滑块、下拉框或法术列表入口，通过绑定配置读写数值。
+    法术列表编辑器按需创建，支持输入 SpellID 新增或删除、滚动选择和显示法术提示。
 
 修改记录：
 2026-09-06：liantian-cn初始化创建。
@@ -22,6 +23,13 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
+local ipairs = ipairs -- 按数组顺序遍历选项和编辑器行
+local pairs = pairs -- 遍历以 SpellID 为键的法术集合
+local select = select -- 提取下拉控件返回的数值设置函数
+local tonumber = tonumber -- 将输入的 SpellID 转为数字
+local tostring = tostring -- 将数值和配置名称转换为显示文本
+local type = type -- 检查配置对象和法术集合的类型
+local gsub = string.gsub -- 移除 SpellID 输入中的空白字符
 local format = string.format                            -- 字符串格式化
 local max = math.max                                    -- 数学最大值
 local insert = table.insert                             -- 表插入
@@ -41,35 +49,35 @@ local GetSpellTexture = C_Spell.GetSpellTexture         -- 获取技能图标
 
 local GetUIScaleFactor = addonTable.GetUIScaleFactor -- UI 缩放计算
 local Config = addonTable.Config                     -- 配置对象工厂
-local ConfigRows = addonTable.ConfigRows             -- 配置行对象工厂
-local logging = addonTable.logging
-local SIZE = addonTable.SIZE                         -- 尺寸表（在创建面板时初始化）
+local ConfigRows = addonTable.ConfigRows             -- 配置行定义数组（加载期登记，UI 初始化时读取）
+local logging = addonTable.logging -- 输出面板模块加载日志
+local SIZE = addonTable.SIZE                         -- 共享尺寸表（由前置 UI 初始化函数填充）
 local COLOR = addonTable.COLOR.PANEL                 -- 面板配色表
-local BurstRemaining = addonTable.BurstRemaining
-local InBurst = addonTable.InBurst
-local UIInitFuncs = addonTable.UIInitFuncs
+local BurstRemaining = addonTable.BurstRemaining -- 读取当前爆发剩余秒数
+local InBurst = addonTable.InBurst -- 查询当前是否处于爆发期间
+local UIInitFuncs = addonTable.UIInitFuncs -- 共享 UI 初始化队列，按登记顺序创建面板和配置行
 
 --[[  logical code  ]]
 
 
 local Panel = {}                                                             -- 面板模块主表
 local FontPath = "Interface\\Addons\\" .. addonName .. "\\media\\UiFont.ttf" -- 自定义字体路径
-local Rows = {}                                                              -- 面板行配置容器（在加载期写入, 在第二帧构建 UI）
+local Rows = {}                                                              -- 预留面板行配置容器（当前未使用）
 local UI = {}                                                                -- UI 工具集合
 local OnUpdateFuncs = {}                                                     -- 更新函数容器
-local DefaultApplied = {}
+local DefaultApplied = {} -- 记录已设置默认值的配置键，避免重复应用
 
 
 -- OnUpdate 事件处理
-local eventFrame = CreateFrame("Frame")
-local timeElapsed = 0
-eventFrame:HookScript("OnUpdate", function(self, elapsed)
-    timeElapsed = timeElapsed + elapsed
-    if timeElapsed > 0.1 then
-        timeElapsed = 0
-        for updaterIndex = 1, #OnUpdateFuncs do
-            local updater = OnUpdateFuncs[updaterIndex]
-            updater()
+local eventFrame = CreateFrame("Frame") -- 承载面板定时刷新回调
+local timeElapsed = 0 -- 距上次刷新累计的帧时间
+eventFrame:HookScript("OnUpdate", function(self, elapsed) -- 累计帧时间并节流刷新面板
+    timeElapsed = timeElapsed + elapsed -- 累加当前帧经过的秒数
+    if timeElapsed > 0.1 then -- 累计超过 0.1 秒后刷新一次
+        timeElapsed = 0 -- 重新开始累计刷新间隔
+        for updaterIndex = 1, #OnUpdateFuncs do -- 按登记顺序执行面板刷新函数
+            local updater = OnUpdateFuncs[updaterIndex] -- 当前面板刷新函数
+            updater() -- 刷新对应面板内容
         end
     end
 end)
@@ -271,10 +279,10 @@ local function CreatePanelFrame()                                               
     local function UpdateStatusUI(enabled) -- 刷新状态显示
         if enabled then -- 启用状态
             toggleButton.text:SetText("已启动") -- 按钮文案
-            toggleButton.text:SetTextColor(0, 1, 0)
+            toggleButton.text:SetTextColor(0, 1, 0) -- 以绿色显示已启动状态
         else -- 停用状态
             toggleButton.text:SetText("已停止") -- 按钮文案
-            toggleButton.text:SetTextColor(1, 0, 0)
+            toggleButton.text:SetTextColor(1, 0, 0) -- 以红色显示已停止状态
         end -- 状态判断结束
     end -- UpdateStatusUI 结束
 
@@ -622,7 +630,7 @@ local function CopySpellList(source) -- 复制技能表
         return copy -- 返回空表
     end -- 类型判断结束
     for rawSpellID, enabled in pairs(source) do -- 遍历源表
-        if enabled then -- 只复制 true 项
+        if enabled then -- 复制值为真的有效条目
             local spellID = NormalizeSpellID(rawSpellID) -- 规范化
             if spellID then -- 有效则写入
                 copy[spellID] = true -- 写入新表
@@ -638,7 +646,7 @@ local function CollectSpellIDs(spellList) -- 收集技能 ID 数组
         return spellIDs -- 返回空数组
     end -- 类型判断结束
     for rawSpellID, enabled in pairs(spellList) do -- 遍历表
-        if enabled then -- 只保留 true
+        if enabled then -- 保留值为真的有效条目
             local spellID = NormalizeSpellID(rawSpellID) -- 规范化
             if spellID then -- 有效则插入
                 insert(spellIDs, spellID) -- 写入数组
@@ -777,7 +785,7 @@ local function EnsureSpellListEditorFrame() -- 确保编辑器存在
 
     function frame:_ClampScrollOffset() -- 约束滚动偏移
         local total = self._spellIDs and #self._spellIDs or 0 -- 总数
-        local maxOffset = math.max(0, total - maxRows) -- 最大偏移
+        local maxOffset = max(0, total - maxRows) -- 最大偏移
         if not self._scrollOffset then -- 未设置
             self._scrollOffset = 0 -- 初始化
         end -- 未设置判断结束
@@ -866,7 +874,7 @@ local function EnsureSpellListEditorFrame() -- 确保编辑器存在
 
     local function GetInputSpellID() -- 读取输入框
         local text = frame.spellIDBox:GetText() or "" -- 取文本
-        text = text:gsub("%s+", "") -- 去空格
+        text = gsub(text, "%s+", "") -- 去空格
         return NormalizeSpellID(text) -- 规范化
     end -- GetInputSpellID 结束
 
@@ -906,7 +914,7 @@ local function EnsureSpellListEditorFrame() -- 确保编辑器存在
     end) -- 删除回调结束
 
     frame.listFrame:SetScript("OnMouseWheel", function(listFrame, delta) -- 列表滚轮
-        local editorFrame = listFrame:GetParent()
+        local editorFrame = listFrame:GetParent() -- 取得列表所属的法术编辑器
         if delta > 0 then -- 上滚
             editorFrame._scrollOffset = (editorFrame._scrollOffset or 0) - 1 -- 向上
         else -- 下滚
@@ -917,7 +925,7 @@ local function EnsureSpellListEditorFrame() -- 确保编辑器存在
     end) -- 滚轮回调结束
 
     for rowIndex = 1, #frame.rows do -- 行交互
-        local row = frame.rows[rowIndex]
+        local row = frame.rows[rowIndex] -- 当前需要绑定交互的法术行
         row:SetScript("OnMouseDown", function(self) -- 点击选择
             if not self._spellID then -- 无 ID
                 return -- 直接退出
@@ -954,7 +962,7 @@ local function EnsureSpellListEditorFrame() -- 确保编辑器存在
             GameTooltip:Hide() -- 隐藏
         end) -- 离开回调结束
         row:SetScript("OnMouseWheel", function(rowFrame, delta) -- 行滚轮
-            local listMouseWheelScript = frame.listFrame:GetScript("OnMouseWheel")
+            local listMouseWheelScript = frame.listFrame:GetScript("OnMouseWheel") -- 读取列表滚轮处理函数供行事件转发
             if listMouseWheelScript then -- 代理到列表
                 listMouseWheelScript(rowFrame:GetParent(), delta) -- 调用列表滚轮
             end -- 代理判断结束
@@ -995,7 +1003,7 @@ end -- AddSpellListRow 结束
 
 local function CreatePanelRows() -- 构建所有设置行
     for rowIndex = 1, #ConfigRows do -- 遍历 Rows
-        local row_info = ConfigRows[rowIndex]
+        local row_info = ConfigRows[rowIndex] -- 当前配置行的类型、显示信息和绑定配置
         if row_info.type == "slider" then -- 滑块
             AddSliderRow(row_info) -- 创建滑块行
         elseif row_info.type == "combo" then -- 下拉
@@ -1008,7 +1016,7 @@ end -- CreatePanelRows 结束
 
 
 
-insert(UIInitFuncs, CreatePanelFrame)
-insert(UIInitFuncs, CreatePanelRows)
+insert(UIInitFuncs, CreatePanelFrame) -- 先创建控制条和承载配置行的面板
+insert(UIInitFuncs, CreatePanelRows) -- 再按配置行定义构建面板控件
 
-logging(addonName .. " Panel loaded.")
+logging(addonName .. " Panel loaded.") -- 记录面板模块加载完成

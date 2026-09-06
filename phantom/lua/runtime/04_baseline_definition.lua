@@ -3,12 +3,12 @@ original: runtime\04_baseline_definition.lua
 uuid: d9cf2e29-674c-4ad5-828a-d61d47fbed0d
 runtime_index: 4
 摘要：
-
-
+    定义运行时共用的颜色、框架层级与界面尺寸。
 
 描述：
-    -
-
+    集中提供光环、施法、基础色和设置面板配色，并按调试开关选择定位标记颜色。
+    定义底板与 Cell 底板的框架层级；将尺寸初始化注册到 UI 初始化队列，
+    延后换算 Cell 和设置面板的尺寸，供后续界面组件使用。
 
 修改记录：
 2026-09-06：liantian-cn初始化创建。
@@ -22,20 +22,20 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
-local CreateColor = CreateColor
-local insert      = table.insert -- 插入表元素
+local CreateColor = CreateColor -- 根据 RGBA 分量创建颜色对象
+local insert      = table.insert -- 将尺寸初始化函数加入 UI 初始化队列
 
 --[[  variable reference  ]]
 
-local DEBUG            = addonTable.DEBUG
-local GetUIScaleFactor = addonTable.GetUIScaleFactor
-local scale            = addonTable.SCALE
-local UIInitFuncs      = addonTable.UIInitFuncs
+local DEBUG            = addonTable.DEBUG -- 调试开关，用于选择定位标记配色
+local GetUIScaleFactor = addonTable.GetUIScaleFactor -- 将物理像素尺寸换算为 UI 尺寸
+local scale            = addonTable.SCALE -- Cell 的显示倍率，调试时放大
+local UIInitFuncs      = addonTable.UIInitFuncs -- 按注册顺序执行的 UI 初始化队列
 
 
 --[[  logical code  ]]
 
-addonTable.COLOR = {
+addonTable.COLOR = { -- 供其他运行时文件共用的颜色定义
     AURA_TYPE = {                                                           -- 光环
         MAGIC = CreateColor(60 / 255, 100 / 255, 220 / 255, 1),             -- 魔法
         CURSE = CreateColor(100 / 255, 0, 120 / 255, 1),                    -- 诅咒
@@ -47,7 +47,7 @@ addonTable.COLOR = {
         BUFF_ON_FRIENDLY = CreateColor(80 / 255, 220 / 255, 120 / 255, 1),  -- 在友方身上的增益,不属于上述状态
         DEBUFF_ON_ENEMY = CreateColor(105 / 255, 105 / 255, 210 / 255, 1),  -- 在敌方身上的减益,不属于上述状态
     },
-    SPELL_TYPE = {
+    SPELL_TYPE = { -- 施法状态配色
         PLAYER_SPELL = CreateColor(64 / 255, 158 / 255, 210 / 255, 1),     -- 友方施法
         INTERRUPTIBLE = CreateColor(255 / 255, 255 / 255, 60 / 255, 1),    -- 可打断
         NOT_INTERRUPTIBLE = CreateColor(200 / 255, 0, 0, 1),               -- 不可打断
@@ -79,45 +79,45 @@ addonTable.COLOR = {
 
 --[[
 标记位颜色
-debug模式下明显，肉眼可辩别
-非debug模式下，不明显，但是冷门，方便识别
+调试模式使用亮绿和亮红，便于肉眼辨别。
+常规模式使用两种接近黑色的颜色作为定位标记。
 
 ]]
-if DEBUG then
-    addonTable.COLOR.MARK = {
-        POINT_0 = CreateColor(0, 255 / 255, 0, 1),
-        POINT_1 = CreateColor(255 / 255, 0, 0, 1),
+if DEBUG then -- 调试模式以高对比度展示定位标记
+    addonTable.COLOR.MARK = { -- 画布定位标记配色
+        POINT_0 = CreateColor(0, 255 / 255, 0, 1), -- 定位标记的第一种颜色：亮绿色
+        POINT_1 = CreateColor(255 / 255, 0, 0, 1), -- 定位标记的第二种颜色：亮红色
     }
-else
-    addonTable.COLOR.MARK = {
-        POINT_0 = CreateColor(15 / 255, 25 / 255, 20 / 255, 1), -- 接近黑色
-        POINT_1 = CreateColor(25 / 255, 15 / 255, 20 / 255, 1), -- 接近黑色
+else -- 常规模式降低定位标记的视觉亮度
+    addonTable.COLOR.MARK = { -- 画布定位标记配色
+        POINT_0 = CreateColor(15 / 255, 25 / 255, 20 / 255, 1), -- 接近黑色的定位标记
+        POINT_1 = CreateColor(25 / 255, 15 / 255, 20 / 255, 1), -- 接近黑色的定位标记
     }
 end
 
 --[[
-框架层级，合理设置层级，确保显示正确。
+框架层级：Cell 底板的层级高于背景底板。
 - 基础为9500
 ]]
 
 
-addonTable.FrameLevel = {
-    Background = 9500,     -- 底板为9000
-    CellBackground = 9510, -- 每个Cell的底板是9510。status_bat和Icon的底板同样
+addonTable.FrameLevel = { -- 供界面组件统一使用的框架层级
+    Background = 9500,     -- 背景底板层级为 9500
+    CellBackground = 9510, -- Cell、Status Bar 与 Icon 的底板共用层级 9510
 }
 
 
 --[[
-尺寸表，尺寸在游戏启动后下一帧立即计算
+尺寸表：在延后执行的 UI 初始化队列中计算，供后续注册的界面初始化函数读取。
 ]]
 addonTable.SIZE = {}                                              -- 尺寸表
 local function InitializeSize()                                   -- 初始化尺寸
-    local SIZE = addonTable.SIZE
-    SIZE.CELL = GetUIScaleFactor(scale * 4)                       -- Cell尺寸
+    local SIZE = addonTable.SIZE -- 执行初始化时取得当前共享尺寸表
+    SIZE.CELL = GetUIScaleFactor(scale * 4)                       -- Cell 边长，包含调试显示倍率
     SIZE.PANEL = {                                                -- 游戏内设置面板尺寸
         MainFrame = {                                             -- 主框体尺寸
             Width = GetUIScaleFactor(400),                        -- 主框体宽度
-            Height = GetUIScaleFactor(16) + GetUIScaleFactor(36), -- 主框体单行高度
+            Height = GetUIScaleFactor(16) + GetUIScaleFactor(36), -- 主框体初始高度，由 16 与 36 像素分别换算后相加
             Border = GetUIScaleFactor(1),                         -- 主框体边框
             Spacing = GetUIScaleFactor(8),                        -- 内边距/间距
         },                                                        -- MainFrame 结束
@@ -138,4 +138,4 @@ local function InitializeSize()                                   -- 初始化�
         }                                                         -- SETTING_LINE 结束
     }
 end
-insert(UIInitFuncs, InitializeSize)
+insert(UIInitFuncs, InitializeSize) -- 注册尺寸计算，先于后续文件的界面初始化执行
