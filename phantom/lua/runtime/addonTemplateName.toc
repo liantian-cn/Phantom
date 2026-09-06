@@ -1,0 +1,13 @@
+## Interface: 120100
+## Title: addonTemplateName
+## Version: 12.1.0.68209
+## SavedVariables: addonTemplateNameSettings
+## LoadSavedVariablesFirst: 1
+## IconTexture: Interface\Icons\UI_Spellbook_OneButton
+
+01_addon.lua
+02_config.lua
+03_rotation_variable.lua
+04_baseline_definition.lua
+05_background.lua
+06_panel.lua
