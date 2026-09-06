@@ -8,7 +8,7 @@
 | --- | --- | ---: | --- |
 | 1 | 通用 Cell | 4 | 按通用字段声明顺序从左到右紧密排列 |
 | 2 | 条件 Cell | 4 | 按条件声明顺序从左到右紧密排列 |
-| 3 | Value Bar | 4 | 按条件声明顺序从左到右紧密排列 |
+| 3 | Value Bar | 4 | 按条件声明顺序，以含红色分隔的实际占位宽度从左到右紧密排列 |
 | 4 | Icon | 8 | 按条件声明顺序从左到右紧密排列 |
 
 每一行独立从左侧起排，不因其他行的区域宽度产生空洞。画布总宽度取四行占用宽度的最大值。
@@ -25,15 +25,19 @@
 
 ## Value Bar
 
-- 高度固定为 4，宽度为 `4n`；`n` 由插件输出描述决定。
-- 只读取中间两行：`inner_pix_array = bar_pix_array[1:3, :]`。
-- 只有像素值严格等于 `(255, 255, 255)` 才计为白色。
-- 原始值是白色像素占可信区域总像素的百分比，范围为 `0.0` 到 `100.0`：
+- 高度固定为 4 像素。构造入参 `width` 表示黑白内容宽度，以 Cell 为单位，由插件输出描述决定；内容宽度为 `4 * width` 像素。
+- 每条 Bar 的内容左右各保留半个 Cell 的红色分隔，实际占位宽度为 `width + 1` 个 Cell，即 `4 * (width + 1)` 像素。布局与画布行宽计算必须包含分隔占位。
+- 构造入参 `x` 表示包含左侧红色分隔的占位起点，相对背景左上角，以 Cell 为单位；黑白内容从 `x + 0.5` 个 Cell 处开始。下一条 Bar 的入参必须为 `next_x = x + width + 1`，不能只累加 `width`。
+- `bar_pix_array` 覆盖该 Bar 的完整占位区域，包含两侧红色分隔；只读取中间两行：`inner_pix_array = bar_pix_array[1:3, :]`。
+- 只有像素值严格等于 `(255, 255, 255)` 才计为白色，严格等于 `(0, 0, 0)` 才计为黑色；红色分隔及其他颜色均不参与分子或分母。
+- 原始值是白色像素占黑色与白色像素总数的百分比，范围为 `0.0` 到 `100.0`；没有黑白像素时返回 `0.0`：
 
 ```python
 white_mask = np.all(inner_pix_array == (255, 255, 255), axis=2)
+black_mask = np.all(inner_pix_array == (0, 0, 0), axis=2)
 white_count = int(np.count_nonzero(white_mask))
-total_count = int(inner_pix_array.shape[0] * inner_pix_array.shape[1])
+black_count = int(np.count_nonzero(black_mask))
+total_count = white_count + black_count
 result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 ```
 
