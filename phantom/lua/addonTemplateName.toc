@@ -5,9 +5,9 @@
 ## LoadSavedVariablesFirst: 1
 ## IconTexture: Interface\Icons\UI_Spellbook_OneButton
 
-01_addon.lua
-02_config.lua
-03_rotation_variable.lua
-04_baseline_definition.lua
-05_background.lua
-06_panel.lua
+runtime\01_addon.lua
+runtime\02_config.lua
+runtime\03_rotation_variable.lua
+runtime\04_baseline_definition.lua
+runtime\05_background.lua
+runtime\06_panel.lua
