@@ -9,11 +9,11 @@
 | 1 | 通用 Cell | 4 | 按通用字段声明顺序从左到右紧密排列 |
 | 2 | 条件 Cell | 4 | 按条件声明顺序从左到右紧密排列 |
 | 3 | Value Bar | 4 | 按条件声明顺序，以含红色分隔的实际占位宽度从左到右紧密排列 |
-| 4 | Icon | 8 | 按条件声明顺序从左到右紧密排列 |
+| 4 | Icon Tile | 8 | 按条件声明顺序从左到右紧密排列 |
 
 每一行独立从左侧起排，不因其他行的区域宽度产生空洞。画布总宽度取四行占用宽度的最大值。
 
-一个条件实例只能选择 `cell`、`value_bar`、`icon` 三种输出类型中的一种，但可以连续占用多个同类区域。区域数量在插件参数通过校验后计算，并在布局完成时冻结；运行中不得改变。
+一个条件实例只能选择 `cell`、`value_bar`、`icon_tile` 三种输出类型中的一种，但可以连续占用多个同类区域。区域数量在插件参数通过校验后计算，并在布局完成时冻结；运行中不得改变。
 
 ## Cell
 
@@ -43,13 +43,13 @@ result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 
 该百分比是 `raw_value()`，不是业务值；插件可在 `decode_value()` 中继续缩放或转换。
 
-## Icon
+## Icon Tile
 
-- 每个 Icon 物理尺寸固定为 8×8。
-- 只信任中间 6×6，即 `icon_pix_array[1:7, 1:7]`。
+- 每个 Icon Tile 物理尺寸固定为 8×8。
+- 只信任中间 6×6，即 `icon_tile_pix_array[1:7, 1:7]`。
 - 中间区域全黑时，该槽位的原始值为 `None`。
 - 否则先保证数组连续，再以 seed 0 计算 `xxh3_64_hexdigest`，返回 16 位小写字符串。
-- 多 Icon 条件的 `raw_value()` 始终返回长度等于 `output_count` 的列表，并用 `None` 保留空槽位。
+- 多 Icon Tile 条件的 `raw_value()` 始终返回长度等于 `output_count` 的列表，并用 `None` 保留空槽位。
 
 插件的 `value()` 可以删除空槽、重新组织列表或合并多个区域。业务列表的排序由插件契约定义，核心不附加统一顺序。
 
@@ -57,7 +57,7 @@ result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 
 每个条件实例必须分别声明：
 
-- `output_type`：`cell`、`value_bar` 或 `icon`。
+- `output_type`：`cell`、`value_bar` 或 `icon_tile`。
 - `output_count`：连续占用的同类区域数量。
 - `value_type`：`bool`、`int`、`float` 或 `str`。
 - `value_shape`：`scalar` 或 `list`。

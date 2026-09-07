@@ -3,14 +3,15 @@ original: runtime\08_valuebar.lua
 uuid: 99f3155c-0642-41c8-9856-8613628f61ab
 runtime_index: 8
 摘要：
-    创建带红色分隔的黑白数值条，提供范围、当前值和反向填充设置。
+    创建带红色分隔的黑白数值条，维护共享行宽并提供数值更新接口。
 
 描述：
     在已创建的共享背景第三行构建红色分隔底板、黑色内容背景和白色 StatusBar。
     x 为包含左侧分隔的占位起点，width 为内容宽度，均以 Cell 为单位；
     内容从 x + 0.5 开始，完整占位宽度为 width + 1，下一条由调用方按此宽度排布。
     构造时将数值范围设为 0 到 100、当前值设为 50，仅 reverse 为 true 时启用反向填充。
-    后续通过实例方法直接设置 StatusBar 的范围和当前值；本文件不负责更新共享行宽或调整背景尺寸。
+    构造完成后将 width + 1 累加到共享 ValueBarLength，再按各行共享长度调整背景尺寸。
+    后续通过实例方法直接设置 StatusBar 的范围和当前值；反向填充方向在构造时确定。
     截图端读取完整占位的中间两行，按白色占黑白像素总数的百分比解码，排除红色及其他颜色。
 
 修改记录：
@@ -25,23 +26,14 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
-local After                    = C_Timer.After                        -- 指定秒数后执行回调
-local insert                   = table.insert                         -- 插入表元素
+local setmetatable             = setmetatable -- 为数值条实例设置共享方法表
 local CreateFrame              = CreateFrame                          -- 创建框体
-local CreateColor              = CreateColor                          -- 创建 RGBA 颜色对象
-local UIParent                 = UIParent                             -- 游戏主界面父框体
-local CreateColorCurve         = C_CurveUtil.CreateColorCurve         -- 创建颜色曲线对象
-local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean -- 按布尔值选择对应颜色
-local Linear                   = Enum.LuaCurveType.Linear             -- 曲线点之间使用线性插值
 
 --[[  variable reference  ]]
 
 local COLOR                 = addonTable.COLOR                 -- 共享基础颜色，提供数值条的红色分隔与黑白配色
-local DEBUG                 = addonTable.DEBUG                 -- 共享调试开关（本文件暂未使用）
 local FrameLevel            = addonTable.FrameLevel            -- 数值条分隔底板、内容背景与填充层的层级定义
-local UIInitFuncs           = addonTable.UIInitFuncs           -- 共享 UI 初始化函数队列
 local SIZE                  = addonTable.SIZE                  -- 共享 Cell 尺寸定义
-local ValueBarLength        = addonTable.ValueBarLength        -- Value Bar 区域的共享长度，初值取自共享表
 local BackgroundFrameResize = addonTable.BackgroundFrameResize -- 按共享长度数据调整背景尺寸
 
 
@@ -52,7 +44,7 @@ local BackgroundFrameResize = addonTable.BackgroundFrameResize -- 按共享长�
 ---@field StatusBar StatusBar 显示当前数值比例的白色填充条
 ---@field X integer 包含左侧红色分隔的占位起点，以 Cell 为单位
 ---@field width number 黑白内容宽度，以 Cell 为单位，不含分隔
-local ValueBar = {} -- 数值条实例的共享方法表
+local ValueBar = {}         -- 数值条实例的共享方法表
 ValueBar.__index = ValueBar -- 实例通过元表访问共享方法
 
 
@@ -63,9 +55,9 @@ ValueBar.__index = ValueBar -- 实例通过元表访问共享方法
 ---@param x integer 包含左侧分隔的占位起点，以 Cell 为单位
 ---@param width number 内容宽度，以 Cell 为单位；完整占位为 width + 1
 ---@param reverse boolean 是否反向填充
-function ValueBar:_initialize(x, width, reverse)
+function ValueBar:_initialize(x, width, reverse) -- 创建第三行数值条并更新共享占位宽度
     local parent = addonTable.BackgroundFrame -- 创建时读取共享背景框体作为父框体
-    local barName = addonName .. "Bar_" .. x -- 按插件名与占位起点生成框体名称
+    local barName = addonName .. "Bar_" .. x  -- 按插件名与占位起点生成框体名称
     local offset_x = x * SIZE.CELL            -- 将占位起点换算为相对背景的横向偏移
     local offset_y = -2 * SIZE.CELL           -- 向下偏移两个 Cell，将数值条放在第三行
 
@@ -76,46 +68,48 @@ function ValueBar:_initialize(x, width, reverse)
         解码端只统计完整占位中间两行的纯黑与纯白像素，计算白色 /（黑色 + 白色）。
     ]]
 
-    local separatorFrame = CreateFrame("Frame", barName .. "separatorFrame", parent) -- 创建包含左右分隔的红色底板
-    separatorFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", offset_x, offset_y) -- 将红底左边缘对齐占位起点
-    separatorFrame:SetFrameStrata("TOOLTIP") -- 使用 TOOLTIP 显示层
-    separatorFrame:SetFrameLevel(FrameLevel.BarSeparator) -- 将分隔底板置于内容背景下方
-    separatorFrame:SetSize((width + 1) * SIZE.CELL, SIZE.CELL) -- 内容外增加共一个 Cell 的分隔占位
-    separatorFrame:Show() -- 显示分隔底板
+    local separatorFrame = CreateFrame("Frame", barName .. "separatorFrame", parent)               -- 创建包含左右分隔的红色底板
+    separatorFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", offset_x, offset_y)                      -- 将红底左边缘对齐占位起点
+    separatorFrame:SetFrameStrata("TOOLTIP")                                                       -- 使用 TOOLTIP 显示层
+    separatorFrame:SetFrameLevel(FrameLevel.BarSeparator)                                          -- 将分隔底板置于内容背景下方
+    separatorFrame:SetSize((width + 1) * SIZE.CELL, SIZE.CELL)                                     -- 内容外增加共一个 Cell 的分隔占位
+    separatorFrame:Show()                                                                          -- 显示分隔底板
 
-    local separatorFrameTex = separatorFrame:CreateTexture(nil, "BACKGROUND") -- 创建分隔底色纹理
-    separatorFrameTex:SetAllPoints() -- 使红色纹理铺满分隔底板
-    separatorFrameTex:SetColorTexture(COLOR.RED:GetRGBA()) -- 以红色标记不参与数值解码的分隔区域
+    local separatorFrameTex = separatorFrame:CreateTexture(nil, "BACKGROUND")                      -- 创建分隔底色纹理
+    separatorFrameTex:SetAllPoints()                                                               -- 使红色纹理铺满分隔底板
+    separatorFrameTex:SetColorTexture(COLOR.RED:GetRGBA())                                         -- 以红色标记不参与数值解码的分隔区域
 
-    local backgroundFrame = CreateFrame("Frame", barName .. "backgroundFrame", parent) -- 创建黑白内容的背景框体
+    local backgroundFrame = CreateFrame("Frame", barName .. "backgroundFrame", parent)             -- 创建黑白内容的背景框体
     backgroundFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", offset_x + (0.5 * SIZE.CELL), offset_y) -- 向右留出半个 Cell 的红色分隔
-    backgroundFrame:SetFrameStrata("TOOLTIP") -- 使用 TOOLTIP 显示层
-    backgroundFrame:SetFrameLevel(FrameLevel.BarBackground) -- 将黑色背景置于红色底板上方
-    backgroundFrame:SetSize(width * SIZE.CELL, SIZE.CELL) -- 设置不含分隔的内容尺寸
-    backgroundFrame:Show() -- 显示内容背景
+    backgroundFrame:SetFrameStrata("TOOLTIP")                                                      -- 使用 TOOLTIP 显示层
+    backgroundFrame:SetFrameLevel(FrameLevel.BarBackground)                                        -- 将黑色背景置于红色底板上方
+    backgroundFrame:SetSize(width * SIZE.CELL, SIZE.CELL)                                          -- 设置不含分隔的内容尺寸
+    backgroundFrame:Show()                                                                         -- 显示内容背景
 
-    local backgroundFrameTex = backgroundFrame:CreateTexture(nil, "BACKGROUND") -- 创建未填充区域的底色纹理
-    backgroundFrameTex:SetAllPoints() -- 使黑色纹理铺满内容背景
-    backgroundFrameTex:SetColorTexture(COLOR.BLACK:GetRGBA()) -- 以黑色表示未被白色填充的部分
+    local backgroundFrameTex = backgroundFrame:CreateTexture(nil, "BACKGROUND")                    -- 创建未填充区域的底色纹理
+    backgroundFrameTex:SetAllPoints()                                                              -- 使黑色纹理铺满内容背景
+    backgroundFrameTex:SetColorTexture(COLOR.BLACK:GetRGBA())                                      -- 以黑色表示未被白色填充的部分
 
 
 
     local bar = CreateFrame("StatusBar", nil, backgroundFrame) -- 创建由内容背景承载的数值填充条
-    bar:SetAllPoints(backgroundFrame) -- 使数值条覆盖完整内容区域
-    bar:SetFrameLevel(FrameLevel.StatusBar) -- 将白色填充置于黑色背景上方
-    bar:SetColorFill(COLOR.WHITE:GetRGBA()) -- 以纯白色填充当前数值对应的比例
+    bar:SetAllPoints(backgroundFrame)                          -- 使数值条覆盖完整内容区域
+    bar:SetFrameLevel(FrameLevel.StatusBar)                    -- 将白色填充置于黑色背景上方
+    bar:SetColorFill(COLOR.WHITE:GetRGBA())                    -- 以纯白色填充当前数值对应的比例
 
-    if reverse then -- 按构造参数选择是否反向填充
-        bar:SetReverseFill(true) -- 启用反向填充
+    if reverse then                                            -- 按构造参数选择是否反向填充
+        bar:SetReverseFill(true)                               -- 启用反向填充
     end
-    bar:Show() -- 显示数值填充条
+    bar:Show()                                                 -- 显示数值填充条
 
-    self.Frame = backgroundFrame -- 保存内容背景框体
-    self.X = x -- 记录包含分隔的占位起点
-    self.width = width -- 记录不含分隔的内容宽度
-    self.StatusBar = bar -- 保存后续更新数值的 StatusBar
-    self:setMinMaxValues(0, 100) -- 初始化数值范围为 0 到 100
-    self:setValue(50) -- 初始化为半满状态
+    self.Frame = backgroundFrame                               -- 保存内容背景框体
+    self.X = x                                                 -- 记录包含分隔的占位起点
+    self.width = width                                         -- 记录不含分隔的内容宽度
+    self.StatusBar = bar                                       -- 保存后续更新数值的 StatusBar
+    self:setMinMaxValues(0, 100)                               -- 初始化数值范围为 0 到 100
+    self:setValue(50)                                          -- 初始化为半满状态
+    addonTable.ValueBarLength = addonTable.ValueBarLength + width + 1 -- 将内容与两侧分隔的占位宽度累加到共享行宽
+    BackgroundFrameResize()                                    -- 调用背景尺寸更新函数
 end
 
 ---创建数值条；调用前须已创建 addonTable.BackgroundFrame
@@ -123,27 +117,27 @@ end
 ---@param width number 内容宽度，以 Cell 为单位；完整占位为 width + 1
 ---@param reverse boolean|nil 仅 true 启用反向填充，省略时使用默认方向
 ---@return ValueBar # 返回初始化完成的 Bar 实例
-function ValueBar:New(x, width, reverse)
-    if reverse and (reverse == true) then -- 仅接受布尔值 true 作为反向填充开关
-        reverse = true -- 启用反向填充
+function ValueBar:New(x, width, reverse) -- 按内容宽度与填充方向构造独立数值条
+    if reverse and (reverse == true) then   -- 仅接受布尔值 true 作为反向填充开关
+        reverse = true                      -- 启用反向填充
     else
-        reverse = false -- 其余输入统一使用默认填充方向
+        reverse = false                     -- 其余输入统一使用默认填充方向
     end
     local instance = setmetatable({}, self) -- 创建继承共享方法的独立实例
     instance:_initialize(x, width, reverse) -- 按占位参数创建框体并初始化数值
-    return instance -- 返回初始化完成的实例
+    return instance                         -- 返回初始化完成的实例
 end
 
 ---设置数值条的最小值与最大值
 ---@param minValue number 数值范围下限
 ---@param maxValue number 数值范围上限
-function ValueBar:setMinMaxValues(minValue, maxValue)
+function ValueBar:setMinMaxValues(minValue, maxValue) -- 更新填充比例使用的数值范围
     self.StatusBar:SetMinMaxValues(minValue, maxValue) -- 将数值范围直接交给 StatusBar
 end
 
 ---设置数值条的当前值
 ---@param currentValue number 当前数值
-function ValueBar:setValue(currentValue)
+function ValueBar:setValue(currentValue) -- 更新当前数值对应的白色填充
     self.StatusBar:SetValue(currentValue) -- 将当前值直接交给 StatusBar 更新填充
 end
 

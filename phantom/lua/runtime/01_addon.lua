@@ -26,13 +26,9 @@ local addonName, addonTable = ...
 --[[  api cache  ]]
 
 local After = C_Timer.After -- 延迟调用 UI 初始化回调
-local GetTime = GetTime -- 获取当前计时值（秒）
-local max = math.max -- 取得数值中的最大值
-local min = math.min -- 取得数值中的最小值
 local print = print -- 向聊天窗口输出日志
 local tostring = tostring -- 将日志内容转换为字符串
 local GetPhysicalScreenSize = GetPhysicalScreenSize -- 获取屏幕物理像素宽高
-local GetScreenHeight = GetScreenHeight -- 获取当前屏幕的 UI 高度
 
 local select = select -- 提取屏幕尺寸返回值中的高度
 local ipairs = ipairs -- 按顺序遍历 UI 初始化回调表

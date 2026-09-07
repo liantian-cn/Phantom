@@ -1,3 +1,5 @@
 {
-  "Lua.diagnostics.globals": ["Background"]
+  "Lua.diagnostics.globals": [
+    "Background"
+]
 }

@@ -24,14 +24,9 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
-local After = C_Timer.After -- 延迟指定秒数执行回调
 local GetTime = GetTime -- 获取当前计时值，用于计算爆发截止时间和剩余秒数
 local max = math.max -- 取较大值，将爆发剩余秒数下限限制为 0
 local min = math.min -- 取较小值，将爆发剩余秒数上限限制为 60
-local print = print -- 输出调试或提示信息
-local tostring = tostring -- 将值转换为字符串
-local GetPhysicalScreenSize = GetPhysicalScreenSize -- 获取屏幕的物理宽度与高度
-local GetScreenHeight = GetScreenHeight -- 获取屏幕高度
 
 --[[  variable reference  ]]
 

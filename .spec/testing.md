@@ -11,9 +11,9 @@ Phantom 最终运行在 Windows，而日常开发环境是 WSL2 与 Docker。容
 - YAML schema、唯一标题/宏名称、UUID、职业/专精和键位校验。
 - 白名单 AST 的允许节点、拒绝节点、优先级、条件引用和类型检查。
 - rotation 自上而下首个命中、每轮最多一个动作和无命中行为。
-- Cell 中间 2×2 与 Icon 中间 6×6 的裁剪。
+- Cell 中间 2×2 与 Icon Tile 中间 6×6 的裁剪。
 - Value Bar 中间两行、严格纯白判断和 `0.0`–`100.0` 百分比。
-- Icon 全黑空值、连续数组 hash 和多槽位 `None` 占位。
+- Icon Tile 全黑空值、连续数组 hash 和多槽位 `None` 占位。
 - 插件参数校验、输出数量冻结、Lua/Python 成对编解码和兜底。
 - 多行独立紧密布局、声明顺序和画布最大宽度。
 - WoW 连字符键位到 Windows 输入的映射。
@@ -31,7 +31,7 @@ Phantom 最终运行在 Windows，而日常开发环境是 WSL2 与 Docker。容
 | 层级 | 当前环境可执行 | 目标 |
 | --- | --- | --- |
 | 纯 Python 单元测试 | 是 | 表达式、布局、schema、编解码、键位映射 |
-| NumPy 图像算法测试 | 是 | 裁剪、白色占比、空 Icon、hash |
+| NumPy 图像算法测试 | 是 | 裁剪、白色占比、空 Icon Tile、hash |
 | 生成产物结构检查 | 是 | TOC、共享模块、UUID Lua 和条件提前返回 |
 | Windows GDI/PostMessage 集成 | 否 | 在 Windows 环境验证窗口定位、截图和按键发送 |
 | WoW 游戏内验证 | 否 | 在目标 12.1 build 验证 API、渲染、安全按钮和保护状态 |

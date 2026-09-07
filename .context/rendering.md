@@ -10,7 +10,7 @@ Phantom's generated addon renders a small screen-corner matrix for Python captur
 - Give only objects that must be referenced later a global name.
 - Anchor each object deterministically and clear old anchors before re-anchoring an existing object.
 - Keep the matrix at a stable scale and pixel-aligned position. UI scale, render scale, antialiasing, and post-processing can alter edge pixels.
-- Render solid interiors and treat borders as untrusted. Phantom therefore samples only the middle 2×2 of a 4×4 Cell and the middle 6×6 of an 8×8 Icon.
+- Render solid interiors and treat borders as untrusted. Phantom therefore samples only the middle 2×2 of a 4×4 Cell and the middle 6×6 of an 8×8 Icon Tile.
 
 ## Cell
 
@@ -24,9 +24,9 @@ A Value Bar is four pixels high and `4n` pixels wide. Python reads the middle tw
 
 This pattern is useful when WoW can display a secret value as bar fill but Lua cannot inspect the number. The plugin still owns the mapping between the rendered percentage and its business value.
 
-## Icon
+## Icon Tile
 
-An Icon occupies 8×8 pixels. Python ignores the one-pixel border and hashes the contiguous middle 6×6 array with `xxh3_64_hexdigest` and seed zero. An all-black trusted region represents an absent slot.
+An Icon Tile occupies 8×8 pixels. Python ignores the one-pixel border and hashes the contiguous middle 6×6 array with `xxh3_64_hexdigest` and seed zero. An all-black trusted region represents an absent slot.
 
 Hash stability depends on identical capture channel order and pixel bytes. Capture backends must expose a common channel-order contract before hashes are shared across them.
 

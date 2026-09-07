@@ -220,13 +220,13 @@ The interview is complete only when the frontier is empty and every design-tree 
 任何插件生成的lua，有三种模式
 cell: 一个4x4大小的像素。根据其亮度值反应数值，精度1/255。
 value_bar:高度为4，宽度为4n的条，由于秘密值的原因，有些数值只能这样展现，精度1/2n
-icon: 一个8x8大小的图标，无法展示数值，只能获得内部6x6区域的hash
+icon_tile: 一个8x8大小的图标，无法展示数值，只能获得内部6x6区域的hash
 
 在游戏内
 第一行为若干的cell，反应通用信息，占用高度4
 第二行为插件生成的cell，占用高度4
 第三行为多个value_bar，展通高度4
-第四行为icon，高度为8。
+第四行为icon_tile，高度为8。
 意义一共占用20像素的高度。宽度若干。
 
 
@@ -630,7 +630,7 @@ Q14-1 Agents.md只是路由。
 
 ❓ **Q19 - 横向布局**：四行中的元素如何排列？
 
-1. **每行独立、从左到右确定性紧密排列（推荐）**：通用 Cell、条件 Cell、Value Bar、Icon 分别按各自声明顺序排列；总画布宽度取四行最大宽度。
+1. **每行独立、从左到右确定性紧密排列（推荐）**：通用 Cell、条件 Cell、Value Bar、Icon Tile 分别按各自声明顺序排列；总画布宽度取四行最大宽度。
 2. 四行共享统一列网格，不同类型必须纵向对齐。
 3. 本次只固定行高和总高度，横向布局列为待定。
 
@@ -674,7 +674,7 @@ Q15-1 字段统一为 snake_case；修正 unitTalnet、bing_key 等拼写；列�
 Q16-1 这里解释下，lua有创造宏，然后绑定k的能力，也就是给某个按键组合绑定某个宏。自动化工具都是这么做的。所以必须存在一个按键宏文本的对应关系。但是本项目允许不绑定宏，就是选一个不需要绑定的按键。游锡内已有的按键。
 Q17-1 加入 schema_version: 1（推荐）：未来升级由显式迁移处理，不靠猜测字段形状。
 Q18-1 冻结逻辑协议，隔离底层待定项（推荐）
-Q19-1 每行独立、从左到右确定性紧密排列（推荐）：通用 Cell、条件 Cell、Value Bar、Icon 分别按各自声明顺序排列；总画布宽度取四行最大宽度。
+Q19-1 每行独立、从左到右确定性紧密排列（推荐）：通用 Cell、条件 Cell、Value Bar、Icon Tile 分别按各自声明顺序排列；总画布宽度取四行最大宽度。
 Q20 - Lua 生成粒度：“按需生成”具体指什么？
     - 我设想是这样的。生成一个插件。
     - 插件的基础模块是通用的。
@@ -1139,7 +1139,7 @@ print("RegMacro[" .. macro.title .. "] > " .. macro.key .. " > " .. macro.text)
 
 ❓ **Q49 - 条件插件输出数量**：一个条件实例可以占用多少输出区域？
 
-1. **一个实例声明一个连续输出区域（推荐）**：插件元数据声明 `cell`、`value_bar` 或 `icon` 之一及其尺寸；生成器据此分配位置。通用 Cell 由基础模块负责，不属于条件实例。
+1. **一个实例声明一个连续输出区域（推荐）**：插件元数据声明 `cell`、`value_bar` 或 `icon_tile` 之一及其尺寸；生成器据此分配位置。通用 Cell 由基础模块负责，不属于条件实例。
 2. 一个条件实例可以声明多个不同类型的输出区域。
 3. 本次不定义条件实例与输出区域的数量关系。
 
@@ -1202,11 +1202,11 @@ Q48 - 生成插件包名称：本次是否确定 WoW 插件目录和 TOC 名称�
 
 Q49 - 条件插件输出数量：一个条件实例可以占用多少输出区域？
 
-一个条件只能是cell、value_bar、icon之一。
-但是一个条件可以占用多个cell、value_bar，icon。
+一个条件只能是cell、value_bar、icon_tile之一。
+但是一个条件可以占用多个cell、value_bar，icon_tile。
 
-比如有个条件是 敌人施法图标 那就是1个icon，返回值是这个icon的xxh3_64_hexdigest，比如'ef46db3751d8e999'
-还有个条件是"敌人施法打断黑名单“，占用10个icon，返回值是一个0-10长度的list  ，比如["ef46db3751d8e999","ef46db3333d32199"]
+比如有个条件是 敌人施法图标 那就是1个icon_tile，返回值是这个icon_tile的xxh3_64_hexdigest，比如'ef46db3751d8e999'
+还有个条件是"敌人施法打断黑名单“，占用10个icon_tile，返回值是一个0-10长度的list  ，比如["ef46db3751d8e999","ef46db3333d32199"]
 那我可以用 敌人施法图标 in 敌人施法打断黑名单这样的判断。
 
 同样的，每个条件都可能返回的是list。虽然我还没想到其他用途。
@@ -1236,7 +1236,7 @@ Q50 - 第一行通用 Cell：当前尚未给出其具体字段，本轮如何处
 ❓ **Q52 - 输出契约声明**：如何描述“多个像素区域”和“标量或列表”？
 
 1. **分别声明四项（推荐）**：
-   - `output_type`：`cell` / `value_bar` / `icon`
+   - `output_type`：`cell` / `value_bar` / `icon_tile`
    - `output_count`：连续占用的同类区域数量
    - `value_type`：`bool` / `int` / `float` / `str`
    - `value_shape`：`scalar` / `list`
@@ -1279,7 +1279,7 @@ Q50 - 第一行通用 Cell：当前尚未给出其具体字段，本轮如何处
 
 ---
 
-❓ **Q56 - 多区域列表顺序**：十个 Icon 如何形成长度 0–10 的列表？
+❓ **Q56 - 多区域列表顺序**：十个 Icon Tile 如何形成长度 0–10 的列表？
 
 1. **按屏幕区域从左到右（推荐）**：依次解码已占用槽位，空槽位不加入结果；列表顺序与非空区域顺序一致。
 2. 始终返回固定长度列表，空槽位写 `null`。
@@ -1319,7 +1319,7 @@ Q51 - 条件类职责：条件实例如何参与循环？
 Q52 - 输出契约声明：如何描述“多个像素区域”和“标量或列表”？
 
   1. 分别声明四项（推荐）：
-      - output_type：cell / value_bar / icon
+      - output_type：cell / value_bar / icon_tile
       - output_count：连续占用的同类区域数量
       - value_type：bool / int / float / str
       - value_shape：scalar / list
@@ -1341,7 +1341,7 @@ Q55 - 不可用值：像素缺失、Cell 被清除或条件暂时不可读时返
 
 每个插件自行选择 false、0、空字符串或空列表作为默认值。
 每个插件设计时，要设计好兜底规则。
-插件对象至少有raw_value和value共2个python方法。raw_value返回cell的r、g、b。 value_bar的长度百分比。 icon的hash。
+插件对象至少有raw_value和value共2个python方法。raw_value返回cell的r、g、b。 value_bar的长度百分比。 icon_tile的hash。
 但是value 就不一样了，是包含计算，并且一定要给一个返回值的。
 比如冷却时间异常，那就返回没冷却。
 目标存在异常，那就返回不存在。
@@ -1350,9 +1350,9 @@ value还有计算只能，比如把冷却时间进行缩放。亮度0-100是0.1�
 我的想法是，基类强制设置好一个兜底方法。制作插件时不覆盖这个方法不行。
 
 
-Q56 - 多区域列表顺序：十个 Icon 如何形成长度 0–10 的列表？
+Q56 - 多区域列表顺序：十个 Icon Tile 如何形成长度 0–10 的列表？
 
-对于icon来说，哪里全黑就是没有图标。
+对于icon_tile来说，哪里全黑就是没有图标。
 如果是raw_value，用None占位list
 但如果是value，应该是排除掉的。
 所以应该是 由每个插件自行定义，核心不规定顺序
@@ -1395,9 +1395,9 @@ Q58 - 通用 Cell 候选项：启停、延迟、职业、专精、战斗状态�
 
 ---
 
-❓ **Q61 - Icon 原始空值**：是否固定以下行为？
+❓ **Q61 - Icon Tile 原始空值**：是否固定以下行为？
 
-1. **固定（推荐）**：只检查内部 `6×6` 区域；全黑则该槽位为 `None`，否则返回 16 位小写 `xxh3_64_hexdigest`；多 Icon 的 `raw_value()` 始终返回长度等于 `output_count` 的列表。
+1. **固定（推荐）**：只检查内部 `6×6` 区域；全黑则该槽位为 `None`，否则返回 16 位小写 `xxh3_64_hexdigest`；多 Icon Tile 的 `raw_value()` 始终返回长度等于 `output_count` 的列表。
 2. 整个 `8×8` 全黑才视为空；其他规则相同。
 3. 是否为空完全由各插件定义。
 
@@ -1407,7 +1407,7 @@ Q58 - 通用 Cell 候选项：启停、延迟、职业、专精、战斗状态�
 
 ❓ **Q62 - 兜底触发范围**：哪些异常应转为插件兜底值？
 
-1. **只处理声明过的不可用原始状态（推荐）**：例如空 Cell、空 Icon、超出有效范围；代码错误、类型错误和未预期异常仍抛出，避免悄悄隐藏插件缺陷。
+1. **只处理声明过的不可用原始状态（推荐）**：例如空 Cell、空 Icon Tile、超出有效范围；代码错误、类型错误和未预期异常仍抛出，避免悄悄隐藏插件缺陷。
 2. `value()` 中出现任何异常都返回兜底值。
 3. 由每个插件自行决定捕获哪些异常。
 
@@ -1463,16 +1463,16 @@ Q60 - Value Bar 原始值单位：raw_value() 返回什么？
 
 
 
-Q61 - Icon 原始空值：是否固定以下行为？
+Q61 - Icon Tile 原始空值：是否固定以下行为？
 
-固定（推荐）：只检查内部 6×6 区域；全黑则该槽位为 None，否则返回 16 位小写 xxh3_64_hexdigest；多 Icon 的 raw_value() 始终返回长度等于 output_count 的列表。
+固定（推荐）：只检查内部 6×6 区域；全黑则该槽位为 None，否则返回 16 位小写 xxh3_64_hexdigest；多 Icon Tile 的 raw_value() 始终返回长度等于 output_count 的列表。
 
 这里要补充Terminal时代的经验
 
 因为游戏内的抗锯齿，渲染等因素。
 
 cell有4x4，但是只计算中间2x2区域的，当读取为np.ndarray后，使用array[1:3, 1:3]获取。
-所以icon只能信任中间的6x6，用array[1:7, 1:7]
+所以icon_tile只能信任中间的6x6，用array[1:7, 1:7]
 
 https://github.com/liantian-cn/M.I.D.N.I.G.H.T/blob/12.0/Terminal/terminal/pixelcalc/cell.py
 
@@ -1614,7 +1614,7 @@ Python 风格（推荐）：True、False、[]、字符串引号和数值；与�
 
 每个条件实例：
 
-- 只能使用 `cell`、`value_bar`、`icon` 中的一种输出模式；
+- 只能使用 `cell`、`value_bar`、`icon_tile` 中的一种输出模式；
 - 可以连续占用多个同类区域；
 - 在参数验证后计算并冻结 `output_count`；
 - 分别声明 `output_type`、`output_count`、`value_type`、`value_shape`；
@@ -1637,15 +1637,15 @@ Python 风格（推荐）：True、False、[]、字符串引号和数值；与�
 1. 通用 Cell：高 4
 2. 条件 Cell：高 4
 3. Value Bar：高 4
-4. Icon：高 8
+4. Icon Tile：高 8
 
 各行独立从左向右紧密排列，画布宽度取四行最大宽度。
 
 - Cell 为 `4×4`，只信任 `array[1:3, 1:3]`。
 - Value Bar 高 4、宽 `4n`，原始值为 `0.0–1.0` 的长度比例。
-- Icon 为 `8×8`，只信任 `array[1:7, 1:7]`。
-- Icon 内部 `6×6` 全黑时原始值为 `None`；否则返回 16 位小写 `xxh3_64_hexdigest`。
-- 多 Icon 的原始列表长度固定为 `output_count`，空槽保留 `None`。
+- Icon Tile 为 `8×8`，只信任 `array[1:7, 1:7]`。
+- Icon Tile 内部 `6×6` 全黑时原始值为 `None`；否则返回 16 位小写 `xxh3_64_hexdigest`。
+- 多 Icon Tile 的原始列表长度固定为 `output_count`，空槽保留 `None`。
 - 业务 `value()` 可以过滤、重排或转换结果，顺序由插件契约定义。
 
 具体通用 Cell、Cell/Value Bar 编码和截图通道顺序留给后续协议任务。
@@ -1836,7 +1836,7 @@ Value Bar 修订已核验并写入计划：读取 `bar_pix_array[1:3, :]`，精�
 
 每个条件实例：
 
-- 只使用 `cell`、`value_bar`、`icon` 中的一种类型；
+- 只使用 `cell`、`value_bar`、`icon_tile` 中的一种类型；
 - 可以连续占用多个同类区域；
 - 参数校验后计算并冻结输出数量；
 - 声明 `output_type`、`output_count`、`value_type`、`value_shape`；
@@ -1853,16 +1853,16 @@ Value Bar 修订已核验并写入计划：读取 `bar_pix_array[1:3, :]`，精�
 1. 通用 Cell，高 4
 2. 条件 Cell，高 4
 3. Value Bar，高 4
-4. Icon，高 8
+4. Icon Tile，高 8
 
 具体规则：
 
 - `4×4` Cell 只读取 `array[1:3, 1:3]`。
-- `8×8` Icon 只读取 `array[1:7, 1:7]`。
-- Icon 内部 `6×6` 全黑时原始值为 `None`；否则计算带 seed 0 的 16 位小写 `xxh3_64_hexdigest`。
-- 多 Icon 的原始列表固定为 `output_count` 长度，空槽保留 `None`；业务值可由插件过滤或重排。
+- `8×8` Icon Tile 只读取 `array[1:7, 1:7]`。
+- Icon Tile 内部 `6×6` 全黑时原始值为 `None`；否则计算带 seed 0 的 16 位小写 `xxh3_64_hexdigest`。
+- 多 Icon Tile 的原始列表固定为 `output_count` 长度，空槽保留 `None`；业务值可由插件过滤或重排。
 - Value Bar 读取 `bar_pix_array[1:3, :]`，精确统计纯白 `(255, 255, 255)` 像素，返回 `0.0–100.0` 的白色占比。这一修订来自并符合参考实现 [matrix.py](https://github.com/liantian-cn/M.I.D.N.I.G.H.T/blob/12.0/Terminal/terminal/pixelcalc/matrix.py)。
-- Cell/Icon 中间区域与哈希方式符合参考实现 [cell.py](https://github.com/liantian-cn/M.I.D.N.I.G.H.T/blob/12.0/Terminal/terminal/pixelcalc/cell.py)。
+- Cell/Icon Tile 中间区域与哈希方式符合参考实现 [cell.py](https://github.com/liantian-cn/M.I.D.N.I.G.H.T/blob/12.0/Terminal/terminal/pixelcalc/cell.py)。
 
 通用 Cell 字段、Cell/Value Bar 编码和截图通道规范留给后续任务。
 

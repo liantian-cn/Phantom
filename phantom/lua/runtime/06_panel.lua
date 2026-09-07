@@ -36,7 +36,6 @@ local insert = table.insert                             -- 表插入
 local floor = math.floor                                -- 向下取整
 local find = string.find                                -- 字符查找
 local sub = string.sub                                  -- 字符截取
-local CreateColor = CreateColor                         -- 创建颜色对象
 local CreateFrame = CreateFrame                         -- 创建框体
 local GameTooltip = GameTooltip                         -- 游戏提示框
 local UIParent = UIParent                               -- 游戏主界面父框体
@@ -48,7 +47,6 @@ local GetSpellTexture = C_Spell.GetSpellTexture         -- 获取技能图标
 
 
 local GetUIScaleFactor = addonTable.GetUIScaleFactor -- UI 缩放计算
-local Config = addonTable.Config                     -- 配置对象工厂
 local ConfigRows = addonTable.ConfigRows             -- 配置行定义数组（加载期登记，UI 初始化时读取）
 local logging = addonTable.logging -- 输出面板模块加载日志
 local SIZE = addonTable.SIZE                         -- 共享尺寸表（由前置 UI 初始化函数填充）

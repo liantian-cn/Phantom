@@ -19,7 +19,7 @@ Phantom 是面向魔兽世界战斗循环的自动化工具。它根据用户配
 核心闭环如下：
 
 1. Python 根据 rotation 和条件插件生成 WoW 插件 Lua。
-2. Lua 在游戏画面角落用 Cell、Value Bar 或 Icon 表达条件数据。
+2. Lua 在游戏画面角落用 Cell、Value Bar 或 Icon Tile 表达条件数据。
 3. Python 截取对应屏幕区域并解码为普通 Python 值。
 4. Python 按顺序求值 rotation，选择本轮动作或不执行动作。
 5. Python 把所选键位发送到魔兽世界窗口，然后进入下一轮。

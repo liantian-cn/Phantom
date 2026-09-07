@@ -106,7 +106,7 @@ addonTable.FrameLevel = { -- 供界面组件统一使用的框架层级
     Cell = 9600,          -- Cell 层级 9600
     BarSeparator = 9510,  --  Value Bar 的底板共用
     BarBackground = 9520, -- Value Bar 中间层, 底色
-    StatusBar = 9600      -- Value Bar 的材质层
+    StatusBar = 9600,     -- Value Bar 的材质层
 
 }
 

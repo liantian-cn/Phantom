@@ -25,14 +25,9 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
-local After                    = C_Timer.After                        -- 指定秒数后执行回调
 local insert                   = table.insert                         -- 插入表元素
 local CreateFrame              = CreateFrame                          -- 创建框体
-local CreateColor              = CreateColor                          -- 创建 RGBA 颜色对象
 local UIParent                 = UIParent                             -- 游戏主界面父框体
-local CreateColorCurve         = C_CurveUtil.CreateColorCurve         -- 创建颜色曲线对象
-local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean -- 按布尔值选择对应颜色
-local Linear                   = Enum.LuaCurveType.Linear             -- 曲线点之间使用线性插值
 
 --[[  variable reference  ]]
 
@@ -47,13 +42,13 @@ local SIZE        = addonTable.SIZE        -- 共享 Cell 尺寸定义
 
 
 --[[
-后续更新BackgroundFrame的宽度，要获取通用Cell，条件Cell、ValueBar、Icon几个最宽的决定。
+后续更新BackgroundFrame的宽度，要获取通用Cell，条件Cell、ValueBar、Icon Tile几个最宽的决定。
 注意这里的宽度是SIZE.CELL的倍数
 ]]
 addonTable.GeneralCellLength = 0 -- 通用 Cell 行的共享长度，以 Cell 为单位
 addonTable.ConditionCellLength = 0 -- 条件 Cell 行的共享长度，以 Cell 为单位
 addonTable.ValueBarLength = 0 -- Value Bar 区域的共享长度，以 Cell 为单位
-addonTable.IconLength = 0 -- Icon 区域的共享长度，以 Cell 为单位
+addonTable.IconTileLength = 0 -- Icon Tile 区域的共享长度，以 Cell 为单位
 
 
 local function InitBackgroundFrame() -- 创建矩阵框架
@@ -149,7 +144,7 @@ insert(UIInitFuncs, InitBackgroundFrame) -- 登记初始化函数，由共享 UI
 修复背板宽度
 ]]
 local function BackgroundFrameResize() -- 按各区域共享长度更新背景尺寸
-    local max_length = max(addonTable.GeneralCellLength, addonTable.ConditionCellLength, addonTable.ValueBarLength, addonTable.IconLength) -- 取四类区域中最大的共享长度
+    local max_length = max(addonTable.GeneralCellLength, addonTable.ConditionCellLength, addonTable.ValueBarLength, addonTable.IconTileLength) -- 取四类区域中最大的共享长度
     addonTable.BackgroundFrame:SetSize(SIZE.CELL * (2 + max_length), SIZE.CELL * 5) -- 背景宽度为最大共享长度加两列留白，高度保持五个 Cell
 end
 addonTable.BackgroundFrameResize = BackgroundFrameResize -- 公开背景尺寸更新接口

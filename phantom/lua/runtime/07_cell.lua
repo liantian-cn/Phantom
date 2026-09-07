@@ -7,7 +7,7 @@ runtime_index: 7
 
 描述：
     按指定行列在共享背景框体下创建方形纹理，初始化为不透明黑色并保存坐标。
-    第一、二行分别递增本地通用与条件 Cell 计数，再调用依据共享长度调整背景的函数。
+    第一、二行分别递增共享表中的通用与条件 Cell 计数，再调用依据共享长度调整背景的函数。
     提供颜色更新、布尔值黑白映射及反转、恢复黑色的方法，并通过 addonTable.Cell 公开。
 
 
@@ -23,24 +23,14 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
-local After                    = C_Timer.After -- 指定秒数后执行回调
-local insert                   = table.insert -- 插入表元素
 local CreateFrame              = CreateFrame  -- 创建框体
-local CreateColor              = CreateColor -- 创建 RGBA 颜色对象
-local UIParent                 = UIParent     -- 游戏主界面父框体
-local CreateColorCurve         = C_CurveUtil.CreateColorCurve -- 创建颜色曲线对象
 local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean -- 按布尔值选择对应颜色
-local Linear                   = Enum.LuaCurveType.Linear -- 曲线点之间使用线性插值
 
 --[[  variable reference  ]]
 
 local COLOR                 = addonTable.COLOR       -- 共享基础颜色，提供单元格黑白配色
-local DEBUG                 = addonTable.DEBUG       -- 共享调试开关（本文件暂未使用）
 local FrameLevel            = addonTable.FrameLevel  -- 背景与 Cell 底层框体的层级定义
-local UIInitFuncs           = addonTable.UIInitFuncs -- 共享 UI 初始化函数队列
 local SIZE                  = addonTable.SIZE        -- 共享 Cell 尺寸定义
-local GeneralCellLength     = addonTable.GeneralCellLength -- 通用 Cell 长度的本地计数，初值取自共享表
-local ConditionCellLength   = addonTable.ConditionCellLength -- 条件 Cell 长度的本地计数，初值取自共享表
 local BackgroundFrameResize = addonTable.BackgroundFrameResize -- 按共享长度数据调整背景尺寸
 
 
@@ -85,11 +75,11 @@ function Cell:_initialize(x, y) -- 按列号和行号创建单元格
     cellFrame:Show() -- 显示单元格框体
 
     if y == 1 then -- 第一行计入通用 Cell
-        GeneralCellLength = GeneralCellLength + 1 -- 递增本地通用计数，未写回共享表
+        addonTable.GeneralCellLength = addonTable.GeneralCellLength + 1 -- 直接更新共享通用 Cell 长度，供背景调整读取
     end
 
     if y == 2 then -- 第二行计入条件 Cell
-        ConditionCellLength = ConditionCellLength + 1 -- 递增本地条件计数，未写回共享表
+        addonTable.ConditionCellLength = addonTable.ConditionCellLength + 1 -- 直接更新共享条件 Cell 长度，供背景调整读取
     end
 
     local cellTexture = cellFrame:CreateTexture(nil, "BACKGROUND") -- 创建单元格底色纹理

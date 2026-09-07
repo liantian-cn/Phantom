@@ -29,7 +29,7 @@ related_paths:
 
 - 只在 `develop` 分支工作；本次不创建业务代码或目录骨架，不改根 `README.md`。
 - 一份 YAML 对应一份 rotation；条件以唯一 `title` 引用，表达式使用白名单 AST；宏使用安全按钮和运行期覆盖绑定。
-- Cell、Value Bar、Icon 只读取可信中间区域；Value Bar 返回中间两行纯白像素的 `0–100` 占比。
+- Cell、Value Bar、Icon Tile 只读取可信中间区域；Value Bar 返回中间两行纯白像素的 `0–100` 占比。
 - 所有手写 Python 文件强制 Type Hint；业务注释使用中文，代码标识符使用英文。
 - 外部源码不进入 Phantom 提交，后续未经明确要求不得写入或更新。
 
