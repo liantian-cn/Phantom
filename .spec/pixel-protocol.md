@@ -49,6 +49,11 @@ Flash 初始为黑色，由局部 `eventFrame` 在每次 `OnUpdate` 时切换一
 灰度值为 `select(3, UnitClass("player"))` 返回的 `classID`，RGB 三个分量均为 `classID / 255`，透明度为 1；未返回职业 ID 时使用灰度 0，表示暂不可用。
 构造函数注册到 `UIInitFuncs`，沿用共享缩放、通用行计数和背景扩宽；构造完成立即刷新，之后由独立事件框架在 `PLAYER_LOGIN`、`PLAYER_ENTERING_WORLD` 刷新。初始化前到达的事件不访问未创建的 Cell。
 
+第二个字段固定为玩家当前专精的顺序索引，使用普通 `Cell`，坐标为 `x=2, y=1`。
+通过局部缓存的 `C_SpecializationInfo.GetSpecialization` 无参数读取 `specializationIndex`，RGB 三个分量均为 `(specializationIndex or 0) / 255`，透明度为 1；无返回值时使用黑色，数值索引直接保留，包括 5，不限制为 1–4。
+构造函数同样注册到 `UIInitFuncs`，沿用共享缩放、计数和背景扩宽，构造完成立即刷新。独立事件框架监听 `PLAYER_LOGIN`、`PLAYER_ENTERING_WORLD`、`ACTIVE_PLAYER_SPECIALIZATION_CHANGED`，并使用 `RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", "player")` 过滤玩家专精事件；初始化前事件不访问未创建的 Cell。
+该字段只显示当前专精，不改变 rotation 切换专精后需要 `/reload` 的规则。
+
 ## Value Bar
 
 - 高度固定为 4 像素。构造入参 `width` 表示黑白内容宽度，以 Cell 为单位，由插件输出描述决定；内容宽度为 `4 * width` 像素。
@@ -92,7 +97,7 @@ result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 
 ## 待定事项
 
-- 第一行除已确定的首个玩家职业字段之外，其余通用 Cell 的字段及语义；启停、延迟、专精和战斗状态只是候选项。
+- 第一行除已确定的玩家职业和专精索引字段之外，其余通用 Cell 的字段及语义；启停、延迟和战斗状态只是候选项。
 - 截图数据的 RGB/BGR 等通道顺序归一化位置。
 - Cell 的通用颜色约定和各条件的精度分段。
 - Value Bar 百分比到具体业务值的编码规则。
