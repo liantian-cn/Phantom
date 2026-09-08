@@ -24,30 +24,20 @@ local GetSpecialization = C_SpecializationInfo.GetSpecialization -- 使用新版
 local insert = table.insert -- 注册 UI 初始化函数
 
 --[[
-GetSpecialization：查询玩家当前专精的顺序索引，不是 SpecializationID。
-以下说明根据 Warcraft Wiki 整理：
-https://warcraft.wiki.gg/wiki/API:GetSpecialization
-签名：specializationIndex = GetSpecialization(isInspect, isPet, specGroup)
-参数均可省略；本文件无参数调用以查询玩家当前专精。
-    isInspect：可选 boolean，历史接口参数表示查询被观察的玩家。
-    isPet：可选 boolean，表示查询玩家宠物。
-    specGroup：可选 number，表示天赋组索引（历史说明为主组 1、副组 2）。
-返回值：从 1 开始的专精索引；Wiki 说明尚未学习专精时可能返回 nil。
-    Wiki 另有历史说明：自 9.0.1 起新建角色可能返回 5。本文件保留该数值，不限定为 1–4。
-    查询其他玩家的专精时，Wiki 指向 GetInspectSpecialization。
-
-新版接口为 C_SpecializationInfo.GetSpecialization，可选第三参数名为 specGroupIndex。
-    当前生成定义的返回值为 luaIndex，Nilable = false，SecretArguments = "AllowedWhenUntainted"。
-    Wiki 的 nil 与新角色说明属于历史资料，并非本地目标版本的游戏实测结论。
-旧全局接口是兼容别名，仅在 loadDeprecationFallbacks 开启时由兼容文件定义。
-    本文件缓存新版接口为局部 GetSpecialization，保持调用形式且不依赖该开关。
+C_SpecializationInfo.GetSpecialization：返回玩家当前专精的顺序索引。
+来源：https://warcraft.wiki.gg/wiki/API:C_SpecializationInfo.GetSpecialization
+签名：specializationIndex = C_SpecializationInfo.GetSpecialization(isInspect, isPet, specGroupIndex)
+参数（均可省略，本文件无参数调用）：
+    isInspect：boolean，可选。
+    isPet：boolean，可选。
+    specGroupIndex：number，可选，专精组索引。
+返回值：
+    specializationIndex：number，当前专精索引，本文件直接作为灰度值。
+限制标记：SecretArguments = "AllowedWhenUntainted"。
 
 核验日期：2026-09-08；本地 /wow-ui-source 版本：12.1.0.69587。
 源码 revision：288f40d5cee5089223758d5810cb906ad34d4018。
 API 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/SpecializationInfoDocumentation.lua。
-事件定义：同目录 UnitDocumentation.lua；PLAYER_SPECIALIZATION_CHANGED 带 unitTarget 参数。
-兼容别名：Interface/AddOns/Blizzard_DeprecatedSpecialization/Deprecated_Specialization_Standard.lua。
-官方玩家事件过滤用例：Interface/AddOns/Blizzard_PlayerSpells/ClassSpecializations/Blizzard_ClassSpecializationsFrame.lua。
 ]]
 
 --[[  variable reference  ]]
