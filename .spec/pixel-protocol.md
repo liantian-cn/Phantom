@@ -54,6 +54,10 @@ Flash 初始为黑色，由局部 `eventFrame` 在每次 `OnUpdate` 时切换一
 构造函数同样注册到 `UIInitFuncs`，沿用共享缩放、计数和背景扩宽，构造完成立即刷新。独立事件框架监听 `PLAYER_LOGIN`、`PLAYER_ENTERING_WORLD`、`ACTIVE_PLAYER_SPECIALIZATION_CHANGED`，并使用 `RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", "player")` 过滤玩家专精事件；初始化前事件不访问未创建的 Cell。
 该字段只显示当前专精，不改变 rotation 切换专精后需要 `/reload` 的规则。
 
+第三个字段为插件启用状态，坐标 `x=3, y=1`，每次读取 `addonTable.ENABLE`；第四个字段为爆发状态，坐标 `x=4, y=1`，每次调用 `addonTable.InBurst()`。两个字段均使用普通 `Cell:setCellBoolean`，true 为不透明白色，false 为不透明黑色；启用状态不影响爆发字段的独立输出。
+两个构造函数注册到 `UIInitFuncs`，沿用共享缩放、计数和背景扩宽，构造完成保持默认黑色，等待错峰首次刷新。
+每个文件各自使用独立事件框架和 `fastTimeElapsed = -random()`（`random` 为 `math.random`），通过 `HookScript("OnUpdate", ...)` 累加 `elapsed`；严格超过 `0.1` 秒时减去 `0.1` 并刷新一次，每帧最多一次，保留剩余累计时间。初始化前刷新安全返回，不增加其他事件刷新或修改随机种子。
+
 ## Value Bar
 
 - 高度固定为 4 像素。构造入参 `width` 表示黑白内容宽度，以 Cell 为单位，由插件输出描述决定；内容宽度为 `4 * width` 像素。
@@ -97,7 +101,7 @@ result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 
 ## 待定事项
 
-- 第一行除已确定的玩家职业和专精索引字段之外，其余通用 Cell 的字段及语义；启停、延迟和战斗状态只是候选项。
+- 第一行除已确定的玩家职业、专精索引、启用状态和爆发状态字段之外，其余通用 Cell 的字段及语义；延迟和战斗状态只是候选项。
 - 截图数据的 RGB/BGR 等通道顺序归一化位置。
 - Cell 的通用颜色约定和各条件的精度分段。
 - Value Bar 百分比到具体业务值的编码规则。

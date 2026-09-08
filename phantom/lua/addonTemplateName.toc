@@ -17,3 +17,5 @@ runtime\09_icon_tile.lua
 runtime\10_mask.lua
 general\01_player_class.lua
 general\02_player_specialization.lua
+general\03_enable.lua
+general\04_in_burst.lua
