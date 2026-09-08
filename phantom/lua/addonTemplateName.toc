@@ -15,3 +15,4 @@ runtime\07_cell.lua
 runtime\08_valuebar.lua
 runtime\09_icon_tile.lua
 runtime\10_mask.lua
+general\01_player_class.lua
