@@ -19,3 +19,4 @@ general\01_player_class.lua
 general\02_player_specialization.lua
 general\03_enable.lua
 general\04_in_burst.lua
+general\05_delaying.lua

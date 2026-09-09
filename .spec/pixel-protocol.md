@@ -58,6 +58,10 @@ Flash 初始为黑色，由局部 `eventFrame` 在每次 `OnUpdate` 时切换一
 两个构造函数注册到 `UIInitFuncs`，沿用共享缩放、计数和背景扩宽，构造完成保持默认黑色，等待错峰首次刷新。
 每个文件各自使用独立事件框架和 `fastTimeElapsed = -random()`（`random` 为 `math.random`），通过 `HookScript("OnUpdate", ...)` 累加 `elapsed`；严格超过 `0.1` 秒时减去 `0.1` 并刷新一次，每帧最多一次，保留剩余累计时间。初始化前刷新安全返回，不增加其他事件刷新或修改随机种子。
 
+第五个字段为延迟状态，坐标 `x=5, y=1`，每次调用 `addonTable.Delaying()`，使用普通 `Cell:setCellBoolean`：延迟中为不透明白色，否则为不透明黑色。该字段独立于 ENABLE 和爆发状态输出。
+`DelayTime` 加载时初始化为 `GetTime()`，默认不延迟；`Delaying()` 判断截止时间是否严格晚于当前时间，`DelayRemaining()` 返回不小于 0 的实际剩余秒数，不限制上限。
+第五个字段沿用上述状态 Cell 的 `UIInitFuncs` 初始化、初始黑色、独立事件框架、随机错峰和 0.1 秒节流规则。
+
 ## Value Bar
 
 - 高度固定为 4 像素。构造入参 `width` 表示黑白内容宽度，以 Cell 为单位，由插件输出描述决定；内容宽度为 `4 * width` 像素。
@@ -101,7 +105,7 @@ result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 
 ## 待定事项
 
-- 第一行除已确定的玩家职业、专精索引、启用状态和爆发状态字段之外，其余通用 Cell 的字段及语义；延迟和战斗状态只是候选项。
+- 第一行除已确定的玩家职业、专精索引、启用状态、爆发状态和延迟状态字段之外，其余通用 Cell 的字段及语义；战斗状态只是候选项。
 - 截图数据的 RGB/BGR 等通道顺序归一化位置。
 - Cell 的通用颜色约定和各条件的精度分段。
 - Value Bar 百分比到具体业务值的编码规则。
