@@ -7,7 +7,7 @@ runtime_index: 6
 
 描述：
     先定义边框、按钮和悬停提示等 UI 工具，再按初始化队列顺序创建控制条与配置行。
-    控制条切换插件启用状态和设置面板显示，并在累计帧时间超过 0.1 秒时刷新爆发倒计时。
+    控制条切换插件启用状态和设置面板显示，并在累计帧时间超过 0.1 秒时刷新启用状态和爆发倒计时。
     配置行按 ConfigRows 中的类型生成滑块、下拉框或法术列表入口，通过绑定配置读写数值。
     法术列表编辑器按需创建，支持输入 SpellID 新增或删除、滚动选择和显示法术提示。
 
@@ -274,7 +274,14 @@ local function CreatePanelFrame()                                               
     Panel.SettingFrame = settingFrame -- 保存设置面板
     Panel.Frame = settingFrame -- 设置行容器指向设置面板
 
-    local function UpdateStatusUI(enabled) -- 刷新状态显示
+    local lastEnabledState = nil -- 记录上次绘制的启用状态，避免重复设置文字和颜色
+
+    local function UpdateStatusUI() -- 根据共享状态刷新启停显示
+        local enabled = addonTable.ENABLE == true -- 每次读取最新状态，响应命令或按钮的修改
+        if lastEnabledState == enabled then -- 状态未变化时保留现有显示
+            return
+        end
+        lastEnabledState = enabled -- 缓存本次绘制的状态
         if enabled then -- 启用状态
             toggleButton.text:SetText("已启动") -- 按钮文案
             toggleButton.text:SetTextColor(0, 1, 0) -- 以绿色显示已启动状态
@@ -330,15 +337,16 @@ local function CreatePanelFrame()                                               
 
     toggleButton:HookScript("OnMouseUp", function() -- 启停按钮点击
         addonTable.ENABLE = not addonTable.ENABLE -- 切换状态
-        UpdateStatusUI(addonTable.ENABLE == true) -- 刷新显示
+        UpdateStatusUI() -- 刷新显示
     end) -- 启停回调结束
 
     configButton:HookScript("OnMouseUp", function() -- 配置按钮点击
         ToggleSetting() -- 展开/收缩
     end) -- 配置回调结束
 
-    UpdateStatusUI(addonTable.ENABLE == true) -- 初始化状态
+    UpdateStatusUI() -- 初始化状态
     UpdateBurstUI() -- 初始化爆发显示
+    insert(OnUpdateFuncs, UpdateStatusUI) -- 与爆发共用定时刷新队列，同步外部启停修改
     insert(OnUpdateFuncs, UpdateBurstUI) -- 高频刷新爆发倒计时
 
     controlFrame.StatusIcon = statusIcon -- 保存图标
