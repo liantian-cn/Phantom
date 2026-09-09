@@ -23,7 +23,18 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 行
 - 截图插件：在 Windows 上捕获约定屏幕区域，向条件层提供 NumPy 数组。
 - rotation 执行器：读取条件值，按配置顺序求值，返回首个命中的宏名称。
 - 行为插件：把宏条目的 WoW 格式键位映射为 Windows 消息并发送到游戏窗口。
-- PySide6 UI：选择 rotation、输入生成包名并承载未来配置操作；当前只冻结技术选型。
+- Textual TUI：选择 rotation、输入生成包名并承载未来配置操作；当前只冻结技术选型。
+
+## Textual 交互能力
+
+Textual 提供以下能力，供后续 TUI 设计使用：
+
+- 消息与事件：通过自定义 `Message`、`post_message` 和消息处理方法协调组件交互，参见[官方消息与事件文档](https://textual.textualize.io/guide/events/)。
+- 信号通知：`Signal` 提供发布／订阅机制，可以在发布数据时调用订阅者的回调，参见[官方 Signal API](https://textual.textualize.io/api/signal/)。它可以实现类似信号槽的通知效果，但不代表与 Qt 信号槽具有完全相同的语义。
+- 响应式状态：`reactive` 属性与 `watch_*` 方法支持状态变化后的界面刷新和联动，参见[官方响应式状态文档](https://textual.textualize.io/guide/reactivity/)。
+- 后台任务：Worker 支持异步任务和线程任务；线程 Worker 可通过线程安全的 `post_message` 传递结果，或通过 `call_from_thread` 在界面线程执行更新，参见[官方 Worker 文档](https://textual.textualize.io/guide/workers/)。
+
+上述内容说明框架能力；项目具体采用哪些通信机制、如何组织后台任务及调度运行循环，仍留待后续设计。
 
 ## 生成插件模型
 
@@ -77,6 +88,6 @@ rotations/
 ## 待定事项
 
 - 循环频率、节流策略和运行期调度模型。
-- PySide6 除 rotation 互斥选择之外的完整 UI 行为。
+- Textual TUI 除已确认的 rotation 表格、首列复选框及互斥选择规则之外的完整界面行为，以及具体通信方案。
 - 天赋感知的 rotation 路由和对应重载规则。
 - `phantom/lua/runtime/` 内共享基础模块的文件拆分，以及它们与各 UUID Lua 的最终生成文件关系。
