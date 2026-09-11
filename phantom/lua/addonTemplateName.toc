@@ -20,3 +20,8 @@ general\02_player_specialization.lua
 general\03_enable.lua
 general\04_in_burst.lua
 general\05_delaying.lua
+examples\01_spell_cooldown.lua
+examples\02_spell_overlay.lua
+examples\03_spell_usable.lua
+examples\04_player_buff.lua
+examples\05_player_health.lua
