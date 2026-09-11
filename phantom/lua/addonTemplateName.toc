@@ -25,3 +25,6 @@ examples\02_spell_overlay.lua
 examples\03_spell_usable.lua
 examples\04_player_buff.lua
 examples\05_player_health.lua
+examples\06_spell_charges.lua
+examples\07_player_cast.lua
+examples\08_target_cast.lua
