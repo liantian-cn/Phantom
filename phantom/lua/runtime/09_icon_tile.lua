@@ -67,7 +67,7 @@ function IconTile:_initialize(x) -- 创建第四行槽位并更新共享行宽
     backgroundFrame:SetSize(iconSize, iconSize) -- 设置正方形槽位尺寸
     backgroundFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", offset_x, offset_y) -- 相对共享背景左上角定位槽位
     backgroundFrame:SetFrameStrata("TOOLTIP") -- 使用 TOOLTIP 显示层
-    backgroundFrame:SetFrameLevel(FrameLevel.Background) -- 使用共享背景框体层级
+    backgroundFrame:SetFrameLevel(FrameLevel.Cell) -- 高于共享背景，确保清空图标后仍显示自身黑底
 
     -- 背景层
     local backgroundBg = backgroundFrame:CreateTexture(nil, "BACKGROUND") -- 创建槽位黑底纹理
