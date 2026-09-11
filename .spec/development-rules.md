@@ -24,7 +24,25 @@
 - 容器类型。
 - 类型不明显的局部变量。
 
-明显的简单局部变量与循环变量不强制逐个标注。第三方代码和生成代码不受本条约束。未来应配置静态类型检查并把手写源码纳入检查范围。
+明显的简单局部变量与循环变量不强制逐个标注。第三方代码和生成代码不受本条约束。所有手写 Python 源码由 mypy strict 检查。
+
+## Python 工程与运行
+
+使用 Python 3.13 和 pip。`requirements.txt` 固定运行依赖，`requirements-dev.txt` 引入运行依赖并固定开发工具及其依赖。
+`pyproject.toml` 保存工程元数据、pytest、mypy 和 Ruff 配置；本阶段直接从仓库运行，不建立发行包或插件安装机制。
+
+Windows PowerShell 在仓库根目录执行：
+
+```powershell
+py -3.13 -m venv .venv
+.venv/Scripts/python -m pip install -r requirements-dev.txt
+.venv/Scripts/python -m rotations.main
+.venv/Scripts/python phantom/captures/gdi@1.0/demo.py
+```
+
+仅运行时安装 `requirements.txt` 即可。主入口暂不接入 Textual 和截图；demo 的时序与输出格式见插件规范。
+WSL2／容器使用 Python 3.13 创建虚拟环境后，通过 `.venv/bin/python` 安装同一开发依赖并运行纯图像测试，GDI 仅支持 Windows。
+源码变量和接口使用英文，业务注释与输出说明使用中文；不把本机 `.venv` 或 demo 截图提交到 Git。
 
 ## 必要文档头
 
@@ -121,6 +139,5 @@ revision 缩写仅用于定位初始化快照；引用具体事实时记录完�
 
 ## 待定事项
 
-- Python 格式化、静态检查和 Type Hint 工具的具体选择及配置。
-- 依赖管理、打包、发布和版本号策略。
+- 打包、发布和正式版本号策略；当前工程元数据版本仅为基础占位。
 - Windows 消息发送的线程、权限和目标窗口生命周期方案。

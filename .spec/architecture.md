@@ -67,7 +67,6 @@ Textual 提供以下能力，供后续 TUI 设计使用：
 以下目录是未来代码工程的职责规划，不要求在当前文档阶段创建空目录：
 
 ```text
-main.py
 phantom/
   ui/
   core/
@@ -79,11 +78,21 @@ phantom/
   captures/
 scripts/
 rotations/
+  main.py
 ```
 
 `phantom/lua/runtime/` 保存生成器使用的共享 Lua 运行时源码。这些源码会进入生成后的 WoW 插件，为条件插件生成的实例 Lua 提供公共运行能力；条件专属模板仍保存在对应的 `phantom/conditions/<name>@<version>/template.lua` 中。该目录不保存生成后的插件产物。
 
 `phantom/lua/general/` 保存第一行通用字段的 Lua 实现，在 TOC 中于 runtime 文件之后加载。通用 Cell 仍使用 runtime 提供的普通 `Cell`，通过 `UIInitFuncs` 延迟创建以沿用共享尺寸换算和背景初始化；不另设 GeneralCell 类型。首个实现为 `01_player_class.lua`，文件头 `index: 1` 表示通用文件顺序元数据。
+
+## 截图基础运行边界
+
+`python -m rotations.main` 是未来 Textual 主程序入口，当前仅运行最小入口说明，不启动截图。
+截图通过 `phantom/captures/gdi@1.0/demo.py` 独立验证，暂不连接 TUI 或 rotation 执行器。
+
+共享图像算法与线程调度位于 `phantom/captures/`。后端只负责截图，线程负责全屏定位、局部截图、校验和交付最新结果。
+截图使用独立后台线程，不使用子进程。主线程通过快照接口取得最新图像与状态，不排队保留历史帧。
+截图 FPS 仅限制采集，不定义未来 rotation 求值或动作发送的循环频率。
 
 ## 待定事项
 

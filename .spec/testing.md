@@ -24,22 +24,42 @@ Phantom 最终运行在 Windows，而日常开发环境是 WSL2 与 Docker。容
 - 生成代码测试应检查结构、契约和关键语义，不依赖无意义的空格或换行。
 - 每个已知边界至少覆盖正常值、边界值和不可用输入。
 - catch-all 解码兜底不能代替插件单元测试；确定性编程错误仍须被测试发现。
-- 所有手写 Python 源码必须通过项目后续选定的静态类型检查。
+- 所有手写 Python 源码必须通过 mypy strict 静态类型检查。
+- 截图测试输入完整合成图像或图像序列，验证定位、裁剪、中心颜色及 worker 的业务状态流转；不写简单字符串或算术测试。
 
 ## 分层验证
 
-| 层级 | 当前环境可执行 | 目标 |
+| 层级 | 执行环境 | 目标 |
 | --- | --- | --- |
-| 纯 Python 单元测试 | 是 | 表达式、布局、schema、编解码、键位映射 |
-| NumPy 图像算法测试 | 是 | 裁剪、白色占比、空 Icon Tile、hash |
-| 生成产物结构检查 | 是 | TOC、共享模块、UUID Lua 和条件提前返回 |
-| Windows GDI/PostMessage 集成 | 否 | 在 Windows 环境验证窗口定位、截图和按键发送 |
-| WoW 游戏内验证 | 否 | 在目标 12.1 build 验证 API、渲染、安全按钮和保护状态 |
+| 纯 Python 单元测试 | Windows、WSL2、容器 | 表达式、布局、schema、编解码、键位映射 |
+| NumPy 图像算法测试 | Windows、WSL2、容器 | 裁剪、白色占比、空 Icon Tile、hash |
+| 生成产物结构检查 | Windows、WSL2、容器 | TOC、共享模块、UUID Lua 和条件提前返回 |
+| Windows GDI/PostMessage 集成 | Windows | 在 Windows 环境验证窗口定位、截图和按键发送 |
+| WoW 游戏内验证 | 安装目标游戏的 Windows | 在目标 12.1 build 验证 API、渲染、安全按钮和保护状态 |
 
 只有后两层才能证明完整端到端行为；容器测试结果不得被描述为已经验证 Windows 或游戏运行。
 
+## 当前工程检查
+
+在仓库根目录执行（已按开发规则安装依赖）：
+
+```powershell
+.venv/Scripts/python -m pytest
+.venv/Scripts/python -m mypy
+.venv/Scripts/python -m ruff check phantom rotations tests
+.venv/Scripts/python -m ruff format --check phantom rotations tests
+```
+
+图像测试覆盖边界尺寸、精确角标、多基板歧义、DEBUG 拒绝、中心像素污染与边缘容忍、Flash 黑白、
+负坐标桌面、色错保留区域与恢复、移动后重新定位、最新结果所有权、停止和重启、运行中更新 FPS 与底层错误交付。
+数组保存测试应比较重新加载的 dtype、shape、RGB 内容及关联状态，不比较 JSON 排版。
+
+Windows 可运行定时 demo 验证真实 GDI 调用、停止及文件输出。无非 DEBUG 基板时应得到 `has_error=true` 和未定位原因，不生成 NPY。
+当前 Lua 保持 DEBUG=true；真实游戏验收需另行准备非 DEBUG 画面，再检查有效图、移动重定位和颜色一致性。
+桌面 smoke test 与合成图像测试不能代替游戏验收。
+
 ## 待定事项
 
-- 测试框架、静态类型检查器和覆盖率工具。
+- 覆盖率工具。
 - Windows 手工验证清单与可重复测试环境。
 - WoW 12.1 build 的兼容矩阵和回归频率。
