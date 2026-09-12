@@ -46,8 +46,8 @@ Phantom 最终运行在 Windows，而日常开发环境是 WSL2 与 Docker。容
 ```powershell
 .venv/Scripts/python -m pytest
 .venv/Scripts/python -m mypy
-.venv/Scripts/python -m ruff check phantom rotations tests
-.venv/Scripts/python -m ruff format --check phantom rotations tests
+.venv/Scripts/python -m ruff check phantom rotations tests demo
+.venv/Scripts/python -m ruff format --check phantom rotations tests demo
 ```
 
 图像测试覆盖边界尺寸、精确角标、多基板歧义、DEBUG 拒绝、中心像素污染与边缘容忍、Flash 黑白、
@@ -61,7 +61,7 @@ Windows 可运行定时 demo 验证真实 GDI 调用、停止及文件输出。�
 
 像素解析测试见 `tests/test_pixels.py`，覆盖 Lua 坐标切分、边缘污染、严格黑白、无有效黑白像素、
 空槽及非空 hash、非连续数组、独立只读快照和缓存、区域越界及 demo 错误结果拒绝。
-运行 `python phantom/core/pixels/demo01.py` 可验证同一游戏截图的十个 Cell、一个 ValueBar 和两个 IconTile。
+运行 `python demo/demo01.py` 可验证同一游戏截图的十个 Cell、一个 ValueBar 和两个 IconTile。
 2026-09-12 实测第一行亮度为 `6,1,255,0,0`，第二行为 `255,0,0,0,255`，
 ValueBar ratio 为 `1.0`、percent 为 `100.0`，两个 IconTile 均为空槽 `None`。
 非空 IconTile hash 已由合成图验证，本次游戏画面未覆盖非空图标。

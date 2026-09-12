@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "phantom/captures/gdi@1.0"))
-
-import demo  # noqa: E402
-
-from phantom.captures.contracts import CaptureResult, CaptureStatus  # noqa: E402
+from demo import demo
+from phantom.captures.contracts import CaptureResult, CaptureStatus
 
 
 @pytest.mark.parametrize("has_error", [False, True])

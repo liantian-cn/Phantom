@@ -11,11 +11,9 @@ from time import sleep
 
 import numpy as np
 
-# 支持直接执行带版本号目录内的脚本；不实现主程序插件发现机制。
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+# 支持从任意工作目录直接执行 demo。
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
-
-from capture import GDIWorker  # noqa: E402
 
 from phantom.captures.contracts import CaptureResult  # noqa: E402
 
@@ -36,6 +34,10 @@ def save_result(result: CaptureResult) -> Path:
 
 
 def main() -> None:
+    print("演示内容：使用 GDI 截取游戏像素基板，保存最后一帧 RGB 数组和截图状态。", flush=True)
+    sys.path.insert(0, str(PROJECT_ROOT / "phantom/captures/gdi@1.0"))
+    from capture import GDIWorker
+
     worker = GDIWorker(fps=15)
     print("3 秒后开始截图，运行 5 秒后停止。", flush=True)
     try:

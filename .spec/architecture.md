@@ -89,7 +89,7 @@ rotations/
 ## 截图基础运行边界
 
 `python -m rotations.main` 是未来 Textual 主程序入口，当前仅运行最小入口说明，不启动截图。
-截图通过 `phantom/captures/gdi@1.0/demo.py` 独立验证，暂不连接 TUI 或 rotation 执行器。
+截图通过 `demo/demo.py` 独立验证，像素解析通过 `demo/demo01.py` 验证，暂不连接 TUI 或 rotation 执行器。
 
 共享图像算法与线程调度位于 `phantom/captures/`。后端只负责截图，线程负责全屏定位、局部截图、校验和交付最新结果。
 截图使用独立后台线程，不使用子进程。主线程通过快照接口取得最新图像与状态，不排队保留历史帧。

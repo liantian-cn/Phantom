@@ -12,7 +12,7 @@ pythonpath = ["."]
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["phantom", "rotations", "tests"]
+files = ["phantom", "rotations", "tests", "demo"]
 exclude = ["demo_results/"]
 
 [tool.ruff]

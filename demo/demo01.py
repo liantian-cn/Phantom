@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from time import sleep
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from phantom.captures.contracts import CaptureResult  # noqa: E402
@@ -34,6 +34,11 @@ def describe_result(result: CaptureResult) -> list[str]:
 
 
 def main() -> None:
+    print(
+        "演示内容：解析游戏像素基板，输出 Cell(x=1–5, y=1–2) 的亮度、"
+        "ValueBar(x=1, width=2) 的 ratio/percent 和 IconTile(x=1,2) 的 hash。",
+        flush=True,
+    )
     # 与现有 demo 一样直接加载指定 GDI 版本，通用插件发现留待后续阶段。
     sys.path.insert(0, str(PROJECT_ROOT / "phantom/captures/gdi@1.0"))
     from capture import GDIWorker

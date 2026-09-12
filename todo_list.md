@@ -64,7 +64,7 @@
 
 **完成标准：** 测试覆盖有效区域、边缘污染、严格黑白判断、无有效黑白像素、全黑 Icon Tile、多槽位和非连续数组；真实截图中的通用字段能够正确读取。
 
-**已验证结果：** `phantom/core/pixels/demo01.py` 定时读取同一帧，第一行 Cell mean 为 `6,1,255,0,0`，第二行为 `255,0,0,0,255`；`getValueBar(1,2)` 的 ratio 为 `1.0`、percent 为 `100.0`；两个 IconTile hash 均为 `None`。非空 hash 与缓存由合成图测试覆盖，本次游戏画面未覆盖非空图标。
+**已验证结果：** `demo/demo01.py` 定时读取同一帧，第一行 Cell mean 为 `6,1,255,0,0`，第二行为 `255,0,0,0,255`；`getValueBar(1,2)` 的 ratio 为 `1.0`、percent 为 `100.0`；两个 IconTile hash 均为 `None`。非空 hash 与缓存由合成图测试覆盖，本次游戏画面未覆盖非空图标。
 
 ### 5. Textual TUI 基础
 

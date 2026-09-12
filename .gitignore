@@ -218,3 +218,4 @@ __marimo__/
 .streamlit/secrets.toml
 提示词
 phantom/captures/gdi@1.0/demo_results/
+demo/demo_results/
