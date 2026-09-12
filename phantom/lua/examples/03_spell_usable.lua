@@ -19,13 +19,13 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
-local CreateFrame = CreateFrame -- 创建独立事件与轮询框架
-local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook -- 查询候选技能是否在玩家法术书中
-local IsSpellUsable = C_Spell.IsSpellUsable -- 查询选中技能是否可用
+local CreateFrame = CreateFrame                                       -- 创建独立事件与轮询框架
+local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook             -- 查询候选技能是否在玩家法术书中
+local IsSpellUsable = C_Spell.IsSpellUsable                           -- 查询选中技能是否可用
 local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean -- 将潜在秘密布尔值转为颜色
-local ipairs = ipairs -- 按给定顺序选择候选技能
-local random = math.random -- 生成独立的首次刷新延迟
-local insert = table.insert -- 注册 UI 初始化函数
+local ipairs = ipairs                                                 -- 按给定顺序选择候选技能
+local random = math.random                                            -- 生成独立的首次刷新延迟
+local insert = table.insert                                           -- 注册 UI 初始化函数
 
 --[[
 C_SpellBook.IsSpellInSpellBook：查询技能是否应出现在法术书中。
@@ -60,28 +60,28 @@ Wiki 在线访问返回 403；说明依据用户提供的 Wiki 内容与本地�
 
 --[[  variable reference  ]]
 
-local Cell = addonTable.Cell -- 复用普通 Cell 的构造和颜色接口
-local COLOR = addonTable.COLOR -- 共享黑白颜色
+local Cell = addonTable.Cell               -- 复用普通 Cell 的构造和颜色接口
+local COLOR = addonTable.COLOR             -- 共享黑白颜色
 local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后创建 Cell
 
 --[[  logical code  ]]
 
 -- 技能名称：灵界打击；类型：RotationsCell。名称和类型仅作说明，以下参数供未来插件替换。
-local SPELL_IDS = { 50000, 49998 } -- 按优先顺序排列的候选技能 ID
-local POSITION_Y = 2 -- 第二行，RotationsCell 对应的行
-local POSITION_X = 3 -- 本行第 3 个 Cell
+local SPELL_IDS = { 50000, 49998 }      -- 按优先顺序排列的候选技能 ID
+local POSITION_Y = 2                    -- 第二行，RotationsCell 对应的行
+local POSITION_X = 3                    -- 本行第 3 个 Cell
 
-local usableCell -- 等待 UI 初始化创建的可用状态 Cell
-local selectedSpellID -- 当前选中的首个法术书技能 ID
+local usableCell                        -- 等待 UI 初始化创建的可用状态 Cell
+local selectedSpellID                   -- 当前选中的首个法术书技能 ID
 local eventFrame = CreateFrame("Frame") -- 本例独立的事件与轮询框架
-local fastTimeElapsed = -random() -- 随机负初值推迟首次刷新，不修改全局随机种子
+local fastTimeElapsed = -random()       -- 随机负初值推迟首次刷新，不修改全局随机种子
 
 local function SelectSpell()
-    selectedSpellID = nil -- 清除旧选择，允许全部候选移出法术书
+    selectedSpellID = nil                   -- 清除旧选择，允许全部候选移出法术书
     for _, spellID in ipairs(SPELL_IDS) do
         if IsSpellInSpellBook(spellID) then -- 法术书查询返回非秘密布尔值
             selectedSpellID = spellID
-            return -- 首个匹配优先，不合并其他候选的可用状态
+            return                          -- 首个匹配优先，不合并其他候选的可用状态
         end
     end
 end
@@ -98,20 +98,21 @@ local function RefreshUsableCell()
 
     local isUsable = IsSpellUsable(selectedSpellID) -- 仅取可用性，不单独处理 insufficientPower
     local color = EvaluateColorFromBoolean(isUsable, COLOR.WHITE, COLOR.BLACK)
-    usableCell:setCell(color) -- 直接渲染颜色对象，不对可用性布尔值分支
+    usableCell:setCell(color)                       -- 直接渲染颜色对象，不对可用性布尔值分支
 end
 
 local function InitializeUsableCell()
     usableCell = Cell:New({ x = POSITION_X, y = POSITION_Y }) -- 保持默认黑色，等待错峰首次刷新
-    SelectSpell() -- 初始化时读取当前法术书
+    SelectSpell()                                             -- 初始化时读取当前法术书
 end
 
-eventFrame:RegisterEvent("SPELLS_CHANGED") -- 法术书变化时重新选择候选技能
-eventFrame:SetScript("OnEvent", SelectSpell) -- 只更新选择，颜色由下一次轮询刷新
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- 首次进入世界时读取当前法术书
+eventFrame:RegisterEvent("SPELLS_CHANGED")        -- 法术书变化时重新选择候选技能
+eventFrame:SetScript("OnEvent", SelectSpell)      -- 只更新选择，颜色由下一次轮询刷新
 eventFrame:HookScript("OnUpdate", function(_, elapsed)
-    fastTimeElapsed = fastTimeElapsed + elapsed -- 累加本帧时间
-    if fastTimeElapsed > 0.1 then -- 每帧最多刷新一次，严格超过间隔才执行
-        fastTimeElapsed = fastTimeElapsed - 0.1 -- 保留剩余累计时间
+    fastTimeElapsed = fastTimeElapsed + elapsed   -- 累加本帧时间
+    if fastTimeElapsed > 0.1 then                 -- 每帧最多刷新一次，严格超过间隔才执行
+        fastTimeElapsed = fastTimeElapsed - 0.1   -- 保留剩余累计时间
         RefreshUsableCell()
     end
 end)

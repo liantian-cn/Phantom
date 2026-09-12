@@ -19,11 +19,11 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
-local CreateFrame = CreateFrame -- 创建独立的玩家生命值事件框架
-local UnitHealthPercent = UnitHealthPercent -- 获取玩家生命值比例的曲线求值结果
+local CreateFrame = CreateFrame                       -- 创建独立的玩家生命值事件框架
+local UnitHealthPercent = UnitHealthPercent           -- 获取玩家生命值比例的曲线求值结果
 local CreateColorCurve = C_CurveUtil.CreateColorCurve -- 创建黑白颜色曲线
-local Linear = Enum.LuaCurveType.Linear -- 按生命值比例线性插值
-local insert = table.insert -- 注册 UI 初始化函数
+local Linear = Enum.LuaCurveType.Linear               -- 按生命值比例线性插值
+local insert = table.insert                           -- 注册 UI 初始化函数
 
 --[[
 UnitHealthPercent：返回生命值比例，或将比例交给曲线生成显示值。
@@ -43,23 +43,23 @@ Wiki 在线访问返回 403；接口说明依据本地源码，不声称已获�
 
 --[[  variable reference  ]]
 
-local Cell = addonTable.Cell -- 复用普通 Cell 的构造和颜色接口
-local COLOR = addonTable.COLOR -- 共享黑白颜色作为曲线端点
+local Cell = addonTable.Cell               -- 复用普通 Cell 的构造和颜色接口
+local COLOR = addonTable.COLOR             -- 共享黑白颜色作为曲线端点
 local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后创建 Cell
 
 --[[  logical code  ]]
 
 -- 类型：RotationsCell，仅作说明；以下参数供未来插件替换。
-local POSITION_Y = 2 -- 第二行，RotationsCell 对应的行
-local POSITION_X = 5 -- 本行第 5 个 Cell
-local USE_PREDICTED = true -- 使用预测生命值，未来作为插件入参
+local POSITION_Y = 2                   -- 第二行，RotationsCell 对应的行
+local POSITION_X = 5                   -- 本行第 5 个 Cell
+local USE_PREDICTED = true             -- 使用预测生命值，未来作为插件入参
 
 local healthCurve = CreateColorCurve() -- 将生命值比例直接映射为灰度颜色
 healthCurve:SetType(Linear)
 healthCurve:AddPoint(0.0, COLOR.BLACK)
 healthCurve:AddPoint(1.0, COLOR.WHITE)
 
-local healthCell -- 等待 UI 初始化创建的玩家血量 Cell
+local healthCell                        -- 等待 UI 初始化创建的玩家血量 Cell
 local eventFrame = CreateFrame("Frame") -- 本例独立的玩家生命值事件框架
 
 local function RefreshHealthCell()
@@ -76,7 +76,8 @@ local function InitializeHealthCell()
     RefreshHealthCell() -- 构造后立即显示当前生命值比例
 end
 
-eventFrame:RegisterUnitEvent("UNIT_HEALTH", "player") -- 只接收玩家当前生命值变化
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")        -- 首次进入世界时读取当前法术书
+eventFrame:RegisterUnitEvent("UNIT_HEALTH", "player")    -- 只接收玩家当前生命值变化
 eventFrame:RegisterUnitEvent("UNIT_MAXHEALTH", "player") -- 只接收玩家最大生命值变化
-eventFrame:SetScript("OnEvent", RefreshHealthCell) -- 两类事件均重新查询当前比例
-insert(UIInitFuncs, InitializeHealthCell) -- 沿用共享布局、计数和缩放
+eventFrame:SetScript("OnEvent", RefreshHealthCell)       -- 两类事件均重新查询当前比例
+insert(UIInitFuncs, InitializeHealthCell)                -- 沿用共享布局、计数和缩放

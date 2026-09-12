@@ -19,12 +19,12 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
-local CreateFrame = CreateFrame -- 创建独立事件框架
-local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook -- 查询候选技能是否在玩家法术书中
-local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed -- 查询选中技能是否高亮
+local CreateFrame = CreateFrame                                       -- 创建独立事件框架
+local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook             -- 查询候选技能是否在玩家法术书中
+local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed    -- 查询选中技能是否高亮
 local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean -- 将潜在秘密布尔值转为颜色
-local ipairs = ipairs -- 按顺序遍历候选技能 ID
-local insert = table.insert -- 注册 UI 初始化函数
+local ipairs = ipairs                                                 -- 按顺序遍历候选技能 ID
+local insert = table.insert                                           -- 注册 UI 初始化函数
 
 --[[
 C_SpellBook.IsSpellInSpellBook：查询技能是否应出现在法术书中。
@@ -56,27 +56,27 @@ Wiki 在线访问返回 403；说明依据用户提供的 Wiki 内容与本地�
 
 --[[  variable reference  ]]
 
-local Cell = addonTable.Cell -- 复用普通 Cell 的构造和颜色接口
-local COLOR = addonTable.COLOR -- 共享黑白颜色
+local Cell = addonTable.Cell               -- 复用普通 Cell 的构造和颜色接口
+local COLOR = addonTable.COLOR             -- 共享黑白颜色
 local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后创建 Cell
 
 --[[  logical code  ]]
 
 -- 技能名称：枯萎凋零；类型：RotationsCell。名称和类型仅作说明，以下参数供未来插件替换。
-local SPELL_IDS = { 43264, 43265 } -- 按优先顺序排列的候选技能 ID
-local POSITION_Y = 2 -- 第二行，RotationsCell 对应的行
-local POSITION_X = 2 -- 本行第 2 个 Cell
+local SPELL_IDS = { 43264, 43265 }      -- 按优先顺序排列的候选技能 ID
+local POSITION_Y = 2                    -- 第二行，RotationsCell 对应的行
+local POSITION_X = 2                    -- 本行第 2 个 Cell
 
-local overlayCell -- 等待 UI 初始化创建的高亮 Cell
-local selectedSpellID -- 当前选中的首个法术书技能 ID
+local overlayCell                       -- 等待 UI 初始化创建的高亮 Cell
+local selectedSpellID                   -- 当前选中的首个法术书技能 ID
 local eventFrame = CreateFrame("Frame") -- 本例独立的高亮与法术书事件框架
 
 local function SelectSpell()
-    selectedSpellID = nil -- 清除旧选择，允许全部候选移出法术书
+    selectedSpellID = nil                   -- 清除旧选择，允许全部候选移出法术书
     for _, spellID in ipairs(SPELL_IDS) do
         if IsSpellInSpellBook(spellID) then -- 法术书查询返回非秘密布尔值
             selectedSpellID = spellID
-            return -- 首个匹配优先
+            return                          -- 首个匹配优先
         end
     end
 end
@@ -93,20 +93,21 @@ local function RefreshOverlayCell()
 
     local isOverlayed = IsSpellOverlayed(selectedSpellID) -- 不读取事件中的技能 ID，也不对高亮结果分支
     local color = EvaluateColorFromBoolean(isOverlayed, COLOR.WHITE, COLOR.BLACK)
-    overlayCell:setCell(color) -- 直接渲染颜色对象
+    overlayCell:setCell(color)                            -- 直接渲染颜色对象
 end
 
 local function InitializeOverlayCell()
     overlayCell = Cell:New({ x = POSITION_X, y = POSITION_Y })
-    SelectSpell() -- 初始化时读取当前法术书
+    SelectSpell()        -- 初始化时读取当前法术书
     RefreshOverlayCell() -- 立即补齐已有高亮状态
 end
 
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")              -- 首次进入世界时读取当前法术书
 eventFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW") -- 高亮出现时重新查询
 eventFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE") -- 高亮消失时重新查询
-eventFrame:RegisterEvent("SPELLS_CHANGED") -- 法术书变化时重新选择并刷新
+eventFrame:RegisterEvent("SPELLS_CHANGED")                     -- 法术书变化时重新选择并刷新
 eventFrame:SetScript("OnEvent", function(_, event)
-    if event == "SPELLS_CHANGED" then -- 只比较事件名称，不检查事件负载
+    if event == "SPELLS_CHANGED" then                          -- 只比较事件名称，不检查事件负载
         SelectSpell()
     end
     RefreshOverlayCell()

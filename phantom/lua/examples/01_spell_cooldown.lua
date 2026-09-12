@@ -19,15 +19,15 @@ local addonName, addonTable = ...
 
 --[[  api cache  ]]
 
-local CreateFrame = CreateFrame -- 创建独立事件与轮询框架
-local CreateColor = CreateColor -- 创建灰度曲线的颜色节点
-local CreateColorCurve = C_CurveUtil.CreateColorCurve -- 创建剩余冷却颜色曲线
-local Linear = Enum.LuaCurveType.Linear -- 在相邻节点间线性插值
-local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook -- 查询候选技能是否在玩家法术书中
+local CreateFrame = CreateFrame                                   -- 创建独立事件与轮询框架
+local CreateColor = CreateColor                                   -- 创建灰度曲线的颜色节点
+local CreateColorCurve = C_CurveUtil.CreateColorCurve             -- 创建剩余冷却颜色曲线
+local Linear = Enum.LuaCurveType.Linear                           -- 在相邻节点间线性插值
+local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook         -- 查询候选技能是否在玩家法术书中
 local GetSpellCooldownDuration = C_Spell.GetSpellCooldownDuration -- 获取可直接用于颜色求值的冷却对象
-local ipairs = ipairs -- 按给定顺序选择候选技能
-local random = math.random -- 生成独立的首次刷新延迟
-local insert = table.insert -- 注册 UI 初始化函数
+local ipairs = ipairs                                             -- 按给定顺序选择候选技能
+local random = math.random                                        -- 生成独立的首次刷新延迟
+local insert = table.insert                                       -- 注册 UI 初始化函数
 
 --[[
 C_SpellBook.IsSpellInSpellBook：查询技能是否应出现在法术书中。
@@ -62,25 +62,25 @@ Wiki 在线访问返回 403；说明依据用户提供的 Wiki 内容与本地�
 
 --[[  variable reference  ]]
 
-local Cell = addonTable.Cell -- 复用普通 Cell 的构造和颜色接口
-local COLOR = addonTable.COLOR -- 共享黑色兜底颜色
+local Cell = addonTable.Cell               -- 复用普通 Cell 的构造和颜色接口
+local COLOR = addonTable.COLOR             -- 共享黑色兜底颜色
 local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后创建 Cell
 
 --[[  logical code  ]]
 
 -- 技能名称：黑暗命令；类型：RotationsCell。名称和类型仅作说明，以下参数供未来插件替换。
-local SPELL_IDS = { 56221, 56222 } -- 按优先顺序排列的候选技能 ID
-local POSITION_Y = 2 -- 第二行，RotationsCell 对应的行
-local POSITION_X = 1 -- 本行第 1 个 Cell
-local IGNORE_GCD = true -- 是否忽略公共冷却，未来作为插件入参
+local SPELL_IDS = { 56221, 56222 }                         -- 按优先顺序排列的候选技能 ID
+local POSITION_Y = 2                                       -- 第二行，RotationsCell 对应的行
+local POSITION_X = 1                                       -- 本行第 1 个 Cell
+local IGNORE_GCD = true                                    -- 是否忽略公共冷却，未来作为插件入参
 
 local C0 = CreateColor(255 / 255, 255 / 255, 255 / 255, 1) -- 就绪时纯白
 local C1 = CreateColor(155 / 255, 155 / 255, 155 / 255, 1) -- 剩余 5 秒
 local C2 = CreateColor(105 / 255, 105 / 255, 105 / 255, 1) -- 剩余 30 秒
-local C3 = CreateColor(55 / 255, 55 / 255, 55 / 255, 1) -- 剩余 155 秒
-local C4 = CreateColor(0 / 255, 0 / 255, 0 / 255, 1) -- 剩余 375 秒
+local C3 = CreateColor(55 / 255, 55 / 255, 55 / 255, 1)    -- 剩余 155 秒
+local C4 = CreateColor(0 / 255, 0 / 255, 0 / 255, 1)       -- 剩余 375 秒
 
-local remainingCurve = CreateColorCurve() -- 不等距节点构成整体非线性的灰度变化
+local remainingCurve = CreateColorCurve()                  -- 不等距节点构成整体非线性的灰度变化
 remainingCurve:SetType(Linear)
 remainingCurve:AddPoint(0.0, C0)
 remainingCurve:AddPoint(5.0, C1)
@@ -88,17 +88,17 @@ remainingCurve:AddPoint(30.0, C2)
 remainingCurve:AddPoint(155.0, C3)
 remainingCurve:AddPoint(375.0, C4)
 
-local cooldownCell -- 等待 UI 初始化创建的冷却 Cell
-local selectedSpellID -- 当前选中的首个法术书技能 ID，没有匹配时为 nil
+local cooldownCell                      -- 等待 UI 初始化创建的冷却 Cell
+local selectedSpellID                   -- 当前选中的首个法术书技能 ID，没有匹配时为 nil
 local eventFrame = CreateFrame("Frame") -- 本例独立的事件与轮询框架
-local fastTimeElapsed = -random() -- 随机负初值推迟首次刷新，不修改全局随机种子
+local fastTimeElapsed = -random()       -- 随机负初值推迟首次刷新，不修改全局随机种子
 
 local function SelectSpell()
-    selectedSpellID = nil -- 先清除旧选择，避免技能移除后继续查询旧 ID
+    selectedSpellID = nil                   -- 先清除旧选择，避免技能移除后继续查询旧 ID
     for _, spellID in ipairs(SPELL_IDS) do
         if IsSpellInSpellBook(spellID) then -- 只对非秘密的法术书查询结果分支
             selectedSpellID = spellID
-            return -- 首个匹配优先，不合并其他候选的冷却状态
+            return                          -- 首个匹配优先，不合并其他候选的冷却状态
         end
     end
 end
@@ -124,15 +124,16 @@ end
 
 local function InitializeCooldownCell()
     cooldownCell = Cell:New({ x = POSITION_X, y = POSITION_Y }) -- 保持默认黑色，等待错峰首次刷新
-    SelectSpell() -- 补齐 UI 初始化前可能发生的法术书变化
+    SelectSpell()                                               -- 补齐 UI 初始化前可能发生的法术书变化
 end
 
-eventFrame:RegisterEvent("SPELLS_CHANGED") -- 法术书变化时重新选择候选技能
-eventFrame:SetScript("OnEvent", SelectSpell) -- 只更新选择，颜色由下一次轮询刷新
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- 首次进入世界时读取当前法术书
+eventFrame:RegisterEvent("SPELLS_CHANGED")        -- 法术书变化时重新选择候选技能
+eventFrame:SetScript("OnEvent", SelectSpell)      -- 只更新选择，颜色由下一次轮询刷新
 eventFrame:HookScript("OnUpdate", function(_, elapsed)
-    fastTimeElapsed = fastTimeElapsed + elapsed -- 累加本帧时间
-    if fastTimeElapsed > 0.1 then -- 每帧最多刷新一次，严格超过间隔才执行
-        fastTimeElapsed = fastTimeElapsed - 0.1 -- 保留剩余累计时间
+    fastTimeElapsed = fastTimeElapsed + elapsed   -- 累加本帧时间
+    if fastTimeElapsed > 0.1 then                 -- 每帧最多刷新一次，严格超过间隔才执行
+        fastTimeElapsed = fastTimeElapsed - 0.1   -- 保留剩余累计时间
         RefreshCooldownCell()
     end
 end)

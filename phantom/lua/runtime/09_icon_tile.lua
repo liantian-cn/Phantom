@@ -7,8 +7,8 @@ runtime_index: 9
 
 描述：
     在已创建的共享背景上构建黑色背景、图标与类型角标三层纹理。
-    x 为从 0 开始的 IconTile 槽位编号，每个槽位边长为两个 Cell，默认尺寸为 8×8。
-    槽位固定向下偏移三个 Cell；调用方按 0、1、2 等连续编号创建，保持第四行紧密排列。
+    x 为从 1 开始的 IconTile 槽位编号，每个槽位边长为两个 Cell，默认尺寸为 8×8。
+    槽位固定向下偏移三个 Cell；跳过左侧一个 Cell 的检测列后，按 1、2、3 等编号紧密排列。
     构造完成后将共享 IconTileLength 增加两个 Cell，并更新背景尺寸。
     图标与角标初始隐藏，分别通过 SetIcon 和 SetBorderColor 更新并显示。
     Clear 隐藏图标与角标、保留黑底，不释放槽位，也不重置已保存的纹理和颜色。
@@ -48,11 +48,11 @@ IconTile.__index = IconTile -- 实例通过元表访问共享方法
 
 ---IconTile 初始化方法（私有）
 ---@private
----@param x integer 从 0 开始的 IconTile 槽位编号
+---@param x integer 从 1 开始的 IconTile 槽位编号
 function IconTile:_initialize(x) -- 创建第四行槽位并更新共享行宽
     local parent = addonTable.BackgroundFrame -- 创建时读取共享背景作为父框体
     local iconSize = 2 * SIZE.CELL -- 边长为 Cell 的两倍，默认 8×8
-    local offset_x = x * iconSize -- 按从 0 开始的槽位编号计算横向偏移
+    local offset_x = SIZE.CELL + (x - 1) * iconSize -- 跳过左侧检测列，按从 1 开始的槽位编号紧密排列
     local offset_y = -3 * SIZE.CELL -- 向下偏移三个 Cell，固定在第四行
 
     --[[
@@ -96,7 +96,7 @@ function IconTile:_initialize(x) -- 创建第四行槽位并更新共享行宽
 end
 
 ---创建图标槽位；调用前须已创建 addonTable.BackgroundFrame
----@param x integer 从 0 开始的 IconTile 槽位编号，每槽宽两个 Cell
+---@param x integer 从 1 开始的 IconTile 槽位编号，每槽宽两个 Cell
 ---@return IconTile # 返回IconTile实例
 function IconTile:New(x) -- 按槽位编号构造独立图标槽位
     local instance = setmetatable({}, self) -- 创建继承共享方法的实例

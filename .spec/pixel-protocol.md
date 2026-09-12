@@ -96,6 +96,7 @@ result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 ## Icon Tile
 
 - 每个 Icon Tile 物理尺寸固定为 8×8。
+- Lua 构造入参 `x` 为从 1 开始的槽位编号；相对背景左边缘的偏移为 `SIZE.CELL + (x - 1) * 2 * SIZE.CELL`，跳过左侧检测列后紧密排列。调用方直接传入 1、2、3，不使用从 0 开始的编号或额外坐标换算。
 - 只信任中间 6×6，即 `icon_tile_pix_array[1:7, 1:7]`。
 - 中间区域全黑时，该槽位的原始值为 `None`。
 - 否则先保证数组连续，再以 seed 0 计算 `xxh3_64_hexdigest`，返回 16 位小写字符串。

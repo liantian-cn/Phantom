@@ -107,6 +107,8 @@ addonTable.FrameLevel = { -- 供界面组件统一使用的框架层级
     BarSeparator = 9510,  --  Value Bar 的底板共用
     BarBackground = 9520, -- Value Bar 中间层, 底色
     StatusBar = 9600,     -- Value Bar 的材质层
+    AuraContainer = 9650, -- 光环容器层级
+    AuraButton = 9700,    -- 光环按钮层级
 
 }
 

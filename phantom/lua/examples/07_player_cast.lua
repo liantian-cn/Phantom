@@ -66,7 +66,7 @@ local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后�
 --[[  logical code  ]]
 
 -- 类型：IconTile，仅作说明；以下参数供未来插件替换。
-local POSITION_X = 1        -- 第 1 个图标，按确认直接传入现有构造器，保留当前定位
+local POSITION_X = 1        -- 第 1 个图标，紧接左侧检测列
 local UNIT_TOKEN = "player" -- 只读取玩家的施法状态
 
 local playerCastTile                    -- 等待 UI 初始化创建的图标
