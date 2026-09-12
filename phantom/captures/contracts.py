@@ -9,6 +9,7 @@ Key Variables:
     CaptureStatus.has_error: 本次采集是否没有可用结果。
 Change Log:
     2026-09-11: Added 截图基础公共契约。
+    2026-09-12: Added 截图 worker 契约的只读运行状态。
 """
 
 from __future__ import annotations
@@ -62,6 +63,9 @@ class CaptureBackend(Protocol):
 
 
 class CaptureWorker(Protocol):
+    @property
+    def is_running(self) -> bool: ...
+
     def start(self) -> None: ...
 
     def stop(self) -> None: ...

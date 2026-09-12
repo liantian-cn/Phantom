@@ -24,18 +24,18 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 行
 - 像素解析：`phantom/core/pixels/` 提供 `PixelDecoder`、`Cell`、`ValueBar`、`IconTile`，将完整基板按 Lua 坐标切分为独立区域，读取通用原始值，不包含条件业务公式。
 - rotation 执行器：读取条件值，按配置顺序求值，返回首个命中的宏名称。
 - 行为插件：把宏条目的 WoW 格式键位映射为 Windows 消息并发送到游戏窗口。
-- Textual TUI：选择 rotation、输入生成包名并承载未来配置操作；当前只冻结技术选型。
+- Textual TUI：承载采集启停、游戏与采集状态、第一行通用数据展示和业务日志；rotation 选择、插件生成与决策展示留到后续步骤（见 [tui.md](tui.md)）。
 
-## Textual 交互能力
+## Textual 通信与任务
 
-Textual 提供以下能力，供后续 TUI 设计使用：
+界面通过 Textual 的消息机制与后台任务协作，项目当前采用以下方式：
 
-- 消息与事件：通过自定义 `Message`、`post_message` 和消息处理方法协调组件交互，参见[官方消息与事件文档](https://textual.textualize.io/guide/events/)。
-- 信号通知：`Signal` 提供发布／订阅机制，可以在发布数据时调用订阅者的回调，参见[官方 Signal API](https://textual.textualize.io/api/signal/)。它可以实现类似信号槽的通知效果，但不代表与 Qt 信号槽具有完全相同的语义。
-- 响应式状态：`reactive` 属性与 `watch_*` 方法支持状态变化后的界面刷新和联动，参见[官方响应式状态文档](https://textual.textualize.io/guide/reactivity/)。
-- 后台任务：Worker 支持异步任务和线程任务；线程 Worker 可通过线程安全的 `post_message` 传递结果，或通过 `call_from_thread` 在界面线程执行更新，参见[官方 Worker 文档](https://textual.textualize.io/guide/workers/)。
+- 消息与事件：游戏检测结果、业务日志和停止完成通过自定义 `Message` 与 `post_message` 从后台线程投递到界面线程，再由消息处理方法更新控件，参见[官方消息与事件文档](https://textual.textualize.io/guide/events/)。
+- 后台任务：阻塞的截图停止与资源释放通过线程 Worker 执行，不在界面线程调用阻塞接口，参见[官方 Worker 文档](https://textual.textualize.io/guide/workers/)。
+- 主题：用 `register_theme` 注册 Catppuccin Latte 主题，色值来源见 [`.context/catppuccin-latte.md`](../.context/catppuccin-latte.md)。
+- 测试：用 `run_test` 驱动真实控件、按键和尺寸变化，验证标签页、按钮状态与数据刷新。
 
-上述内容说明框架能力；项目具体采用哪些通信机制、如何组织后台任务及调度运行循环，仍留待后续设计。
+当前不使用 `Signal` 与响应式属性 `reactive`；状态更新由显式消息和刷新方法完成。
 
 ## 生成插件模型
 
@@ -65,7 +65,7 @@ Textual 提供以下能力，供后续 TUI 设计使用：
 
 ## 预定源码结构
 
-以下目录是未来代码工程的职责规划，不要求在当前文档阶段创建空目录：
+以下目录是代码工程的职责划分；`phantom/ui`、`phantom/core`、`phantom/captures`、`phantom/lua` 和 `rotations` 已在使用，`phantom/conditions` 与 `phantom/actions` 仍只有后续步骤需要的占位：
 
 ```text
 phantom/
@@ -88,8 +88,8 @@ rotations/
 
 ## 截图基础运行边界
 
-`python -m rotations.main` 是未来 Textual 主程序入口，当前仅运行最小入口说明，不启动截图。
-截图通过 `demo/demo.py` 独立验证，像素解析通过 `demo/demo01.py` 验证，暂不连接 TUI 或 rotation 执行器。
+`python -m rotations.main` 是 Textual 主程序入口：读取启动工作目录的应用配置、运行界面，并在退出时等待后台线程释放。
+截图与像素解析仍由 `demo/demo.py` 和 `demo/demo01.py` 独立验证，demo 不经过 TUI，也不读取应用配置。
 
 共享图像算法与线程调度位于 `phantom/captures/`。后端只负责截图，线程负责全屏定位、局部截图、校验和交付最新结果。
 截图使用独立后台线程，不使用子进程。主线程通过快照接口取得最新图像与状态，不排队保留历史帧。
@@ -98,6 +98,5 @@ rotations/
 ## 待定事项
 
 - 循环频率、节流策略和运行期调度模型。
-- Textual TUI 除已确认的 rotation 表格、首列复选框及互斥选择规则之外的完整界面行为，以及具体通信方案。
 - 天赋感知的 rotation 路由和对应重载规则。
 - `phantom/lua/runtime/` 内共享基础模块的文件拆分，以及它们与各 UUID Lua 的最终生成文件关系。

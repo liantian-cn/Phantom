@@ -22,6 +22,7 @@
 | 修改屏幕布局、采样或像素解码 | [pixel-protocol.md](pixel-protocol.md) |
 | 创建或修改条件、行为、截图插件 | [plugin-system.md](plugin-system.md) |
 | 修改 rotation TOML 或表达式语言 | [configuration.md](configuration.md) |
+| 修改 TUI 页面、应用配置、游戏检测或业务日志 | [tui.md](tui.md) |
 | 编写代码、查询 API、使用外部源码 | [development-rules.md](development-rules.md) |
 | 设计或执行测试 | [testing.md](testing.md) |
 

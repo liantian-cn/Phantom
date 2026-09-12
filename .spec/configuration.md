@@ -1,5 +1,9 @@
 # Rotation 配置规范
 
+## 应用配置与 rotation 配置的边界
+
+启动工作目录下的 `phantom.toml` 是应用配置文件，保存截图 FPS 与界面参数，与 rotation TOML 无关，其字段、默认值和错误规则见 [tui.md](tui.md)。本文件只规定旋转（rotation）配置的 schema 与语义。
+
 ## 文件边界
 
 一份 TOML 文件（`.toml`）表示一份 rotation。schema v1 的顶层字段固定为：

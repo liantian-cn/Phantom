@@ -10,6 +10,7 @@ Key Variables:
     ThreadCaptureWorker._fps: 可在运行期间更新的频率上限。
 Change Log:
     2026-09-11: Added 独立截图线程与图像业务流程。
+    2026-09-12: Added 只读运行状态，供 TUI 识别截图线程已结束。
 """
 
 import math
@@ -56,6 +57,12 @@ class ThreadCaptureWorker:
         self._latest: CaptureResult = CaptureResult()
         self._fps: float = 15
         self.set_fps(fps)
+
+    @property
+    def is_running(self) -> bool:
+        # 不等待生命周期锁，避免 UI 查询被另一个线程的 stop/join 阻塞。
+        thread = self._thread
+        return thread is not None and thread.is_alive()
 
     def set_fps(self, fps: float = 15) -> None:
         if not math.isfinite(fps) or fps <= 0:

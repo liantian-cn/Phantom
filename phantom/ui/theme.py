@@ -1,0 +1,55 @@
+"""用户提供的 Catppuccin Latte 色值与 Textual 主题配置。"""
+
+from textual.theme import Theme
+
+LATTE: dict[str, str] = {
+    "rosewater": "#dc8a78",
+    "flamingo": "#dd7878",
+    "pink": "#ea76cb",
+    "mauve": "#8839ef",
+    "red": "#d20f39",
+    "maroon": "#e64553",
+    "peach": "#fe640b",
+    "yellow": "#df8e1d",
+    "green": "#40a02b",
+    "teal": "#179299",
+    "sky": "#04a5e5",
+    "sapphire": "#209fb5",
+    "blue": "#1e66f5",
+    "lavender": "#7287fd",
+    "text": "#4c4f69",
+    "subtext_1": "#5c5f77",
+    "subtext_0": "#6c6f85",
+    "overlay_2": "#7c7f93",
+    "overlay_1": "#8c8fa1",
+    "overlay_0": "#9ca0b0",
+    "surface_2": "#acb0be",
+    "surface_1": "#bcc0cc",
+    "surface_0": "#ccd0da",
+    "base": "#eff1f5",
+    "mantle": "#e6e9ef",
+    "crust": "#dce0e8",
+}
+
+PHANTOM_THEME = Theme(
+    name="phantom-latte",
+    primary=LATTE["blue"],
+    secondary=LATTE["mauve"],
+    accent=LATTE["blue"],
+    warning=LATTE["peach"],
+    error=LATTE["red"],
+    success=LATTE["green"],
+    foreground=LATTE["text"],
+    background=LATTE["base"],
+    surface=LATTE["mantle"],
+    panel=LATTE["mantle"],
+    dark=False,
+    variables={
+        **{f"latte-{name.replace('_', '-')}": color for name, color in LATTE.items()},
+        "text": LATTE["text"],
+        "text-muted": LATTE["subtext_1"],
+        "text-disabled": LATTE["overlay_1"],
+        "block-cursor-background": LATTE["blue"],
+        "block-cursor-foreground": LATTE["base"],
+    },
+)

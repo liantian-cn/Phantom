@@ -41,7 +41,9 @@ py -3.13 -m venv .venv
 .venv/Scripts/python demo/demo01.py
 ```
 
-仅运行时安装 `requirements.txt` 即可。主入口暂不接入 Textual 和截图；demo 的时序与输出格式见插件规范。
+仅运行时安装 `requirements.txt` 即可。`python -m rotations.main` 启动 Textual 主程序，读取或创建启动工作目录下的 `phantom.toml`；
+在仓库根目录启动时配置落在仓库根目录，换目录启动就使用该目录的配置，程序不改变工作目录。界面、配置与检测规则见 [tui.md](tui.md)。
+demo 的时序与输出格式见插件规范，demo 不经过 TUI，也不读取应用配置。
 独立 demo 统一放在项目根目录 `demo/`，执行时先打印演示内容，再开始采集流程。
 像素解析 demo 同样等待 3 秒、采集 5 秒，停止后输出最后一帧的十个 Cell 亮度、
 一个 ValueBar 的 ratio/percent 和两个 IconTile hash；截图错误或区域不足时明确失败，不回退旧帧。

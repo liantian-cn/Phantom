@@ -209,8 +209,10 @@ def test_worker_latest_frame_ownership_stop_and_restart() -> None:
         return backend
 
     worker = ThreadCaptureWorker(factory, fps=1)
+    assert not worker.is_running
     try:
         worker.start()
+        assert worker.is_running
         worker.start()
         original = await_result(worker, lambda result: result.image is not None)
         assert original.image is not None
@@ -230,6 +232,7 @@ def test_worker_latest_frame_ownership_stop_and_restart() -> None:
         stopped = monotonic()
         worker.stop()
         assert monotonic() - stopped < 1  # stop 不等待十秒周期结束。
+        assert not worker.is_running
         worker.stop()
         assert backends[0].closed.is_set()
         np.testing.assert_array_equal(worker.get_latest_result().image, last)
