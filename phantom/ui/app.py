@@ -32,7 +32,7 @@ from phantom.core.configuration import AppConfig
 from phantom.core.game import GameMonitor, GameStatus, detect_game
 from phantom.ui.business_log import BusinessLog
 from phantom.ui.capture import GENERAL_FIELDS, GeneralData, create_capture, decode_general
-from phantom.ui.theme import MOCHA, PHANTOM_THEME
+from phantom.ui.theme import FLEXOKI, PHANTOM_THEME
 
 
 class GameUpdated(Message):
@@ -346,10 +346,10 @@ class PhantomApp(App[None]):
         program = "已启动" if self.collecting else "已暂停"
         game = "已启动" if self.game_status.running else "未启动"
         status = Text()
-        status.append(f"程序：{program}", style=MOCHA["green" if self.collecting else "peach"])
-        status.append(" · ", style=MOCHA["text"])
+        status.append(f"程序：{program}", style=FLEXOKI["green" if self.collecting else "orange"])
+        status.append(" · ", style=FLEXOKI["text"])
         status.append(
-            f"游戏：{game}", style=MOCHA["green" if self.game_status.running else "peach"]
+            f"游戏：{game}", style=FLEXOKI["green" if self.game_status.running else "orange"]
         )
         self.query_one("#status_line", Static).update(status)
         values = {

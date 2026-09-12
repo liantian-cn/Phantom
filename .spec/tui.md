@@ -22,10 +22,10 @@
 
 ## 视觉
 
-界面固定使用 Catppuccin Mocha 深色配色，色值以 [`.context/catppuccin-mocha.md`](../.context/catppuccin-mocha.md) 为准，不得改写、近似或替换；不跟随系统或终端深浅色，也不提供主题切换入口。
+界面固定使用 Flexoki 深色配色（底色为 Flexoki black），色值以 [`.context/flexoki.md`](../.context/flexoki.md) 为准，不得改写、近似或替换；不跟随系统或终端深浅色，也不提供主题切换入口。
 
-- 背景使用 Base，容器使用 Mantle，正文使用 Text，选中与强调使用 Blue。
-- 状态“开”使用 Green，状态“关”使用 Peach。
+- 背景使用 black，容器使用 base-950，正文使用 paper，选中与强调使用 blue-400。
+- 状态“开”使用 green-400，状态“关”使用 orange-400。
 
 ## 布局
 

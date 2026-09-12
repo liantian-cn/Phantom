@@ -27,7 +27,7 @@ The 42 pre-consolidation Markdown files are preserved outside the project at `/w
 | Build frames, textures, bars, icons, or secure buttons | [`rendering.md`](rendering.md) |
 | Choose events or optimize update work | [`events-performance.md`](events-performance.md) |
 | Check taint, combat restrictions, or an API signature | [`security-api.md`](security-api.md) |
-| Look up the Catppuccin Mocha color values used by the TUI | [`catppuccin-mocha.md`](catppuccin-mocha.md) |
+| Look up the Flexoki color values used by the TUI | [`flexoki.md`](flexoki.md) |
 
 ## Evidence order
 
