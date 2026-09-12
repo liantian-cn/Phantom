@@ -1,55 +1,67 @@
-"""用户提供的 Catppuccin Latte 色值与 Textual 主题配置。"""
+"""
+Summary:
+    用户提供的 Catppuccin Mocha 色值与 Phantom 的 Textual 深色主题配置。
+Description:
+    集中定义 Mocha 全套官方色值，并据此注册界面唯一使用的深色主题。
+    主题通过 mocha-* 变量提供给样式表，语义固定为 Base 背景、Mantle 容器、
+    Text 正文、Blue 选中与强调。
+Key Variables:
+    MOCHA: Catppuccin Mocha 官方色值，键为色名。
+    PHANTOM_THEME: 注册到 Textual 的 Phantom 深色主题。
+Change Log:
+    2026-09-12: Changed 界面配色由 Catppuccin Latte 改为 Catppuccin Mocha 深色。
+"""
 
 from textual.theme import Theme
 
-LATTE: dict[str, str] = {
-    "rosewater": "#dc8a78",
-    "flamingo": "#dd7878",
-    "pink": "#ea76cb",
-    "mauve": "#8839ef",
-    "red": "#d20f39",
-    "maroon": "#e64553",
-    "peach": "#fe640b",
-    "yellow": "#df8e1d",
-    "green": "#40a02b",
-    "teal": "#179299",
-    "sky": "#04a5e5",
-    "sapphire": "#209fb5",
-    "blue": "#1e66f5",
-    "lavender": "#7287fd",
-    "text": "#4c4f69",
-    "subtext_1": "#5c5f77",
-    "subtext_0": "#6c6f85",
-    "overlay_2": "#7c7f93",
-    "overlay_1": "#8c8fa1",
-    "overlay_0": "#9ca0b0",
-    "surface_2": "#acb0be",
-    "surface_1": "#bcc0cc",
-    "surface_0": "#ccd0da",
-    "base": "#eff1f5",
-    "mantle": "#e6e9ef",
-    "crust": "#dce0e8",
+MOCHA: dict[str, str] = {
+    "rosewater": "#f5e0dc",
+    "flamingo": "#f2cdcd",
+    "pink": "#f5c2e7",
+    "mauve": "#cba6f7",
+    "red": "#f38ba8",
+    "maroon": "#eba0ac",
+    "peach": "#fab387",
+    "yellow": "#f9e2af",
+    "green": "#a6e3a1",
+    "teal": "#94e2d5",
+    "sky": "#89dceb",
+    "sapphire": "#74c7ec",
+    "blue": "#89b4fa",
+    "lavender": "#b4befe",
+    "text": "#cdd6f4",
+    "subtext_1": "#bac2de",
+    "subtext_0": "#a6adc8",
+    "overlay_2": "#9399b2",
+    "overlay_1": "#7f849c",
+    "overlay_0": "#6c7086",
+    "surface_2": "#585b70",
+    "surface_1": "#45475a",
+    "surface_0": "#313244",
+    "base": "#1e1e2e",
+    "mantle": "#181825",
+    "crust": "#11111b",
 }
 
 PHANTOM_THEME = Theme(
-    name="phantom-latte",
-    primary=LATTE["blue"],
-    secondary=LATTE["mauve"],
-    accent=LATTE["blue"],
-    warning=LATTE["peach"],
-    error=LATTE["red"],
-    success=LATTE["green"],
-    foreground=LATTE["text"],
-    background=LATTE["base"],
-    surface=LATTE["mantle"],
-    panel=LATTE["mantle"],
-    dark=False,
+    name="phantom-mocha",
+    primary=MOCHA["blue"],
+    secondary=MOCHA["mauve"],
+    accent=MOCHA["blue"],
+    warning=MOCHA["peach"],
+    error=MOCHA["red"],
+    success=MOCHA["green"],
+    foreground=MOCHA["text"],
+    background=MOCHA["base"],
+    surface=MOCHA["mantle"],
+    panel=MOCHA["mantle"],
+    dark=True,
     variables={
-        **{f"latte-{name.replace('_', '-')}": color for name, color in LATTE.items()},
-        "text": LATTE["text"],
-        "text-muted": LATTE["subtext_1"],
-        "text-disabled": LATTE["overlay_1"],
-        "block-cursor-background": LATTE["blue"],
-        "block-cursor-foreground": LATTE["base"],
+        **{f"mocha-{name.replace('_', '-')}": color for name, color in MOCHA.items()},
+        "text": MOCHA["text"],
+        "text-muted": MOCHA["subtext_1"],
+        "text-disabled": MOCHA["overlay_1"],
+        "block-cursor-background": MOCHA["blue"],
+        "block-cursor-foreground": MOCHA["base"],
     },
 )

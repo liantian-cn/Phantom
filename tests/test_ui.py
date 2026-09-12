@@ -8,6 +8,7 @@ from threading import enumerate as enumerate_threads
 
 import numpy as np
 import pytest
+from textual.color import Color
 from textual.widgets import Button, DataTable, Log, TabbedContent
 
 from phantom.captures.contracts import CaptureResult, CaptureStatus, RGBImage
@@ -97,6 +98,21 @@ def test_business_log_deduplicates_body_before_timestamp() -> None:
     assert lines[0][11:] == "A"
     assert lines[2][11:] == "A"
     assert len(lines[3].splitlines()) == 2
+
+
+def test_dark_mocha_theme_is_applied(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        app = make_app(tmp_path, FakeCapture())
+        async with app.run_test(size=(120, 46)) as pilot:
+            await pilot.pause()
+            theme = app.current_theme
+            assert theme.name == "phantom-mocha"
+            assert theme.dark
+            assert theme.primary == "#89b4fa"
+            assert app.screen.styles.background == Color.parse("#1e1e2e")
+            assert app.query_one("#footer").styles.background == Color.parse("#181825")
+
+    asyncio.run(scenario())
 
 
 def test_tabs_keyboard_and_resizing_preserve_state(tmp_path: Path) -> None:

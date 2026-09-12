@@ -1,106 +1,105 @@
 Screen {
-    background: $latte-base;
-    color: $latte-text;
+    background: $mocha-base;
+    color: $mocha-text;
 }
 #content { height: 1fr; }
 #footer {
     dock: bottom;
     height: auto;
-    background: $latte-mantle;
+    background: $mocha-mantle;
 }
 #status_line { height: 1; padding: 0 1; text-wrap: nowrap; }
 #size_notice {
     height: 1fr;
     content-align: center middle;
     text-align: center;
-    color: $latte-peach;
+    color: $mocha-peach;
 }
 #pages, TabPane, ContentSwitcher { height: 1fr; }
-TabPane { padding: 1 2; background: $latte-base; }
-Tabs { background: $latte-mantle; }
-Tab { color: $latte-subtext-1; background: $latte-mantle; }
-Tab:hover { color: $latte-blue; background: $latte-surface-0; }
-Tab.-active { color: $latte-blue; background: $latte-base; text-style: bold; }
-Tabs:focus Tab.-active { color: $latte-blue; background: $latte-base; }
-Underline > .underline--bar { color: $latte-blue; background: $latte-surface-0; }
+TabPane { padding: 1 2; background: $mocha-base; }
+Tabs { background: $mocha-mantle; }
+Tab { color: $mocha-subtext-1; background: $mocha-mantle; }
+Tab:hover { color: $mocha-blue; background: $mocha-surface-0; }
+Tab.-active { color: $mocha-blue; background: $mocha-base; text-style: bold; }
+Tabs:focus Tab.-active { color: $mocha-blue; background: $mocha-base; }
+Underline > .underline--bar { color: $mocha-blue; background: $mocha-surface-0; }
 #overview_columns { height: 1fr; }
 #controls {
     width: 1fr;
     height: 1fr;
     padding: 1 2;
     margin-right: 2;
-    border: round $latte-surface-1;
-    background: $latte-mantle;
+    border: round $mocha-surface-1;
+    background: $mocha-mantle;
 }
 #work_status {
     width: 3fr;
     height: 1fr;
     padding: 1 3;
-    border: round $latte-surface-1;
-    background: $latte-mantle;
+    border: round $mocha-surface-1;
+    background: $mocha-mantle;
 }
-.section_title { height: auto; text-style: bold; color: $latte-blue; margin-bottom: 1; }
-.state_label { height: auto; color: $latte-subtext-1; }
-.state_value { height: auto; margin-bottom: 1; color: $latte-text; }
-#current_error { color: $latte-peach; }
-.muted, #keyboard_help { height: auto; color: $latte-subtext-1; }
+.section_title { height: auto; text-style: bold; color: $mocha-blue; margin-bottom: 1; }
+.state_label { height: auto; color: $mocha-subtext-1; }
+.state_value { height: auto; margin-bottom: 1; color: $mocha-text; }
+#current_error { color: $mocha-peach; }
+.muted, #keyboard_help { height: auto; color: $mocha-subtext-1; }
 #keyboard_help { margin-top: 2; }
 #controls Button {
     width: 1fr;
     min-width: 10;
     margin-bottom: 1;
-    color: $latte-text;
-    background: $latte-surface-0;
-    border: tall $latte-surface-0;
+    color: $mocha-text;
+    background: $mocha-surface-0;
+    border: tall $mocha-surface-0;
     text-opacity: 1;
 }
 #controls Button:hover, #controls Button:focus {
-    color: $latte-blue;
-    background: $latte-base;
-    border: tall $latte-blue;
+    color: $mocha-blue;
+    background: $mocha-base;
+    border: tall $mocha-blue;
     text-style: bold;
 }
 #controls Button.-active {
-    color: $latte-base;
-    background: $latte-blue !important;
-    border: tall $latte-blue !important;
+    color: $mocha-base;
+    background: $mocha-blue !important;
+    border: tall $mocha-blue !important;
     tint: transparent;
 }
 #controls Button:disabled {
-    color: $latte-overlay-1;
-    background: $latte-mantle !important;
-    border: tall $latte-surface-0 !important;
+    color: $mocha-overlay-1;
+    background: $mocha-mantle !important;
+    border: tall $mocha-surface-0 !important;
     text-opacity: 1;
 }
 #general_table {
     height: 1fr;
-    background: $latte-base;
-    color: $latte-text;
+    background: $mocha-base;
+    color: $mocha-text;
 }
 DataTable > .datatable--header {
-    background: $latte-surface-0;
-    color: $latte-text;
+    background: $mocha-surface-0;
+    color: $mocha-text;
     text-style: bold;
 }
-DataTable > .datatable--odd-row { background: $latte-base; }
-DataTable > .datatable--even-row { background: $latte-mantle; }
-DataTable > .datatable--cursor { background: $latte-blue; color: $latte-base; }
-DataTable > .datatable--hover { background: $latte-surface-0; color: $latte-text; }
+DataTable > .datatable--odd-row { background: $mocha-base; }
+DataTable > .datatable--even-row { background: $mocha-mantle; }
+DataTable > .datatable--cursor { background: $mocha-blue; color: $mocha-base; }
+DataTable > .datatable--hover { background: $mocha-surface-0; color: $mocha-text; }
 #business_log {
     height: 1fr;
-    border: round $latte-surface-1;
-    background: $latte-mantle;
+    border: round $mocha-surface-1;
+    background: $mocha-mantle;
     background-tint: transparent;
-    color: $latte-text;
+    color: $mocha-text;
 }
-.placeholder { height: 1fr; content-align: center middle; color: $latte-subtext-1; }
+.placeholder { height: 1fr; content-align: center middle; color: $mocha-subtext-1; }
 * {
-    scrollbar-color: $latte-overlay-0;
-    scrollbar-color-hover: $latte-overlay-1;
-    scrollbar-color-active: $latte-blue;
-    scrollbar-background: $latte-mantle;
-    scrollbar-background-hover: $latte-mantle;
-    scrollbar-background-active: $latte-mantle;
-    scrollbar-corner-color: $latte-mantle;
+    scrollbar-color: $mocha-overlay-0;
+    scrollbar-color-hover: $mocha-overlay-1;
+    scrollbar-color-active: $mocha-blue;
+    scrollbar-background: $mocha-mantle;
+    scrollbar-background-hover: $mocha-mantle;
+    scrollbar-background-active: $mocha-mantle;
+    scrollbar-corner-color: $mocha-mantle;
 }
-

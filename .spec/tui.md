@@ -22,7 +22,7 @@
 
 ## 视觉
 
-界面使用用户提供的 Catppuccin Latte 配色，色值以 [`.context/catppuccin-latte.md`](../.context/catppuccin-latte.md) 为准，不得改写、近似或替换。
+界面固定使用 Catppuccin Mocha 深色配色，色值以 [`.context/catppuccin-mocha.md`](../.context/catppuccin-mocha.md) 为准，不得改写、近似或替换；不跟随系统或终端深浅色，也不提供主题切换入口。
 
 - 背景使用 Base，容器使用 Mantle，正文使用 Text，选中与强调使用 Blue。
 - 状态“开”使用 Green，状态“关”使用 Peach。
