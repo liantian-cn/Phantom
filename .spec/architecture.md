@@ -5,7 +5,7 @@
 Phantom 分为游戏外 Python 端和游戏内 Lua 端。Lua 端只负责采集游戏状态、编码与渲染数据以及建立已配置的安全按钮绑定；Python 端负责生成、截图、解码、求值和发送按键。
 
 ```text
-rotation YAML
+rotation TOML
     ↓
 Python 生成器 ──→ WoW 插件（共享基础模块 + UUID Lua）
                        ↓

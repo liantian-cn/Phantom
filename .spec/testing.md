@@ -8,7 +8,7 @@ Phantom 最终运行在 Windows，而日常开发环境是 WSL2 与 Docker。容
 
 ## 优先测试内容
 
-- YAML schema、唯一标题/宏名称、UUID、职业/专精和键位校验。
+- TOML schema、唯一标题/宏名称、UUID、职业/专精和键位校验。
 - 白名单 AST 的允许节点、拒绝节点、优先级、条件引用和类型检查。
 - rotation 自上而下首个命中、每轮最多一个动作和无命中行为。
 - Cell 中间 2×2 与 Icon Tile 中间 6×6 的裁剪。

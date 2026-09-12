@@ -2,7 +2,7 @@
 
 ## 文件边界
 
-一份 YAML 文件表示一份 rotation。schema v1 的顶层字段固定为：
+一份 TOML 文件（`.toml`）表示一份 rotation。schema v1 的顶层字段固定为：
 
 - `schema_version`
 - `uuid`
@@ -11,62 +11,66 @@
 - `macros`
 - `rotation`
 
-字段名统一使用 `snake_case`。草案中的 `unitTalnet`、`bing_key` 等拼写不是兼容契约，不得作为别名保留。列表必须使用真正的 YAML 数组，不得用逗号拼接伪装列表。配置对象不使用数字 `id`。
+字段名统一使用 `snake_case`。草案中的 `unitTalnet`、`bing_key` 等拼写不是兼容契约，不得作为别名保留。列表必须使用真正的 TOML 数组，不得用逗号拼接伪装列表。配置对象不使用数字 `id`。
+
+`profile` 使用表；`conditions`、`macros` 和 `rotation` 使用表数组。每个 `[conditions.plugin_args]` 归属于最近声明的 `[[conditions]]` 条目。
 
 ## 完整示例
 
-```yaml
-schema_version: 1
-uuid: "550e8400-e29b-41d4-a716-446655440000"
+```toml
+schema_version = 1
+uuid = "550e8400-e29b-41d4-a716-446655440000"
 
-profile:
-  title: 神圣骑士基础循环
-  description: 优先治疗玩家，否则对有效目标使用审判。
-  unit_class: PALADIN
-  unit_spec: 1
+[profile]
+title = "神圣骑士基础循环"
+description = "优先治疗玩家，否则对有效目标使用审判。"
+unit_class = "PALADIN"
+unit_spec = 1
 
-conditions:
-  - title: 玩家血量
-    plugin: health_pct@1.0
-    plugin_args:
-      unit_token: player
+[[conditions]]
+title = "玩家血量"
+plugin = "health_pct@1.0"
+[conditions.plugin_args]
+unit_token = "player"
 
-  - title: 圣光术冷却时间
-    plugin: player_spell_cooldown@1.0
-    plugin_args:
-      spell_ids:
-        - 82326
-        - 82325
-      ignore_gcd: true
+[[conditions]]
+title = "圣光术冷却时间"
+plugin = "player_spell_cooldown@1.0"
+[conditions.plugin_args]
+spell_ids = [82326, 82325]
+ignore_gcd = true
 
-  - title: 目标血量
-    plugin: health_pct@1.0
-    plugin_args:
-      unit_token: target
+[[conditions]]
+title = "目标血量"
+plugin = "health_pct@1.0"
+[conditions.plugin_args]
+unit_token = "target"
 
-  - title: 审判冷却时间
-    plugin: player_spell_cooldown@1.0
-    plugin_args:
-      spell_ids:
-        - 12345
-      ignore_gcd: true
+[[conditions]]
+title = "审判冷却时间"
+plugin = "player_spell_cooldown@1.0"
+[conditions.plugin_args]
+spell_ids = [12345]
+ignore_gcd = true
 
-macros:
-  - name: 对玩家释放圣光术
-    macro_text: /cast [@player] 圣光术
-    key: ALT-NUMPAD1
-    bind_key: true
+[[macros]]
+name = "对玩家释放圣光术"
+macro_text = "/cast [@player] 圣光术"
+key = "ALT-NUMPAD1"
+bind_key = true
 
-  - name: 审判
-    key: E
-    bind_key: false
+[[macros]]
+name = "审判"
+key = "E"
+bind_key = false
 
-rotation:
-  - condition: 玩家血量 < 70 and 圣光术冷却时间 == 0
-    macro: 对玩家释放圣光术
+[[rotation]]
+condition = "玩家血量 < 70 and 圣光术冷却时间 == 0"
+macro = "对玩家释放圣光术"
 
-  - condition: 目标血量 > 0 and 审判冷却时间 == 0
-    macro: 审判
+[[rotation]]
+condition = "目标血量 > 0 and 审判冷却时间 == 0"
+macro = "审判"
 ```
 
 ## 标识和引用
@@ -101,10 +105,10 @@ schema v1 支持：
 ## 宏与键位
 
 - `key` 必填，使用大写 WoW 连字符格式，例如 `ALT-NUMPAD1`、`SHIFT-F8`；Python 端解析同一个字符串并映射到 Windows 输入。
-- `bind_key: true` 时，`macro_text` 必填。生成的 Lua 使用不可见 `SecureActionButtonTemplate` 设置 `type = "macro"` 与 `macrotext`，再通过 `SetOverrideBindingClick` 建立优先覆盖绑定。
+- `bind_key = true` 时，`macro_text` 必填。生成的 Lua 使用不可见 `SecureActionButtonTemplate` 设置 `type = "macro"` 与 `macrotext`，再通过 `SetOverrideBindingClick` 建立优先覆盖绑定。
 - 上述绑定不创建 WoW 已保存宏槽位，也不改写玩家的持久键位设置。
-- `bind_key: true` 会直接覆盖该键在当前运行期的已有动作，不检查也不提示；用户已经接受该风险。
-- `bind_key: false` 时，`macro_text` 可省略；即使填写也不生效，生成器不得为该项输出安全按钮或覆盖绑定 Lua。Python 直接发送玩家已有游戏键位。
+- `bind_key = true` 会直接覆盖该键在当前运行期的已有动作，不检查也不提示；用户已经接受该风险。
+- `bind_key = false` 时，`macro_text` 可省略；即使填写也不生效，生成器不得为该项输出安全按钮或覆盖绑定 Lua。Python 直接发送玩家已有游戏键位。
 
 启用绑定时，生成代码必须保持以下调用语义；变量命名可以由生成器调整：
 
