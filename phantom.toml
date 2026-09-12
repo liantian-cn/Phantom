@@ -1,0 +1,7 @@
+[capture]
+fps = 15
+
+[ui]
+min_width = 120
+min_height = 46
+log_max_lines = 1000
