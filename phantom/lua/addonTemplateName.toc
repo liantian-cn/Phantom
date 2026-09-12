@@ -12,7 +12,7 @@ runtime\04_baseline_definition.lua
 runtime\05_background.lua
 runtime\06_panel.lua
 runtime\07_cell.lua
-runtime\08_valuebar.lua
+runtime\08_value_bar.lua
 runtime\09_icon_tile.lua
 runtime\10_mask.lua
 general\01_player_class.lua
