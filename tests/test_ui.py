@@ -14,6 +14,7 @@ from textual.widgets import Button, DataTable, Log, TabbedContent
 from phantom.captures.contracts import CaptureResult, CaptureStatus, RGBImage
 from phantom.core.configuration import AppConfig
 from phantom.core.game import GameStatus
+from phantom.core.generator import GenerationResult, generate
 from phantom.ui.app import GameUpdated, PhantomApp
 from phantom.ui.business_log import BusinessLog
 from phantom.ui.capture import decode_general
@@ -282,5 +283,135 @@ def test_logs_bound_history_even_when_tab_hidden(tmp_path: Path) -> None:
             await pilot.press("tab", "tab")
             assert log.region.height > 20
             assert log.max_lines == 6
+
+    asyncio.run(scenario())
+
+
+def rotation_app(tmp_path: Path, capture: FakeCapture) -> PhantomApp:
+    root = Path(__file__).resolve().parents[1]
+    rotation_path = tmp_path / "blood.toml"
+    rotation_path.write_bytes((root / "rotations/blood-dk.toml").read_bytes())
+    executable = tmp_path / "_retail_/Wow.exe"
+    executable.parent.mkdir()
+    executable.touch()
+    return PhantomApp(
+        AppConfig(
+            tmp_path / "phantom.toml", rotation_path=rotation_path, wow_executable=executable
+        ),
+        capture=capture,
+        game_detector=lambda: GameStatus(False),
+    )
+
+
+def test_generation_without_game_and_error_recovery(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        app = rotation_app(tmp_path, FakeCapture())
+        async with app.run_test(size=(120, 46)) as pilot:
+            await pilot.pause()
+            assert app.query_one("#start", Button).disabled
+            assert not app.query_one("#generate", Button).disabled
+            table = app.query_one("#condition_table", DataTable)
+            assert table.row_count == 8
+            assert table.get_cell("4", "plugin") == "spell_gcd@1.0"
+            app.generate_addon()
+            assert app.generating
+            assert app.query_one("#generate", Button).disabled
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert not app.generating
+            assert (tmp_path / "_retail_/Interface/AddOns/Phantom/Phantom.toc").is_file()
+            assert app.config.rotation_path is not None
+            saved = app.config.rotation_path.read_text(encoding="utf-8")
+            app.config.rotation_path.write_text("invalid TOML =", encoding="utf-8")
+            app.generate_addon()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert app.rotation is None and app.rotation_error
+            assert table.row_count == 0
+            app.config.rotation_path.write_text(saved, encoding="utf-8")
+            app.generate_addon()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert app.rotation is not None and not app.rotation_error
+            assert table.row_count == 8
+
+    asyncio.run(scenario())
+
+
+def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        capture = FakeCapture()
+        app = rotation_app(tmp_path, capture)
+        async with app.run_test(size=(120, 46)) as pilot:
+            await pilot.pause()
+            app.on_game_updated(GameUpdated(GameStatus(True)))
+            app.start_collection()
+            assert app.query_one("#generate", Button).disabled
+            table = app.query_one("#condition_table", DataTable)
+            image = np.zeros((20, 36, 3), dtype=np.uint8)
+            image[:4, 4:8] = 6
+            image[:4, 8:12] = 1
+            for index, brightness in enumerate((85, 3, 255, 205, 255, 102, 255), 1):
+                image[4:8, 4 * index : 4 * index + 4] = brightness
+            image[8:12, 4:6] = [255, 0, 0]
+            image[8:12, 6:10] = 255
+            image[8:12, 14:16] = [255, 0, 0]
+            capture.result = CaptureResult(image)
+            app.refresh_capture()
+            assert [table.get_cell(str(i), "value") for i in range(8)] == [
+                "40.0",
+                "3",
+                "1",
+                "True",
+                "2.5",
+                "0.0",
+                "40.0",
+                "True",
+            ]
+            image[:4, 8:12] = 2
+            app.refresh_capture()
+            assert all(table.get_cell(str(i), "value") == "—" for i in range(8))
+            image[:4, 8:12] = 1
+            app.refresh_capture()
+            assert table.get_cell("0", "value") == "40.0"
+            app.stop_collection()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert all(table.get_cell(str(i), "value") == "—" for i in range(8))
+            assert not app.query_one("#generate", Button).disabled
+
+    asyncio.run(scenario())
+
+
+def test_slow_generation_exit_waits_for_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    entered = Event()
+    release = Event()
+
+    def slow_generate(rotation_path: Path, executable: Path, addon_name: str) -> GenerationResult:
+        entered.set()
+        assert release.wait(5)
+        return generate(rotation_path, executable, addon_name)
+
+    monkeypatch.setattr("phantom.ui.app.generate", slow_generate)
+
+    async def scenario() -> None:
+        app = rotation_app(tmp_path, FakeCapture())
+        async with app.run_test(size=(120, 46)) as pilot:
+            await pilot.pause()
+            app.generate_addon()
+            try:
+                await pilot.pause()
+                assert entered.is_set()
+                assert app.query_one("#start", Button).disabled
+                await pilot.press("tab")
+                assert app.query_one("#pages", TabbedContent).active == "general"
+                await app.action_quit()
+                assert app.closing
+            finally:
+                release.set()
+            await app.workers.wait_for_complete()
+        assert (tmp_path / "_retail_/Interface/AddOns/Phantom/Phantom.toc").is_file()
 
     asyncio.run(scenario())

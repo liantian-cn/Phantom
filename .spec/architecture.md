@@ -24,7 +24,7 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 行
 - 像素解析：`phantom/core/pixels/` 提供 `PixelDecoder`、`Cell`、`ValueBar`、`IconTile`，将完整基板按 Lua 坐标切分为独立区域，读取通用原始值，不包含条件业务公式。
 - rotation 执行器：读取条件值，按配置顺序求值，返回首个命中的宏名称。
 - 行为插件：把宏条目的 WoW 格式键位映射为 Windows 消息并发送到游戏窗口。
-- Textual TUI：承载采集启停、游戏与采集状态、第一行通用数据展示和业务日志；rotation 选择、插件生成与决策展示留到后续步骤（见 [tui.md](tui.md)）。
+- Textual TUI：承载采集启停、游戏与采集状态、第一行通用数据展示和业务日志；支持配置指定的单份 rotation 生成和条件值；多份选择和决策展示留到后续步骤（见 [tui.md](tui.md)）。
 
 ## Textual 通信与任务
 
@@ -65,7 +65,7 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 行
 
 ## 预定源码结构
 
-以下目录是代码工程的职责划分；`phantom/ui`、`phantom/core`、`phantom/captures`、`phantom/lua` 和 `rotations` 已在使用，`phantom/conditions` 与 `phantom/actions` 仍只有后续步骤需要的占位：
+以下目录是代码工程的职责划分；`phantom/ui`、`phantom/core`、`phantom/captures`、`phantom/lua` 和 `rotations` 已在使用，`phantom/conditions` 已实现版本化条件，`phantom/actions` 仍是后续占位：
 
 ```text
 phantom/
@@ -99,4 +99,13 @@ rotations/
 
 - 循环频率、节流策略和运行期调度模型。
 - 天赋感知的 rotation 路由和对应重载规则。
-- `phantom/lua/runtime/` 内共享基础模块的文件拆分，以及它们与各 UUID Lua 的最终生成文件关系。
+
+
+## 单份生成器落地
+
+phantom/core/rotation.py 负责配置和布局回写，conditions/registry.py 负责精确加载，core/generator.py 负责生成。
+当前单份入口输出 runtime/ 与 general/ 源码副本、完整 media/ 二进制资源、一个 UUID Lua 和同名 TOC；不复制 examples。字体与纹理由 Lua 路径访问，不加入 TOC。
+UUID Lua 开头检查玩家职业和专精，随后每个模板置于独立 do/end 作用域并注册 UIInitFuncs。
+生成所有声明的条件；模板只插入经过校验的参数与固定位置，不插入表达式或宏文本作为 Lua。
+同名文件覆盖、旧文件保留，TOC 最后写入且仅列本次产物。每个目标文件使用同目录临时文件替换，避免单文件截断；不提供整个目录的事务或备份。
+当前不生成安全按钮和覆盖键位；多 rotation 选择及宏绑定仍留待后续阶段。

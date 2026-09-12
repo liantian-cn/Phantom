@@ -147,3 +147,11 @@ revision 缩写仅用于定位初始化快照；引用具体事实时记录完�
 
 - 打包、发布和正式版本号策略；当前工程元数据版本仅为基础占位。
 - Windows 消息发送的线程、权限和目标窗口生命周期方案。
+
+
+## Windows 参考源码路径
+
+Windows 下 `/wow-ui-source` 对应 `E:\Documents\GitHub\wow-ui-source`。该目录仅作只读参考；不得修改、提交或更新分支。引用技术事实时记录该目录实际版本与 revision，历史快照记录不改写。
+
+
+完整类型检查使用 `.venv/Scripts/python scripts/check_types.py`，覆盖核心和每个精确版本插件。`python -m mypy` 只检查普通模块，版本目录由该脚本逐个执行 mypy，避免同名 condition 模块冲突。详见测试规范。

@@ -70,15 +70,15 @@ GDI worker 搜索整个虚拟桌面，包含负坐标显示器，按物理像素
 2. 根据参数计算 `output_type`、`output_count`、`value_type` 和 `value_shape`。
 3. 由布局器分配连续区域并冻结位置与数量。
 4. 生成本实例对应的 Lua。
-5. 运行时从截图区域读取 `raw_value()`。
-6. 由 `value()` 调用插件的 `decode_value(raw)` 得到普通 Python 业务值。
+5. 运行时从截图区域读取 `raw_value(decoder)`。
+6. 由 `value()` 调用插件的 `decode_value(cells, value_bars, icon_tiles)` 得到普通 Python 业务值。
 
 ## 基类契约
 
-- 基类公开 `raw_value()`，按冻结的输出描述读取原始区域。
-- 基类公开 `value()`，并把原始值交给插件实现的 `decode_value(raw)`。
-- 每个条件插件必须实现 `decode_value(raw)` 和 `fallback_value()`；任一缺失时，该插件类保持抽象，不能实例化。
-- `decode_value(raw)` 抛出任何异常时，`value()` 必须捕获异常并返回 `fallback_value()`。
+- 基类公开 `raw_value(decoder)`，按冻结的输出描述读取原始区域。
+- 基类公开 `value(cells, value_bars, icon_tiles)`，三项均为列表，未使用的类型传空列表，并交给插件实现的 `decode_value(cells, value_bars, icon_tiles)`。
+- 每个条件插件必须实现 `decode_value(cells, value_bars, icon_tiles)` 和 `fallback_value()`；任一缺失时，该插件类保持抽象，不能实例化。
+- `decode_value(cells, value_bars, icon_tiles)` 抛出任何异常时，`value()` 必须捕获异常并返回 `fallback_value()`。
 - 插件可以在识别到业务不可用状态时主动返回自己的兜底值。
 - `value()` 必须始终返回与声明的 `value_type` 和 `value_shape` 相符的值；核心不使用通用 `None` 业务值。
 
@@ -106,6 +106,34 @@ Lua 编码与 Python 解码属于同一插件版本的配对契约。任何缩�
 
 ## 待定事项
 
-- 各首批条件插件的完整清单、参数与编解码公式。
 - 行为插件的公共基类接口。
-- 插件发现、缓存和冲突报错的具体实现。
+- 行为及截图插件的通用发现扩展。
+
+
+## 第 7–10 步条件实现
+
+`phantom/conditions/base.py` 提供不可变 Output/Region、Condition 生命周期和独立行布局。
+每个版本导出 Plugin 类；Registry 只加载精确目录，按标识缓存类，实例不共享。
+非法标识、版本缺失、模块或参数错误均附带插件名称；无版本回退和热加载。
+output_count 与 value_shape 独立，ValueBar 的 widths 为每条内容宽度，支持单实例多区域。
+冻结前验证兜底类型；输入列表数量错误、解码异常或业务类型不符返回已声明兜底。
+区域越界由调用层报告，不将整个错误布局伪装为正常业务值。
+
+| 插件 @1.0 | 参数 | 输出与解码 | 兜底 |
+| --- | --- | --- | --- |
+| player_primary_power | 有限正数 max_power | Cell ratio × max_power，float | 0.0 |
+| spec_dk_rune | 无 | Cell mean 四舍五入，0–6 int | 0 |
+| spell_charges | spell_ids、正整数 max_charges | ValueBar 宽=max_charges，ratio×上限四舍五入 | 0 |
+| spell_overlay | spell_ids | Cell 严格黑白 bool | False |
+| spell_usable | spell_ids | Cell 严格黑白 bool | False |
+| player_health_pct | 无 | Cell percent，预测生命百分比 float | 0.0 |
+| spell_cooldown | spell_ids、布尔 ignore_gcd | Cell 分段剩余秒数 float | 375.0 |
+| spell_gcd | 无 | Cell 分段剩余秒数 float | 375.0 |
+
+spell_ids 是非空正整数列表，普通法术取首个法术书匹配候选。
+spell_gcd 固定 GetSpellCooldownDuration(61304,false)，不查询法术书，不接受技能或 ignore_gcd 参数。
+无参插件可省略 plugin_args 或传空表，其他参数一律拒绝。前缀 player_/target_/focus_/spell_/spec_ 仅为建议。
+冷却亮度 255/155/105/55/0 对应 0/5/30/155/375 秒，区间内线性反算；黑色同时表示饱和或无 duration。
+灰度 Cell 必须纯灰，布尔必须纯黑/白；整数采用非负数四舍五入而非银行家舍入。
+能量与血量直接把曲线返回颜色交给渲染，充能直接传秘密 currentCharges；符文仅统计非秘密 runeReady，不读取秘密事件参数。
+事件与节流沿用对应模板；GCD 与普通冷却均独立随机错峰、严格超过 0.1 秒轮询。

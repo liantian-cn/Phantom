@@ -54,3 +54,18 @@ A plugin may not translate “secret” into an empty Cell. Empty output means o
 - Is the evidence tied to the target build and pinned revision?
 
 If any answer is uncertain, mark the path unverified and keep it out of a normative plugin contract.
+
+
+## Blood DK condition verification — 2026-09-12
+
+Reference: E:/Documents/GitHub/wow-ui-source, 12.1.0.69587,
+revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58.
+PlayerScriptDocumentation.lua defines GetRuneCooldown with optional absence and no secret-return annotation;
+Blizzard_UnitFrame/Mainline/RuneFrame.lua branches on runeReady. UnitDocumentation.lua marks
+RUNE_POWER_UPDATE payloads secret: the plugin ignores them and queries all six runes again.
+UnitPowerPercent accepts powerType, unmodified and a curve; the result is sent directly to Cell.
+SpellDocumentation.lua defines GetSpellCooldownDuration(spellIdentifier, ignoreGCD), MayReturnNothing.
+The user identifies 61304 as the fixed GCD spell; spell_gcd queries it directly with false and no spellbook test.
+The absence of a duration renders black. This does not establish the actual in-game 61304 behavior;
+game loading/rendering verification remains outstanding. Wiki requests for GetRuneCooldown/UnitPowerPercent
+failed during this task, so API signatures are documented from the local source, not claimed as live Wiki evidence.

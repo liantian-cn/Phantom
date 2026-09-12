@@ -59,7 +59,7 @@ def test_cell_uses_inner_rgb_and_ignores_border() -> None:
     pixels[1:3, 1:3] = (12, 24, 36)
     cell = Cell(8, 2, pixels)
     assert cell.mean == 24.0
-    assert cell.decimal == pytest.approx(24 / 255)
+    assert cell.ratio == pytest.approx(24 / 255)
     assert cell.percent == pytest.approx(24 / 255 * 100)
     assert cell.color_string == "12,24,36"
     assert cell.is_pure and not cell.is_not_pure

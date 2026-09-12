@@ -135,3 +135,15 @@ SetOverrideBindingClick(frame, true, macro.key, buttonName)
 - 键位语法的完整合法键名表和错误提示。
 - 循环频率、节流与相关配置字段。
 - 未来是否增加天赋路由字段。
+
+
+## 单份生成阶段扩展（schema v1）
+
+- profile.unit_class_id 可省略，按职业 token 推导；显式值必须一致。annotate 是 rotation 条目的可选字符串说明。
+- Idle 是保留动作名，不得声明同名宏，不需要键位。空 condition 仅允许在末尾显式 Idle；省略时在内存追加隐含 Idle，不写回该条目。
+- 条件 layout 是可重建的排错表：output_type 加 regions 数组，每个区域有 x、适用的 y/width；单位与 Lua 构造器一致。
+- 每次启动加载和点击生成重新分配，分类后按条件原始顺序排列，ValueBar 包含分隔。仅 layout 不同时保存，保留注释和其他内容，校验失败不回写。
+- 本阶段校验所有结构、基本类型、UUID、职业专精、名称/引用与插件参数，解析表达式语法和引用但不求值；第 11 步补齐上文白名单与表达式类型校验。
+- 条件实例、宏和规则保持配置顺序；重复规则允许，条件标题与宏名称必须唯一。
+- 当前键位仅校验大写格式及 CTRL/ALT/SHIFT 修饰符，无重复修饰符；完整合法键名表留待绑定阶段。
+- 示例为 rotations/blood-dk.toml；每次生成所有声明的条件，包括尚未被规则引用的条件。

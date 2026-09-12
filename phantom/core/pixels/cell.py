@@ -32,12 +32,12 @@ class Cell(PixelRegion):
         return float(np.mean(self.inner))
 
     @property
-    def decimal(self) -> float:
+    def ratio(self) -> float:
         return self.mean / 255.0
 
     @property
     def percent(self) -> float:
-        return self.decimal * 100.0
+        return self.ratio * 100.0
 
     @property
     def is_pure(self) -> bool:

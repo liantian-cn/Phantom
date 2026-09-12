@@ -72,7 +72,7 @@ Underline > .underline--bar { color: $flexoki-blue; background: $flexoki-surface
     border: tall $flexoki-surface-0 !important;
     text-opacity: 1;
 }
-#general_table {
+#general_table, #condition_table {
     height: 1fr;
     background: $flexoki-base;
     color: $flexoki-text;

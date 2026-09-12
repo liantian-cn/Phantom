@@ -46,3 +46,8 @@ If sources disagree, do not silently choose one. Record the build and revision, 
 - Recheck volatile claims whenever the 12.1 build or `/wow-ui-source` revision changes.
 - Keep examples small and project-relevant. Do not rebuild a general WoW addon tutorial here.
 - Preserve API names, enum names, paths, and code in English; accuracy is more important than translation.
+
+
+## Windows reference location
+
+On Windows, `/wow-ui-source` maps to `E:\Documents\GitHub\wow-ui-source` (read-only). Checked 2026-09-12: version 12.1.0.69587, revision `a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58`. Historical archival revisions above are preserved as historical evidence.

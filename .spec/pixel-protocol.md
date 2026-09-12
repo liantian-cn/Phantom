@@ -67,7 +67,7 @@ Decoder 负责切分，区域构造器只分析已切分的 RGB 数组，坐标�
 - 物理尺寸固定为 4×4。
 - Python 读取 NumPy 数组时只信任中间 2×2，即 `cell_pix_array[1:3, 1:3]`。
 - `Cell(x, y, pix_array)` 保存 `x`、`y`、完整 `pix_array` 和内部 `inner`。
-- 只读属性 `mean` 为内部全部 RGB 分量的均值，`decimal = mean/255`，`percent = decimal*100`，均返回 Python `float`。
+- 只读属性 `mean` 为内部全部 RGB 分量的均值，`ratio = mean/255`，`percent = ratio*100`，均返回 Python `float`。
 - `is_pure` 判断内部所有 RGB 像素一致，`is_not_pure` 取反；`color_string` 使用内部左上像素，格式为 `"r,g,b"`。`is_black`、`is_white` 要求内部全部像素严格为黑、白。
 - 未来条件插件的 `raw_value()` 保留所需 RGB 原始信息；如何映射业务值由版本化编解码契约决定，当前 Cell 不提供该插件接口。
 

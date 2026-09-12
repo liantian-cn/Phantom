@@ -90,3 +90,18 @@ Screen 背景为 `#000000`、正文为 `#EDEDED`、容器为 `#111111`，状态�
 - 覆盖率工具。
 - Windows 手工验证清单与可重复测试环境。
 - WoW 12.1 build 的兼容矩阵和回归频率。
+
+
+## 第 7–10 步离线验收（2026-09-12）
+
+新增配置、布局、多区域、插件参数、灰度/充能/冷却解码、Lua 生成及 TUI 集成测试。
+160 项 pytest 通过；mypy strict、Ruff check 与 format --check 通过。
+`condition.py` 在含 @ 的精确版本目录下不能作为普通包被 mypy 合并扫描（会冲突为同名模块）。
+统一类型检查入口为 `.venv/Scripts/python scripts/check_types.py`：先检查核心/tests/scripts，
+再逐个检查八个精确版本 condition.py，任何失败都返回非零；不跳过插件检查。
+Ruff 命令增加 scripts 目录。运行依赖新增 tomlkit==0.15.1，开发依赖新增 lupa==2.8。
+测试使用 lupa.lua51 编译全部生成 Lua，执行真实生成条件模板与 API doubles，再把输出构造成完整 NumPy 基板验证 Python 业务值。
+特别覆盖 GCD 不查询法术书、固定 61304/false、无 duration 输出黑色、普通技能筛选和职业专精不匹配不注册条件。
+TUI run_test 覆盖无游戏生成、错误后修复重试、同帧条件值、暂停/专精不匹配清空、慢速生成期间响应与退出等待。
+实际 `E:\World of Warcraft\_retail_\Interface\AddOns\Phantom` 已生成 23 个文件（含 6 个 media 资源），TOC 引用 16 个存在的 Lua，全部通过 Lua 5.1 解析，未引用 examples。
+没有启动游戏、安装宏绑定或发送按键；该记录仅证明离线生成与算法，不证明游戏端 API/渲染。
