@@ -38,9 +38,12 @@ py -3.13 -m venv .venv
 .venv/Scripts/python -m pip install -r requirements-dev.txt
 .venv/Scripts/python -m rotations.main
 .venv/Scripts/python phantom/captures/gdi@1.0/demo.py
+.venv/Scripts/python phantom/core/pixels/demo01.py
 ```
 
 仅运行时安装 `requirements.txt` 即可。主入口暂不接入 Textual 和截图；demo 的时序与输出格式见插件规范。
+像素解析 demo 同样等待 3 秒、采集 5 秒，停止后输出最后一帧的十个 Cell 亮度、
+一个 ValueBar 的 ratio/percent 和两个 IconTile hash；截图错误或区域不足时明确失败，不回退旧帧。
 WSL2／容器使用 Python 3.13 创建虚拟环境后，通过 `.venv/bin/python` 安装同一开发依赖并运行纯图像测试，GDI 仅支持 Windows。
 源码变量和接口使用英文，业务注释与输出说明使用中文；不把本机 `.venv` 或 demo 截图提交到 Git。
 

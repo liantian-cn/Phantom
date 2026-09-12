@@ -55,8 +55,16 @@ Phantom 最终运行在 Windows，而日常开发环境是 WSL2 与 Docker。容
 数组保存测试应比较重新加载的 dtype、shape、RGB 内容及关联状态，不比较 JSON 排版。
 
 Windows 可运行定时 demo 验证真实 GDI 调用、停止及文件输出。无非 DEBUG 基板时应得到 `has_error=true` 和未定位原因，不生成 NPY。
-当前 Lua 保持 DEBUG=true；真实游戏验收需另行准备非 DEBUG 画面，再检查有效图、移动重定位和颜色一致性。
+2026-09-12 用户确认第三步截图已测试成功；当日像素解析 demo 也成功读取当前游戏基板。
+真实游戏验收使用非 DEBUG 画面；移动重定位等具体场景仍以各任务实际验证记录为准。
 桌面 smoke test 与合成图像测试不能代替游戏验收。
+
+像素解析测试见 `tests/test_pixels.py`，覆盖 Lua 坐标切分、边缘污染、严格黑白、无有效黑白像素、
+空槽及非空 hash、非连续数组、独立只读快照和缓存、区域越界及 demo 错误结果拒绝。
+运行 `python phantom/core/pixels/demo01.py` 可验证同一游戏截图的十个 Cell、一个 ValueBar 和两个 IconTile。
+2026-09-12 实测第一行亮度为 `6,1,255,0,0`，第二行为 `255,0,0,0,255`，
+ValueBar ratio 为 `1.0`、percent 为 `100.0`，两个 IconTile 均为空槽 `None`。
+非空 IconTile hash 已由合成图验证，本次游戏画面未覆盖非空图标。
 
 ## 待定事项
 

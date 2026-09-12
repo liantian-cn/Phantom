@@ -48,9 +48,28 @@ RGB 分别为 `POINT_0=(15,25,20)`、`POINT_1=(25,15,20)`。全部 16 像素精�
 
 ## Cell
 
+Python 通用解析入口为 `phantom.core.pixels.PixelDecoder(pix_array)`，接收包含左右检测列的完整
+RGB `uint8` 基板数组，高度为 20、宽度至少 8 且为 4 的倍数。三个读取方法采用 Lua 相同入参：
+
+| 方法 | 左上像素坐标 | 完整区域宽×高 |
+| --- | --- | --- |
+| `getCell(x, y)` | `(4*x, 4*(y-1))` | `4×4` |
+| `getValueBar(x, width)` | `(4*x, 8)` | `4*(width+1)×4` |
+| `getIconTile(x)` | `(4+8*(x-1), 12)` | `8×8` |
+
+`x`、`width` 必须是正整数，Cell 的 `y` 为 1 或 2；越过内容区或进入检测列的请求抛出异常。
+Decoder 负责切分，区域构造器只分析已切分的 RGB 数组，坐标仅用于定位。
+每个区域持有独立只读快照，后续输入变化不影响已有区域或 hash 缓存。
+三个区域均通过只读属性 `pos`、`region` 返回相对完整基板的物理像素坐标，
+矩形右下不包含；`pos_string`、`region_string` 为无括号、无空格的逗号分隔字符串。
+例如 Cell(1,1) 的 region 为 `(4,0,8,4)`，region_string 为 `"4,0,8,4"`。
+
 - 物理尺寸固定为 4×4。
 - Python 读取 NumPy 数组时只信任中间 2×2，即 `cell_pix_array[1:3, 1:3]`。
-- `raw_value()` 保留插件需要的 RGB 原始信息；如何把颜色或亮度映射为业务值由插件的版本化编解码契约决定。
+- `Cell(x, y, pix_array)` 保存 `x`、`y`、完整 `pix_array` 和内部 `inner`。
+- 只读属性 `mean` 为内部全部 RGB 分量的均值，`decimal = mean/255`，`percent = decimal*100`，均返回 Python `float`。
+- `is_pure` 判断内部所有 RGB 像素一致，`is_not_pure` 取反；`color_string` 使用内部左上像素，格式为 `"r,g,b"`。`is_black`、`is_white` 要求内部全部像素严格为黑、白。
+- 未来条件插件的 `raw_value()` 保留所需 RGB 原始信息；如何映射业务值由版本化编解码契约决定，当前 Cell 不提供该插件接口。
 
 边缘像素不参与计算，因为游戏渲染、抗锯齿和缩放可能污染边缘。
 
@@ -91,7 +110,10 @@ total_count = white_count + black_count
 result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 ```
 
-该百分比是 `raw_value()`，不是业务值；插件可在 `decode_value()` 中继续缩放或转换。
+`ValueBar(x, width, pix_array)` 保存 `x`、`width`、完整 `pix_array` 与 `inner`。
+只读属性 `ratio` 返回白色占有效黑白像素的 0–1 比例，`percent` 返回上述 0–100 百分数，
+两者无有效黑白像素时均为 `0.0`；不提供含义模糊的 `value` 或反向参数。
+未来插件可通过 `raw_value()` 读取百分比，再在 `decode_value()` 中缩放或转换。
 
 ## Icon Tile
 
@@ -100,6 +122,7 @@ result = 100.0 * white_count / total_count if total_count > 0 else 0.0
 - 只信任中间 6×6，即 `icon_tile_pix_array[1:7, 1:7]`。
 - 中间区域全黑时，该槽位的原始值为 `None`。
 - 否则先保证数组连续，再以 seed 0 计算 `xxh3_64_hexdigest`，返回 16 位小写字符串。
+- `IconTile(x, pix_array)` 保存槽位 `x`、完整 `pix_array` 与内部 `inner`；`is_black`、`is_pure`、`is_not_pure` 均分析整个内部 6×6。`hash` 为只读属性，通过实例 `_hash_cache` 缓存非空结果。
 - 多 Icon Tile 条件的 `raw_value()` 始终返回长度等于 `output_count` 的列表，并用 `None` 保留空槽位。
 
 插件的 `value()` 可以删除空槽、重新组织列表或合并多个区域。业务列表的排序由插件契约定义，核心不附加统一顺序。
