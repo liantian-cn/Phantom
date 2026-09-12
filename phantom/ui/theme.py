@@ -1,59 +1,68 @@
 """
 Summary:
-    Flexoki 官方色值与 Phantom 的 Textual 深色主题配置。
+    Phantom 纯黑配色与 Textual 深色主题配置。
 Description:
-    集中定义 Flexoki 深色方案使用的官方色值，并据此注册界面唯一使用的深色主题。
-    主题通过 flexoki-* 变量提供给样式表，语义固定为 black 背景、base-950 容器、
-    paper 正文、blue-400 选中与强调。
+    集中定义界面颜色角色，并据此注册界面唯一使用的深色主题。
 Key Variables:
-    FLEXOKI: Flexoki 官方色值，键为 Phantom 使用的颜色角色名。
+    MONOCHROME: Phantom 颜色角色。
     PHANTOM_THEME: 注册到 Textual 的 Phantom 深色主题。
 Change Log:
-    2026-09-12: Changed 界面配色由 Catppuccin Mocha 改为 Flexoki 深色（纯黑底）。
+    2026-09-12: Changed 界面配色为纯黑、深灰面板和明亮状态色。
 """
 
 from textual.theme import Theme
 
+MONOCHROME: dict[str, str] = {
+    "base": "#000000",
+    "panel": "#111111",
+    "surface": "#222222",
+    "border": "#333333",
+    "muted": "#A1A1AA",
+    "disabled": "#71717A",
+    "text": "#EDEDED",
+    "focus": "#FFFFFF",
+    "green": "#4ADE80",
+    "yellow": "#FBBF24",
+    "red": "#F87171",
+}
+
+# 样式表保留稳定的语义变量名，颜色角色已全部映射到新的纯黑方案。
 FLEXOKI: dict[str, str] = {
-    "base": "#100f0f",
-    "mantle": "#1c1b1a",
-    "crust": "#282726",
-    "surface_0": "#343331",
-    "surface_1": "#403e3c",
-    "overlay_0": "#575653",
-    "overlay_1": "#6f6e69",
-    "subtext_0": "#878580",
-    "subtext_1": "#b7b5ac",
-    "text": "#fffcf0",
-    "blue": "#4385be",
-    "green": "#879a39",
-    "orange": "#da702c",
-    "red": "#d14d41",
-    "yellow": "#d0a215",
-    "cyan": "#3aa99f",
-    "purple": "#8b7ec8",
-    "magenta": "#ce5d97",
+    "base": MONOCHROME["base"],
+    "mantle": MONOCHROME["panel"],
+    "crust": MONOCHROME["surface"],
+    "surface_0": MONOCHROME["surface"],
+    "surface_1": MONOCHROME["border"],
+    "overlay_0": MONOCHROME["muted"],
+    "overlay_1": MONOCHROME["disabled"],
+    "subtext_0": MONOCHROME["muted"],
+    "subtext_1": MONOCHROME["muted"],
+    "text": MONOCHROME["text"],
+    "blue": MONOCHROME["focus"],
+    "green": MONOCHROME["green"],
+    "orange": MONOCHROME["yellow"],
+    "red": MONOCHROME["red"],
 }
 
 PHANTOM_THEME = Theme(
-    name="phantom-flexoki",
-    primary=FLEXOKI["blue"],
-    secondary=FLEXOKI["purple"],
-    accent=FLEXOKI["blue"],
-    warning=FLEXOKI["orange"],
-    error=FLEXOKI["red"],
-    success=FLEXOKI["green"],
-    foreground=FLEXOKI["text"],
-    background=FLEXOKI["base"],
-    surface=FLEXOKI["mantle"],
-    panel=FLEXOKI["mantle"],
+    name="phantom-monochrome",
+    primary=MONOCHROME["focus"],
+    secondary=MONOCHROME["muted"],
+    accent=MONOCHROME["focus"],
+    warning=MONOCHROME["yellow"],
+    error=MONOCHROME["red"],
+    success=MONOCHROME["green"],
+    foreground=MONOCHROME["text"],
+    background=MONOCHROME["base"],
+    surface=MONOCHROME["panel"],
+    panel=MONOCHROME["panel"],
     dark=True,
     variables={
         **{f"flexoki-{name.replace('_', '-')}": color for name, color in FLEXOKI.items()},
-        "text": FLEXOKI["text"],
-        "text-muted": FLEXOKI["subtext_1"],
-        "text-disabled": FLEXOKI["overlay_1"],
-        "block-cursor-background": FLEXOKI["blue"],
-        "block-cursor-foreground": FLEXOKI["base"],
+        "text": MONOCHROME["text"],
+        "text-muted": MONOCHROME["muted"],
+        "text-disabled": MONOCHROME["disabled"],
+        "block-cursor-background": MONOCHROME["focus"],
+        "block-cursor-foreground": MONOCHROME["base"],
     },
 )

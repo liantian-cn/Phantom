@@ -346,10 +346,12 @@ class PhantomApp(App[None]):
         program = "已启动" if self.collecting else "已暂停"
         game = "已启动" if self.game_status.running else "未启动"
         status = Text()
-        status.append(f"程序：{program}", style=FLEXOKI["green" if self.collecting else "orange"])
+        status.append(
+            f"程序：{program}", style=FLEXOKI["green" if self.collecting else "subtext_1"]
+        )
         status.append(" · ", style=FLEXOKI["text"])
         status.append(
-            f"游戏：{game}", style=FLEXOKI["green" if self.game_status.running else "orange"]
+            f"游戏：{game}", style=FLEXOKI["green" if self.game_status.running else "subtext_1"]
         )
         self.query_one("#status_line", Static).update(status)
         values = {

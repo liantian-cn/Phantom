@@ -32,7 +32,7 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 行
 
 - 消息与事件：游戏检测结果、业务日志和停止完成通过自定义 `Message` 与 `post_message` 从后台线程投递到界面线程，再由消息处理方法更新控件，参见[官方消息与事件文档](https://textual.textualize.io/guide/events/)。
 - 后台任务：阻塞的截图停止与资源释放通过线程 Worker 执行，不在界面线程调用阻塞接口，参见[官方 Worker 文档](https://textual.textualize.io/guide/workers/)。
-- 主题：用 `register_theme` 注册固定深色的 Flexoki 主题 `phantom-flexoki`，色值来源见 [`.context/flexoki.md`](../.context/flexoki.md)。
+- 主题：用 `register_theme` 注册固定纯黑深色的 `phantom-monochrome` 主题，颜色角色集中定义在 `phantom/ui/theme.py`。
 - 测试：用 `run_test` 驱动真实控件、按键和尺寸变化，验证标签页、按钮状态与数据刷新。
 
 当前不使用 `Signal` 与响应式属性 `reactive`；状态更新由显式消息和刷新方法完成。

@@ -79,9 +79,8 @@ TUI 与应用生命周期测试见 `tests/test_ui.py`、`tests/test_configuratio
 同日完成 Windows 桌面 smoke 验证：真实入口在启动工作目录创建默认 `phantom.toml`，界面以暂停状态打开，
 未检测到游戏时“启动”保持禁用，标签顺序为综合→通用条件→日志→宏绑定→循环条件，Ctrl+Q 正常退出且不残留 `phantom-` 线程；
 该次验证记录的浅色解析样式（Base `#eff1f5`、Text `#4c4f69`、Mantle `#e6e9ef`、Blue `#1e66f5`）在同日主题先后改为 Catppuccin Mocha 与 Flexoki 后失效。
-Flexoki 主题通过 Textual 真实控件运行（`run_test`，120×46）重新解析：活动主题为 `phantom-flexoki`（dark，primary blue-400 `#4385be`，background black `#100f0f`），
-Screen 背景为 black `#100f0f`、正文为 paper `#fffcf0`、容器为 base-950 `#1c1b1a`，
-状态行“程序”使用 orange-400 `rgb(218,112,44)`、“游戏”使用 green-400 `rgb(135,154,57)`，CSS 变量中不再存在 `mocha-*` 或 `latte-*`。
+纯黑主题通过 Textual 真实控件运行（`run_test`，120×46）重新解析：活动主题为 `phantom-monochrome`（dark，primary `#FFFFFF`，background `#000000`），
+Screen 背景为 `#000000`、正文为 `#EDEDED`、容器为 `#111111`，状态行正常使用 `#4ADE80`，暂停和未运行使用 `#A1A1AA`。
 本次环境无法分配交互式终端（ConPTY 创建失败），未重复桌面终端 smoke；以上深色证据来自真实控件的解析样式，不是终端截图。
 同一环境直接启动 GDI 线程时，无基板会得到 `has_error=true`、原因“未找到非 DEBUG 基板定位标记”，线程保持运行并可正常停止。
 以上 smoke 验证不带游戏画面，不能代替游戏内验收：第 6 步要求的“游戏内改变状态、TUI 随之变化”尚未执行。
