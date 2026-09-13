@@ -1,0 +1,19 @@
+# AI Agent 自述；运行时不读取。参数与返回值以同目录实现为准。
+# 核验：2026-09-13，E:/Documents/GitHub/wow-ui-source，12.1.0.69587
+# revision: a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58
+# 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/ 下 UnitDocumentation.lua, CurveUtilDocumentation.lua
+name = "liantian_cn.player_health_pct@dev"
+display_name = "玩家预测生命百分比"
+recommended_condition_name = "玩家血量百分比"
+description = """
+固定采集玩家预测生命比例。UnitHealthPercent 使用 usePredicted=true，配合 C_CurveUtil.CreateColorCurve 把生命比例直接映射为黑白线性灰度；Lua 不读取秘密颜色分量。Python 从一个 Cell 读取灰度并换算为 0–100 的浮点百分比。初始化立即刷新，随后响应进入世界、玩家生命与最大生命变化；不支持 target 或 focus 参数。
+"""
+
+[parameters]
+description = "无参数；可省略 plugin_args 或传空表，其他字段均拒绝。"
+
+[returns]
+type = "float"
+unit = "百分比（0–100）"
+fallback = 0.0
+description = "预测生命百分比标量，灰度为 0 对应 0.0，为 255 对应 100.0；解码异常返回 0.0。"

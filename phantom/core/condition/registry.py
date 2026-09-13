@@ -7,17 +7,16 @@ Description:
 Key Variables:
     Registry._classes: 当前 registry 生命周期内的精确版本类缓存。
 Change Log:
+    2026-09-13: Changed 命名交由作者规则约束，精确加载并检查目录与源码边界。
     2026-09-12: Added 条件插件发现与参数校验入口。
 """
 
+import hashlib
 import importlib.util
-import re
 import sys
 from pathlib import Path
 
 from phantom.core.condition.base import Condition
-
-PLUGIN_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*@[0-9]+(?:\.[0-9]+)+", re.ASCII)
 
 
 class Registry:
@@ -29,17 +28,26 @@ class Registry:
 
     def create(self, identifier: str, args: dict[str, object]) -> Condition:
         try:
-            if PLUGIN_ID.fullmatch(identifier) is None:
-                raise ValueError("插件标识必须为小写名称@精确版本")
+            if (
+                not identifier
+                or identifier in {".", ".."}
+                or any(character in identifier for character in "/\\:")
+                or identifier.endswith((".", " "))
+                or Path(identifier).is_absolute()
+            ):
+                raise ValueError("插件标识必须是单个安全目录名")
             directory = self.root / identifier
             if directory.resolve().parent != self.root:
                 raise ValueError("插件目录必须位于条件根目录内")
             template = directory / "template.lua"
             source = directory / "condition.py"
+            if any(path.resolve().parent != directory.resolve() for path in (source, template)):
+                raise ValueError("条件源码与模板必须位于精确版本目录内")
             if not source.is_file() or not template.is_file():
                 raise ValueError("缺少精确版本的 condition.py 或 template.lua")
             if identifier not in self._classes:
-                module_name = f"phantom_condition_{identifier.replace('@', '_').replace('.', '_')}"
+                digest = hashlib.sha256(str(source.resolve()).encode()).hexdigest()
+                module_name = f"phantom_condition_{digest}"
                 spec = importlib.util.spec_from_file_location(module_name, source)
                 if spec is None or spec.loader is None:
                     raise ValueError("无法创建插件模块")

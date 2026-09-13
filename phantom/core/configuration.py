@@ -21,7 +21,7 @@ from phantom.core.rotation import validate_addon_name
 from phantom.core.validation import PositiveInteger, PositiveNumber, String, Table
 
 DEFAULT_CONFIG = """[capture]
-plugin = "gdi@1.0"
+plugin = "liantian_cn.gdi@dev"
 fps = 15
 
 [ui]
@@ -48,7 +48,7 @@ class ConfigurationError(ValueError):
 class AppConfig:
     path: Path
     fps: float = 15
-    capture_plugin: str = "gdi@1.0"
+    capture_plugin: str = "liantian_cn.gdi@dev"
     min_width: int = 120
     min_height: int = 46
     log_max_lines: int = 1000
@@ -86,7 +86,9 @@ def load_config(working_directory: Path) -> AppConfig:
         assert isinstance(addon_name, str)
         validate_addon_name(addon_name)
         fps_number = PositiveNumber().validate(capture.get("fps", 15), "capture.fps")
-        capture_plugin = String().validate(capture.get("plugin", "gdi@1.0"), "capture.plugin")
+        capture_plugin = String().validate(
+            capture.get("plugin", "liantian_cn.gdi@dev"), "capture.plugin"
+        )
         return AppConfig(
             path=path,
             fps=fps_number,

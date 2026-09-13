@@ -4,8 +4,8 @@
 
 | 插件类型 | 专题 | 当前入口 |
 | --- | --- | --- |
-| 条件 | [条件插件](conditions.md) | `phantom/conditions/<name>@<version>/condition.py` 与 `template.lua` |
-| 截图 | [截图插件](captures.md) | `phantom/captures/<name>@<version>/capture.py` |
+| 条件 | [条件插件](conditions.md) | `phantom/conditions/<author>.<name>@<version>/condition.py` 与 `template.lua` |
+| 截图 | [截图插件](captures.md) | `phantom/captures/<author>.<name>@<version>/capture.py` |
 | 行为 | 尚未实施 | 接口留待对应路线图任务确认，不自行设计并接入 |
 
 系统加载、生命周期及输出契约以 [插件系统](../.spec/plugin-system.md) 为准；像素单位以 [像素协议](../.spec/pixel-protocol.md) 为准。
@@ -13,7 +13,7 @@
 
 ## 职责与依赖
 
-- 版本目录只放插件实现及配套模板。公共条件设施位于 `phantom/core/condition/`，截图设施位于 `phantom/core/capture/`。
+- 版本目录放插件实现、配套模板与供 Agent 阅读的 `plugin.toml`。公共条件设施位于 `phantom/core/condition/`，截图设施位于 `phantom/core/capture/`。
 - 插件依赖核心的公开契约；核心不依赖具体技能、职业或专精规则，不按某个插件名称写分支。
 - 不导入另一个插件版本目录。通用数学与基础输入检查通过组合复用；业务字段、算法参数、业务范围和兜底留在本插件版本。
 - 不在 UI 中加载具体后端文件或引用其具体实现类；使用核心注册器。
@@ -21,8 +21,34 @@
 
 ## 版本与变更
 
-使用系统规定的精确版本标识，不做版本回退或跨版本隐式复用。修改参数约束、输出语义或编解码协议时，先确认迁移与版本策略。
+以下是 Agent 开发规则，不由运行时代码或 CI 强制校验：
+
+- 插件标识使用 `repo作者名.包名@版本号`，包名沿用英文 `snake_case`。作者名应为可用的 Python 包名（合法标识符且不是保留词）；本仓库作者 `liantian-cn` 使用 `liantian_cn`。
+- 数字或点分数字版本（如 `1`、`1.0`、`1.2.3`）是正式版本，接口参数和逻辑不得原地修改；需要修改时创建另一版本。
+- 其余非数字版本是测试版本，例如 `dev`、`beta`、`1.0-beta`，允许修改接口参数和逻辑；仍需同步受影响配置、说明并验证业务行为。
+- 当前八个条件插件和 GDI 截图插件统一为 `liantian_cn.<原包名>@dev`，本次迁移不改变业务契约，不保留旧别名。
+
+运行时只按完整目录名精确加载，不做版本回退、作者名自动转换或跨版本隐式复用，保留路径安全及接口检查。
+
 2026-09-13 的职责重构保留现有八个 `@1.0` 的业务契约，这次决定不构成未来修改已发布语义的通用授权。
+
+## AI Agent 自述
+
+建议每个插件提供 `plugin.toml`，新增或修改插件时由 Agent 同步维护。这是软性作者要求：Python 运行代码不读取它，缺失或内容错误不作为插件加载失败条件，也不增加强制 CI 校验。
+
+自述使用英文 TOML 字段与中文业务说明，推荐结构如下：
+
+| 字段 | 内容 |
+| --- | --- |
+| `name` | 完整插件标识，与目录名一致 |
+| `display_name` | 简明中文插件名 |
+| `description` | 中等详细用途：主要 API 名称、输入到输出转换、适用边界；无需 API 调用教程 |
+| `recommended_condition_name` | 建议的条件标题；如 `{技能名称}的冷却时间`，占位符需替换，实际标题遵守 rotation 命名规则；截图填写“不适用” |
+| `[parameters]` | 无参数时用 `description` 明确说明；有参数时使用下级表逐项描述 |
+| `[parameters.<参数名>]` | `type`、`required`、`description`，仅有默认值时填写 `default`；说明含义与约束，不罗列内部临时变量 |
+| `[returns]` | `type`、`description`，按业务需要填写 `unit`、`fallback`、输出形状与状态字段说明 |
+
+内容必须与实际插件一致，不凭 API 名称推断更强的业务保证。WoW API 核验来源可用注释记录日期、版本、revision 和对应定义文件。完整源码说明要求仍见各插件专题。
 
 ## 文档、类型与验证
 

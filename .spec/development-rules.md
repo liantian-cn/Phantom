@@ -36,12 +36,12 @@ Windows PowerShell 在仓库根目录执行：
 ```powershell
 py -3.13 -m venv .venv
 .venv/Scripts/python -m pip install -r requirements-dev.txt
-.venv/Scripts/python -m rotations.main
+.venv/Scripts/python -m phantom.main
 .venv/Scripts/python demo/demo.py
 .venv/Scripts/python demo/demo01.py
 ```
 
-仅运行时安装 `requirements.txt` 即可。`python -m rotations.main` 启动 Textual 主程序，读取或创建启动工作目录下的 `phantom.toml`；
+仅运行时安装 `requirements.txt` 即可。`python -m phantom.main` 启动 Textual 主程序，读取或创建启动工作目录下的 `phantom.toml`；
 在仓库根目录启动时配置落在仓库根目录，换目录启动就使用该目录的配置，程序不改变工作目录。界面、配置与检测规则见 [tui.md](tui.md)。
 demo 的时序与输出格式见插件规范，demo 不经过 TUI，也不读取应用配置。
 独立 demo 统一放在项目根目录 `demo/`，执行时先打印演示内容，再开始采集流程。

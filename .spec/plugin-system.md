@@ -2,22 +2,24 @@
 
 ## 插件标识与解析
 
-插件标识由小写 `snake_case` 名称、字符 `@` 和精确版本组成，例如：
+插件标识与版本的 Agent 作者约定见 [插件开发手册](../.plugin-development/README.md#版本与变更)。当前标识例如：
 
-- 条件：`health_pct@1.0`
-- 行为：`post_message@1.0`
-- 截图：`gdi@1.0`
+- 条件：`liantian_cn.player_health_pct@dev`
+- 行为（尚未实现）：`liantian_cn.post_message@dev`
+- 截图：`liantian_cn.gdi@dev`
 
-标识区分大小写。解析器必须查找精确目录；不得自动降级、升级或回退到相近版本。多个版本可以并存，共享配置继续引用作者已测试的版本。
+解析器以完整标识查找精确目录，不校验作者名、包名或版本格式，不自动改名、降级、升级或回退到相近版本。多个版本可以并存，共享配置继续引用作者已测试的版本。
+标识必须是单个安全目录名，禁止绝对路径、目录穿越和 Windows 路径别名；目录及源码、模板不得逃逸各自根目录。文件定位沿用宿主文件系统语义。
 
 ## 插件目录
 
 条件插件目录：
 
 ```text
-phantom/conditions/health_pct@1.0/
+phantom/conditions/liantian_cn.player_health_pct@dev/
   condition.py
   template.lua
+  plugin.toml
 ```
 
 - `condition.py` 定义参数校验、输出描述、Lua 模板参数、解码和兜底。
@@ -26,22 +28,23 @@ phantom/conditions/health_pct@1.0/
 行为插件目录：
 
 ```text
-phantom/actions/post_message@1.0/
+phantom/actions/liantian_cn.post_message@dev/
   action.py
 ```
 
-第一版只规划基于 `ctypes.windll.user32.PostMessageW` 的 `post_message@1.0`。
+第一版只规划基于 `ctypes.windll.user32.PostMessageW` 的 `liantian_cn.post_message@dev`。
 
 截图插件目录：
 
 ```text
-phantom/captures/gdi@1.0/
+phantom/captures/liantian_cn.gdi@dev/
   capture.py
+  plugin.toml
 ```
 
-第一版只规划基于 `ctypes.windll.gdi32` 位图截图的 `gdi@1.0`。
+第一版只规划基于 `ctypes.windll.gdi32` 位图截图的 `liantian_cn.gdi@dev`。
 
-当前 `gdi@1.0` 使用 `ctypes.WinDLL` 声明 Windows 函数签名，完成独立后端与 demo；已通过 core/capture/registry.py 接入精确版本加载，统一导出 Plugin。
+当前 `liantian_cn.gdi@dev` 使用 `ctypes.WinDLL` 声明 Windows 函数签名，完成独立后端与 demo；已通过 core/capture/registry.py 接入精确版本加载，统一导出 Plugin。
 
 ## 截图 worker 契约
 
@@ -112,7 +115,7 @@ output_count 与 value_shape 独立，ValueBar 的 widths 为每条内容宽度�
 冻结前验证兜底类型；输入列表数量错误、解码异常或业务类型不符返回已声明兜底。
 区域越界由调用层报告，不将整个错误布局伪装为正常业务值。
 
-| 插件 @1.0 | 参数 | 输出与解码 | 兜底 |
+| 插件（统一为 liantian_cn.名称@dev） | 参数 | 输出与解码 | 兜底 |
 | --- | --- | --- | --- |
 | player_primary_power | 有限正数 max_power | Cell ratio × max_power，float | 0.0 |
 | spec_dk_rune | 无 | Cell mean 四舍五入，0–6 int | 0 |
@@ -134,6 +137,6 @@ spell_gcd 固定 GetSpellCooldownDuration(61304,false)，不查询法术书，�
 ## 截图加载与配置
 
 `phantom/core/capture/` 提供 contracts、worker、imaging 与 registry；`phantom/captures/` 只保存版本插件。
-`Registry.create(identifier="gdi@1.0", fps=15)` 返回 CaptureWorker，每次构造独立实例。标识精确匹配、源码限定在版本目录。
+`Registry.create(identifier="liantian_cn.gdi@dev", fps=15)` 返回 CaptureWorker，每次构造独立实例。标识精确匹配、源码限定在版本目录。
 配置字段见 [TUI 应用配置](tui.md#应用配置)。非法选择、导入失败或不满足调用接口抛出带标识的 CapturePluginError，入口在进入 UI 前报告并非零退出。
 缺省配置采用 GDI；显式配置错误不回退。不提供热切换或热加载。

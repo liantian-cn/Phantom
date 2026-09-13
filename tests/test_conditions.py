@@ -32,7 +32,7 @@ def cell(brightness: int) -> Cell:
 def test_scalar_decode(
     name: str, args: dict[str, object], brightness: int, expected: Value
 ) -> None:
-    plugin = Registry().create(name + "@1.0", args)
+    plugin = Registry().create("liantian_cn." + name + "@dev", args)
     allocate([plugin])
     result = plugin.value([cell(brightness)], [], [])
     assert result == expected
@@ -62,14 +62,16 @@ def test_cooldown_segments(name: str, brightness: int, seconds: float) -> None:
     args: dict[str, object] = (
         {"spell_ids": [195292], "ignore_gcd": True} if name == "spell_cooldown" else {}
     )
-    plugin = Registry().create(name + "@1.0", args)
+    plugin = Registry().create("liantian_cn." + name + "@dev", args)
     allocate([plugin])
     assert plugin.value([cell(brightness)], [], []) == seconds
 
 
 @pytest.mark.parametrize("white_columns", [0, 2, 4, 6, 8])
 def test_charges_half_up_and_red_separator(white_columns: int) -> None:
-    plugin = Registry().create("spell_charges@1.0", {"spell_ids": [50842], "max_charges": 2})
+    plugin = Registry().create(
+        "liantian_cn.spell_charges@dev", {"spell_ids": [50842], "max_charges": 2}
+    )
     allocate([plugin])
     pixels = np.zeros((4, 12, 3), dtype=np.uint8)
     pixels[:, :2] = [255, 0, 0]
@@ -94,7 +96,7 @@ def test_charges_half_up_and_red_separator(white_columns: int) -> None:
 )
 def test_plugin_arguments(name: str, args: dict[str, object]) -> None:
     with pytest.raises(ValueError):
-        Registry().create(name + "@1.0", args)
+        Registry().create("liantian_cn." + name + "@dev", args)
 
 
 class Multi(Condition):
@@ -154,8 +156,8 @@ def test_wrong_type_and_exception_fallback() -> None:
 
 def test_registry_instances_are_independent() -> None:
     registry = Registry()
-    first = registry.create("spell_gcd@1.0", {})
-    second = registry.create("spell_gcd@1.0", {})
+    first = registry.create("liantian_cn.spell_gcd@dev", {})
+    second = registry.create("liantian_cn.spell_gcd@dev", {})
     assert first is not second and type(first) is type(second)
     allocate([first, second])
     assert first.regions[0].x == 1 and second.regions[0].x == 2

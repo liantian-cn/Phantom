@@ -217,6 +217,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 提示词
-phantom/captures/gdi@1.0/demo_results/
+phantom/captures/liantian_cn.gdi@dev/demo_results/
 demo/demo_results/
 author

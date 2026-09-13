@@ -160,7 +160,7 @@ def test_lua_guard_registers_no_conditions(tmp_path: Path, unit_class: str, spec
     ],
 )
 def test_templates_use_frozen_xy(identifier: str, args: dict[str, object]) -> None:
-    plugin = Registry().create(identifier + "@1.0", args)
+    plugin = Registry().create("liantian_cn." + identifier + "@dev", args)
     # 非默认行揭示模板中隐藏的 y=2；注册器本身不决定布局策略。
     plugin.freeze((Region(7, 1),))
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
@@ -180,7 +180,7 @@ def test_generated_cooldown_curve_roundtrips_all_segments(identifier: str, secon
     args: dict[str, object] = (
         {"spell_ids": [195292], "ignore_gcd": True} if identifier == "spell_cooldown" else {}
     )
-    plugin = Registry().create(identifier + "@1.0", args)
+    plugin = Registry().create("liantian_cn." + identifier + "@dev", args)
     plugin.freeze((Region(1, 2),))
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     state, addon = lua.execute(
@@ -198,7 +198,9 @@ def test_generated_cooldown_curve_roundtrips_all_segments(identifier: str, secon
 
 
 def test_charge_template_uses_nondefault_width_and_position() -> None:
-    plugin = Registry().create("spell_charges@1.0", {"spell_ids": [50842], "max_charges": 5})
+    plugin = Registry().create(
+        "liantian_cn.spell_charges@dev", {"spell_ids": [50842], "max_charges": 5}
+    )
     plugin.freeze((Region(4, width=5),))
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     state, addon = lua.execute(

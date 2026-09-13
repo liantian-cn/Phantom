@@ -13,7 +13,7 @@
 
 ## 配置接入
 
-应用通过 `capture.plugin` 选择精确版本，省略时默认 `gdi@1.0`；加载入口为 `phantom.core.capture.registry.Registry.create(identifier, fps=...)`。
+应用通过 `capture.plugin` 选择精确版本，省略时默认 `liantian_cn.gdi@dev`；加载入口为 `phantom.core.capture.registry.Registry.create(identifier, fps=...)`。
 现有配置只读，修改后重启程序生效。不存在的版本或损坏插件明确失败，不换用 GDI。
 独立 demo 显式指定 GDI 并使用同一注册器，不读取应用配置。
 

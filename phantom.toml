@@ -1,4 +1,5 @@
 [capture]
+plugin = "liantian_cn.gdi@dev"
 fps = 15
 
 [ui]

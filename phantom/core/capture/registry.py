@@ -7,21 +7,19 @@ Description:
 Key Variables:
     Registry.root: 截图版本插件根目录，默认指向 phantom/captures。
 Change Log:
+    2026-09-13: Changed 命名交由作者规则约束，默认加载 liantian_cn.gdi@dev。
     2026-09-13: Added 可配置截图插件加载入口。
 """
 
 import hashlib
 import importlib.util
 import inspect
-import re
 import sys
 from pathlib import Path
 from typing import cast
 
 from phantom.core.capture.contracts import CaptureResult, CaptureWorker
 from phantom.core.validation import PositiveNumber
-
-PLUGIN_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*@[0-9]+(?:\.[0-9]+)+", re.ASCII)
 
 
 class CapturePluginError(ValueError):
@@ -35,10 +33,16 @@ class Registry:
         ).resolve()
         self._classes: dict[str, type[object]] = {}
 
-    def create(self, identifier: str = "gdi@1.0", *, fps: float = 15) -> CaptureWorker:
+    def create(self, identifier: str = "liantian_cn.gdi@dev", *, fps: float = 15) -> CaptureWorker:
         try:
-            if PLUGIN_ID.fullmatch(identifier) is None:
-                raise ValueError("插件标识必须为小写名称@精确版本")
+            if (
+                not identifier
+                or identifier in {".", ".."}
+                or any(character in identifier for character in "/\\:")
+                or identifier.endswith((".", " "))
+                or Path(identifier).is_absolute()
+            ):
+                raise ValueError("插件标识必须是单个安全目录名")
             fps = PositiveNumber().validate(fps, "capture.fps")
             directory = self.root / identifier
             source = directory / "capture.py"

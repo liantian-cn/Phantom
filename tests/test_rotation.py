@@ -24,7 +24,7 @@ def test_example_layout_idempotent_and_optional_class_id(tmp_path: Path) -> None
     assert rotation.board_width == 36
     assert len(rotation.rules) == 6
     assert len(rotation.macros) == 4
-    assert rotation.conditions[4].plugin == "spell_gcd@1.0"
+    assert rotation.conditions[4].plugin == "liantian_cn.spell_gcd@dev"
     assert [e.instance.regions[0].x for e in rotation.conditions] == [1, 2, 1, 3, 4, 5, 6, 7]
     old = path.read_bytes()
     modified = path.stat().st_mtime_ns
@@ -50,8 +50,8 @@ def test_example_layout_idempotent_and_optional_class_id(tmp_path: Path) -> None
         ('condition = "符文数量>=1"', 'condition = "未知条件>=1"'),
         ('condition = "符文数量>=1"', 'condition = "("'),
         ('condition = "符文数量>=1"', 'condition = ""'),
-        ("player_primary_power@1.0", "player_primary_power@2.0"),
-        ("player_primary_power@1.0", "../player_primary_power@1.0"),
+        ("liantian_cn.player_primary_power@dev", "player_primary_power@2.0"),
+        ("liantian_cn.player_primary_power@dev", "../liantian_cn.player_primary_power@dev"),
         ("max_power = 120", "max_power = -1"),
         ("max_charges = 2", "max_charges = 2.0"),
         ("ignore_gcd = true", 'ignore_gcd = "true"'),
