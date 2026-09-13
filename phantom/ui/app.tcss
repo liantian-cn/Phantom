@@ -103,3 +103,5 @@ DataTable > .datatable--hover { background: $flexoki-surface-0; color: $flexoki-
     scrollbar-background-active: $flexoki-mantle;
     scrollbar-corner-color: $flexoki-mantle;
 }
+
+#rotation_title, #decision { height: auto; margin-bottom: 1; }

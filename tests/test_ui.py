@@ -267,6 +267,40 @@ def test_capture_termination_pauses_and_explicit_restart_works(tmp_path: Path) -
     asyncio.run(scenario())
 
 
+@pytest.mark.parametrize("capture_running", [True, False])
+def test_shutdown_refresh_ignores_removed_widgets(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capture_running: bool
+) -> None:
+    async def scenario() -> None:
+        capture = FakeCapture()
+        app = make_app(tmp_path, capture)
+        close_all = app._close_all
+        refreshed_during_shutdown = False
+
+        async def close_all_and_refresh() -> None:
+            nonlocal refreshed_during_shutdown
+            await close_all()
+            # Textual 已卸载屏幕，但尚未调用应用的 on_unmount。
+            assert not app.is_running
+            assert app.collecting and not app.closing
+            capture.running = capture_running
+            app.refresh_capture()
+            refreshed_during_shutdown = True
+
+        monkeypatch.setattr(app, "_close_all", close_all_and_refresh)
+        async with app.run_test(size=(120, 46)) as pilot:
+            await pilot.pause()
+            await pilot.click("#start")
+            assert app.collecting
+
+        assert refreshed_during_shutdown
+        assert app.closing and not app.collecting
+        assert capture.stop_entered.is_set() and not capture.running
+        assert not any(thread.name.startswith("phantom-") for thread in enumerate_threads())
+
+    asyncio.run(scenario())
+
+
 def test_logs_bound_history_even_when_tab_hidden(tmp_path: Path) -> None:
     async def scenario() -> None:
         app = make_app(tmp_path, FakeCapture())
@@ -368,12 +402,35 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
                 "40.0",
                 "True",
             ]
+            assert app.decision is not None and app.decision.rule_index == 1
+            assert app.decision.macro is not None
+            assert app.decision.macro.name == "灵界打击"
+            await pilot.pause()
+            log = app.query_one("#business_log", Log)
+            assert any("拟执行宏：灵界打击" in line for line in log.lines)
+            count = len(log.lines)
+            app.refresh_capture()
+            await pilot.pause()
+            assert len(log.lines) == count
             image[:4, 8:12] = 2
             app.refresh_capture()
             assert all(table.get_cell(str(i), "value") == "—" for i in range(8))
+            assert app.decision is None
+            await pilot.pause()
             image[:4, 8:12] = 1
             app.refresh_capture()
             assert table.get_cell("0", "value") == "40.0"
+            # 同一帧使全部规则为假，不能保留此前命中的宏。
+            image[4:8, 8:12] = 0
+            image[4:8, 12:16] = 0
+            image[4:8, 20:24] = 0
+            image[4:8, 28:32] = 0
+            app.refresh_capture()
+            assert app.decision is not None and app.decision.macro is None
+            assert app.decision.rule.macro == "Idle"
+            capture.result = CaptureResult(status=CaptureStatus(True, "截图不可用"))
+            app.refresh_capture()
+            assert app.decision is None
             app.stop_collection()
             await app.workers.wait_for_complete()
             await pilot.pause()

@@ -10,6 +10,8 @@ Key Variables:
     PhantomApp.stopping: 后台正在释放截图资源，期间禁止再次启动。
     PhantomApp.business_log: 主动业务日志入口，与 Textual 诊断日志分离。
 Change Log:
+    2026-09-13: Fixed 在 Textual 停止消息循环后拒绝采集刷新，避免访问已卸载控件。
+    2026-09-13: Changed 将同帧决策与宏名称日志整合进启动后的采集流程。
     2026-09-12: Added 第 5、6 步 Textual 界面与采集展示生命周期。
     2026-09-12: Changed 接入第 7–10 步单份 rotation 与八个条件实例。
 """
@@ -36,7 +38,7 @@ from phantom.core.configuration import AppConfig
 from phantom.core.game import GameMonitor, GameStatus, detect_game
 from phantom.core.generator import GenerationResult, generate
 from phantom.core.pixels import PixelDecoder
-from phantom.core.rotation import Rotation, RotationError, load_rotation
+from phantom.core.rotation import Decision, Rotation, RotationError, load_rotation
 from phantom.ui.business_log import BusinessLog
 from phantom.ui.capture import GENERAL_FIELDS, GeneralData, decode_general
 from phantom.ui.theme import FLEXOKI, PHANTOM_THEME
@@ -97,6 +99,8 @@ class PhantomApp(App[None]):
     ) -> None:
         super().__init__()
         self.config: AppConfig = config
+        self.decision: Decision | None = None
+        self._decision_log: str = ""
         self.rotation: Rotation | None = None
         self.rotation_error: str = ""
         if config.rotation_path is not None:
@@ -170,6 +174,8 @@ class PhantomApp(App[None]):
                 with TabPane("宏绑定", id="macros"):
                     yield Static("宏绑定展示尚未实现", classes="placeholder")
                 with TabPane("循环条件", id="conditions"):
+                    yield Static("", id="rotation_title", markup=False)
+                    yield Static("决策：—", id="decision", markup=False)
                     yield DataTable[str](
                         id="condition_table", cursor_type="row", zebra_stripes=True
                     )
@@ -292,7 +298,38 @@ class PhantomApp(App[None]):
     def stop_collection(self) -> None:
         self._request_stop()
 
+    def _decision_text(self, decision: Decision) -> str:
+        action = (
+            f"宏：{decision.macro.name} · 键位：{decision.macro.key}"
+            if decision.macro is not None
+            else "Idle · 无动作"
+        )
+        return (
+            f"第 {decision.rule_index} 条 · {decision.rule.condition or '兜底'}"
+            f" · {decision.rule.annotate} · {action}（仅报告）"
+        )
+
+    def _show_decision(self, decision: Decision | None) -> None:
+        self.decision = decision
+        self.query_one("#decision", Static).update(
+            "决策：" + (self._decision_text(decision) if decision else "—")
+        )
+        message = (
+            f"拟执行宏：{decision.macro.name}"
+            if decision and decision.macro
+            else "Idle：无动作"
+            if decision
+            else ""
+        )
+        if message and message != self._decision_log:
+            self.business_log.log(message)
+        self._decision_log = message
+
     def _populate_conditions(self) -> None:
+        self._show_decision(None)
+        self.query_one("#rotation_title", Static).update(
+            f"当前 rotation：{self.rotation.profile.title}" if self.rotation else "未加载 rotation"
+        )
         table = self.query_one("#condition_table", DataTable)
         table.clear()
         if self.rotation is not None:
@@ -300,6 +337,7 @@ class PhantomApp(App[None]):
                 table.add_row(entry.title, entry.plugin, "—", key=str(index))
 
     def _clear_conditions(self) -> None:
+        self._show_decision(None)
         if self.rotation is not None:
             table = self.query_one("#condition_table", DataTable)
             for index in range(len(self.rotation.conditions)):
@@ -402,7 +440,8 @@ class PhantomApp(App[None]):
             self.query_one("#business_log", Log).write_lines(message.text.splitlines())
 
     def refresh_capture(self) -> None:
-        if not self.collecting or self.closing:
+        # Textual 先停止消息循环并卸载控件，之后才调用应用的 on_unmount。
+        if not self.is_running or not self.collecting or self.closing:
             return
         # 先检查存活，再取结果，保证线程结束时能读取它发布的最后错误。
         running = self.capture.is_running
@@ -427,13 +466,14 @@ class PhantomApp(App[None]):
                 condition_error = ""
                 if self.rotation is not None:
                     try:
-                        values = self.rotation.values(PixelDecoder(result.image))
+                        decision = self.rotation.trial(PixelDecoder(result.image))
                     except (ValueError, TypeError, IndexError) as error:
                         self._clear_conditions()
                         condition_error = str(error)
                     else:
                         table = self.query_one("#condition_table", DataTable)
-                        for index, value in enumerate(values):
+                        self._show_decision(decision)
+                        for index, value in enumerate(decision.values):
                             table.update_cell(str(index), "value", str(value))
                 self._set_capture_state(
                     "条件不可用" if condition_error else "采集正常", condition_error

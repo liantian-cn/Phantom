@@ -3,11 +3,12 @@ Summary:
     加载单份 rotation、核验引用并持久化重新分配的条件布局。
 Description:
     先校验用户内容和精确版本参数，再冻结输出；布局只是可重建的排错信息。
-    TOML Kit 保留注释，仅修改 layout；表达式只解析语法和名称，不执行。
+    TOML Kit 保留注释，仅修改 layout；表达式加载时完成白名单及类型校验。
 Key Variables:
     Rotation.conditions: 按配置顺序保存的独立条件实例。
     CLASS_IDS: Blizzard 职业 token 对应的亮度 ID。
 Change Log:
+    2026-09-13: Changed 加载时校验表达式类型并提供单帧优先级试运行。
     2026-09-13: Changed 迁用条件核心与基础校验器。
     2026-09-12: Added 第 7–9 步 rotation 加载与布局回写。
 """
@@ -28,9 +29,10 @@ import tomlkit
 from tomlkit.items import AoT, Table
 
 from phantom.core.condition.base import Condition
-from phantom.core.condition.contracts import Value
+from phantom.core.condition.contracts import Output, Value
 from phantom.core.condition.layout import allocate
 from phantom.core.condition.registry import Registry
+from phantom.core.expression import evaluate, parse_expression
 from phantom.core.pixels import PixelDecoder
 from phantom.core.validation import Fields, Items, String
 from phantom.core.validation import Table as TableValidator
@@ -122,6 +124,14 @@ class ConditionEntry:
 
 
 @dataclass(frozen=True)
+class Decision:
+    values: tuple[Value, ...]
+    rule_index: int
+    rule: Rule
+    macro: Macro | None
+
+
+@dataclass(frozen=True)
 class Rotation:
     path: Path
     uuid: str
@@ -130,6 +140,26 @@ class Rotation:
     macros: tuple[Macro, ...]
     rules: tuple[Rule, ...]
     board_width: int
+
+    def decide(self, values: list[Value]) -> Decision:
+        if len(values) != len(self.conditions) or any(
+            not entry.instance.output.accepts(value)
+            for entry, value in zip(self.conditions, values)
+        ):
+            raise ValueError("决策条件值与声明不匹配")
+        snapshot = {
+            entry.title: value.copy() if isinstance(value, list) else value
+            for entry, value in zip(self.conditions, values)
+        }
+        for index, rule in enumerate(self.rules, 1):
+            if rule.expression is None or evaluate(rule.expression, snapshot):
+                macro = next((item for item in self.macros if item.name == rule.macro), None)
+                return Decision(tuple(snapshot.values()), index, rule, macro)
+        raise ValueError("rotation 缺少 Idle 兜底")
+
+    def trial(self, decoder: PixelDecoder) -> Decision:
+        """同一帧完成解码与首个命中选择；仅报告，不调用行为模块。"""
+        return self.decide(self.values(decoder))
 
     def values(self, decoder: PixelDecoder) -> list[Value]:
         for x, expected in ((1, self.profile.unit_class_id), (2, self.profile.unit_spec)):
@@ -183,7 +213,9 @@ def parse_macros(value: object) -> tuple[Macro, ...]:
     return tuple(result)
 
 
-def parse_rules(value: object, names: set[str], macro_names: set[str]) -> tuple[Rule, ...]:
+def parse_rules(
+    value: object, outputs: dict[str, Output], macro_names: set[str]
+) -> tuple[Rule, ...]:
     result: list[Rule] = []
     rows = tables(value, "rotation")
     for index, table in enumerate(rows):
@@ -198,10 +230,10 @@ def parse_rules(value: object, names: set[str], macro_names: set[str]) -> tuple[
             if macro != "Idle" or index != len(rows) - 1:
                 raise ValueError("空 condition 仅允许位于末尾显式 Idle")
         else:
-            expression = ast.parse(condition, mode="eval")
-            references = {node.id for node in ast.walk(expression) if isinstance(node, ast.Name)}
-            if references - names:
-                raise ValueError(f"表达式引用未知条件：{sorted(references - names)}")
+            try:
+                expression = parse_expression(condition, outputs)
+            except (ValueError, SyntaxError) as error:
+                raise ValueError(f"rotation[{index + 1}] {condition!r}：{error}") from error
         result.append(Rule(condition, macro, annotate, expression))
     if not result or result[-1].condition or result[-1].macro != "Idle":
         result.append(Rule("", "Idle", "隐含兜底", None))
@@ -243,7 +275,11 @@ def load_rotation(path: Path, registry: Registry | None = None) -> Rotation:
             plugin = string(table, "plugin")
             args = object_table(table.get("plugin_args", {}), f"{title}.plugin_args")
             entries.append(ConditionEntry(title, plugin, loader.create(plugin, args)))
-        rules = parse_rules(document["rotation"], names, {macro.name for macro in macros})
+        rules = parse_rules(
+            document["rotation"],
+            {entry.title: entry.instance.output for entry in entries},
+            {macro.name for macro in macros},
+        )
         board_width = allocate([entry.instance for entry in entries])
         # 所有用户内容与插件均通过后才回写排错坐标，失败配置不被部分修改。
         editable = tomlkit.parse(source)
