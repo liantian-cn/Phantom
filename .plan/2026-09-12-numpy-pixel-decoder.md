@@ -13,7 +13,7 @@ Add PixelDecoder, Cell, ValueBar, IconTile, a timed Windows demo, algorithm test
 - Cell starts at (4*x,4*(y-1)), size 4x4; ValueBar starts at (4*x,8), size 4*(width+1) by 4; IconTile starts at (4+8*(x-1),12), size 8x8.
 - Region constructors receive logical coordinates and already cropped arrays. Coordinates affect only location metadata.
 - All computed and location interfaces are read-only properties. pos/region use board-relative pixels and exclusive bottom/right edges; strings are comma-separated without spaces or parentheses.
-- Cell inner is [1:3,1:3]; mean averages RGB components, decimal divides by 255, percent multiplies decimal by 100. color_string uses the first inner RGB pixel. Purity requires equal RGB pixels; black/white are exact.
+- Cell inner is [1:3,1:3]; mean averages RGB components, ratio divides by 255, percent multiplies ratio by 100. color_string uses the first inner RGB pixel. Purity requires equal RGB pixels; black/white are exact.
 - ValueBar inner is [1:3,:]. ratio counts white/(white+black); percent is ratio*100. Other colors are excluded; empty denominator returns 0.0. No value or reverse interface.
 - IconTile inner is [1:7,1:7]. Whole-inner black returns None; otherwise hash uses contiguous RGB bytes and xxh3_64_hexdigest seed 0, with instance _hash_cache. Purity compares all inner pixels.
 - Regions own independent read-only snapshots. Decoder validates board shape and dtype, positive integer indices/width, Cell rows 1/2, and content bounds. Invalid requests fail explicitly.

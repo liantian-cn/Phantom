@@ -14,7 +14,7 @@
 - 参考E:\Documents\GitHub\EZWowX2\Terminal\terminal\pixelcalc\cell.py，但是本项目要新建cell.py value_bar.py icon_tile.py三个文件。
 - cell.py包含一个类Cell
 - Cell内置属性self.x、self.y、self.pix_array（完整4x4）,self.inner(内部2x2)
-- Cell内置方法，根据self.inner计算，包含：mean decimal  percent is_pure/is_not_pure  color_string is_black is_white
+- Cell内置方法，根据self.inner计算，包含：mean ratio  percent is_pure/is_not_pure  color_string is_black is_white
 - Cell不需要Terminal项目的white_count/remaining/is_green方法。
 - value_bar包含一个类ValueBar
 - ValueBar内置属性self.x self.width,self.pix_array（完整bar）,self.inner(内部2行，self.pix_array[1:3, :])
