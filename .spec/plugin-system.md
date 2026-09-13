@@ -41,10 +41,11 @@ phantom/captures/gdi@1.0/
 
 第一版只规划基于 `ctypes.windll.gdi32` 位图截图的 `gdi@1.0`。
 
-当前 `gdi@1.0` 使用 `ctypes.WinDLL` 声明 Windows 函数签名，完成独立后端与 demo；通用插件发现和版本解析尚未实现。
+当前 `gdi@1.0` 使用 `ctypes.WinDLL` 声明 Windows 函数签名，完成独立后端与 demo；已通过 core/capture/registry.py 接入精确版本加载，统一导出 Plugin。
 
 ## 截图 worker 契约
 
+- worker 提供只读 `is_running: bool`，构造后未运行；初始快照为 `CaptureResult()`。
 - worker 实例化接受 `fps=15`，提供 `start()`、`stop()`、`set_fps(fps=15)`、`get_latest_result()`。
 - FPS 必须为有限正数，允许运行中修改；GDI 实际应用上限，其他未来后端保留接口但可以不生效。
 - 重复 `start()` 不创建重复线程；`stop()` 唤醒等待并等待资源释放，重复停止无副作用。重新启动清除旧结果并重新定位。
@@ -84,35 +85,27 @@ GDI worker 搜索整个虚拟桌面，包含负坐标显示器，按物理像素
 
 捕获全部解码异常会隐藏部分插件编程错误，这是用户明确接受的行为。插件仍应通过有效测试发现确定性错误。
 
-兜底规则由插件作者按业务含义定义。例如，冷却信息不可读可以解释为“没有冷却”，目标存在性不可读可以解释为“目标不存在”。每个插件都必须把自己的选择写入文档。
+兜底规则由插件作者按业务含义定义。例如，冷却信息不可读可以解释为“没有冷却”，目标存在性不可读可以解释为“目标不存在”。作者说明要求见 [条件插件手册](../.plugin-development/conditions.md)。
 
 ## 编解码配对
 
-Lua 编码与 Python 解码属于同一插件版本的配对契约。任何缩放、精度分段、空值表示、多个区域合并或列表过滤都必须两端一致，并随插件版本记录。一个已确认的合法场景是用不同 Cell 亮度区间表示不同精度范围。
+配对协议的作者要求统一见 [条件插件手册](../.plugin-development/conditions.md#配对与说明)；本页下表记录当前八个版本的业务输出。
 
-## 条件插件文档头
+## 插件作者要求
 
-每个条件插件除项目级 Python 文件头外，还必须明确记录：
-
-- 用途和业务语义。
-- `plugin_args` 的字段、类型和约束。
-- 输出类型、数量、业务类型、形状和物理尺寸。
-- 使用的 WoW API 与核验来源。
-- Secret Value 风险与安全处理边界。
-- 解码算法与兜底规则。
-- 插件版本变化。
-
-代码标识符使用英文，业务注释使用中文。所有手写 Python 文件的 Type Hint 要求见 [development-rules.md](development-rules.md)。
+目录依赖、对象组合、模板头部变量、注释和开发步骤统一维护在 [插件开发手册](../.plugin-development/README.md)。
+条件专属文档头见 [条件插件](../.plugin-development/conditions.md#配对与说明)。
 
 ## 待定事项
 
 - 行为插件的公共基类接口。
-- 行为及截图插件的通用发现扩展。
+- 行为插件的发现扩展。
 
 
 ## 第 7–10 步条件实现
 
-`phantom/conditions/base.py` 提供不可变 Output/Region、Condition 生命周期和独立行布局。
+`phantom/core/condition/` 分别以 contracts.py、base.py、layout.py、template.py 和 registry.py 提供输出契约、生命周期、布局、渲染和精确加载。
+通用 Validator 位于 core/validation.py，Decoder 位于 core/condition/decoders.py；核心不含技能参数或冷却业务节点。
 每个版本导出 Plugin 类；Registry 只加载精确目录，按标识缓存类，实例不共享。
 非法标识、版本缺失、模块或参数错误均附带插件名称；无版本回退和热加载。
 output_count 与 value_shape 独立，ValueBar 的 widths 为每条内容宽度，支持单实例多区域。
@@ -137,3 +130,10 @@ spell_gcd 固定 GetSpellCooldownDuration(61304,false)，不查询法术书，�
 灰度 Cell 必须纯灰，布尔必须纯黑/白；整数采用非负数四舍五入而非银行家舍入。
 能量与血量直接把曲线返回颜色交给渲染，充能直接传秘密 currentCharges；符文仅统计非秘密 runeReady，不读取秘密事件参数。
 事件与节流沿用对应模板；GCD 与普通冷却均独立随机错峰、严格超过 0.1 秒轮询。
+
+## 截图加载与配置
+
+`phantom/core/capture/` 提供 contracts、worker、imaging 与 registry；`phantom/captures/` 只保存版本插件。
+`Registry.create(identifier="gdi@1.0", fps=15)` 返回 CaptureWorker，每次构造独立实例。标识精确匹配、源码限定在版本目录。
+配置字段见 [TUI 应用配置](tui.md#应用配置)。非法选择、导入失败或不满足调用接口抛出带标识的 CapturePluginError，入口在进入 UI 前报告并非零退出。
+缺省配置采用 GDI；显式配置错误不回退。不提供热切换或热加载。

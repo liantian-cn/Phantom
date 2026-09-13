@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from demo import demo
-from phantom.captures.contracts import CaptureResult, CaptureStatus
+from phantom.core.capture.contracts import CaptureResult, CaptureStatus
 
 
 @pytest.mark.parametrize("has_error", [False, True])

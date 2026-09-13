@@ -5,6 +5,8 @@ import numpy as np
 import pytest
 from lupa.lua51 import LuaRuntime  # type: ignore[import-untyped]
 
+from phantom.core.condition.contracts import Region
+from phantom.core.condition.registry import Registry
 from phantom.core.generator import generate, render
 from phantom.core.pixels import PixelDecoder
 from phantom.core.rotation import load_rotation
@@ -143,3 +145,78 @@ def test_lua_guard_registers_no_conditions(tmp_path: Path, unit_class: str, spec
     run(render(rotation, "Phantom")[rotation.uuid + ".lua"], addon)
     assert len(addon.UIInitFuncs) == 0
     assert len(state.frames) == 0
+
+
+@pytest.mark.parametrize(
+    ("identifier", "args"),
+    [
+        ("spec_dk_rune", {}),
+        ("player_primary_power", {"max_power": 120}),
+        ("player_health_pct", {}),
+        ("spell_overlay", {"spell_ids": [50842]}),
+        ("spell_usable", {"spell_ids": [49998]}),
+        ("spell_gcd", {}),
+        ("spell_cooldown", {"spell_ids": [195292], "ignore_gcd": True}),
+    ],
+)
+def test_templates_use_frozen_xy(identifier: str, args: dict[str, object]) -> None:
+    plugin = Registry().create(identifier + "@1.0", args)
+    # 非默认行揭示模板中隐藏的 y=2；注册器本身不决定布局策略。
+    plugin.freeze((Region(7, 1),))
+    lua: Any = LuaRuntime(unpack_returned_tuples=True)
+    state, addon = lua.execute(
+        (ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8")
+    )
+    run: Any = lua.eval("function(source, addon) assert(loadstring(source))('Phantom',addon) end")
+    run(plugin.generate_lua("instance"), addon)
+    assert len(state.cells) == 0  # 构造仍延迟到 UIInitFuncs。
+    state.initialize(state)
+    assert (state.cells[7].x, state.cells[7].y) == (7, 1)
+
+
+@pytest.mark.parametrize("identifier", ["spell_cooldown", "spell_gcd"])
+@pytest.mark.parametrize("seconds", [0.0, 2.5, 5.0, 17.5, 30.0, 92.5, 155.0, 265.0, 375.0])
+def test_generated_cooldown_curve_roundtrips_all_segments(identifier: str, seconds: float) -> None:
+    args: dict[str, object] = (
+        {"spell_ids": [195292], "ignore_gcd": True} if identifier == "spell_cooldown" else {}
+    )
+    plugin = Registry().create(identifier + "@1.0", args)
+    plugin.freeze((Region(1, 2),))
+    lua: Any = LuaRuntime(unpack_returned_tuples=True)
+    state, addon = lua.execute(
+        (ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8")
+    )
+    state.remaining[195292 if identifier == "spell_cooldown" else 61304] = seconds
+    run: Any = lua.eval("function(source, addon) assert(loadstring(source))('Phantom',addon) end")
+    run(plugin.generate_lua("instance"), addon)
+    state.initialize(state)
+    state.update(state)
+    pixels = np.zeros((20, 32, 3), dtype=np.uint8)
+    pixels[4:8, 4:8] = round(state.cells[1].brightness)
+    # 像素量化在最慢区间每级为 4 秒，误差最多半级。
+    assert plugin.value(*plugin.raw_value(PixelDecoder(pixels))) == pytest.approx(seconds, abs=2.0)
+
+
+def test_charge_template_uses_nondefault_width_and_position() -> None:
+    plugin = Registry().create("spell_charges@1.0", {"spell_ids": [50842], "max_charges": 5})
+    plugin.freeze((Region(4, width=5),))
+    lua: Any = LuaRuntime(unpack_returned_tuples=True)
+    state, addon = lua.execute(
+        (ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8")
+    )
+    setup: Any = lua.eval("""function(addon, state)
+        addon.ValueBar.New = function(self, x, width, reverse)
+            assert(reverse == false)
+            local bar = {x=x, width=width}
+            function bar:setMinMaxValues(low, high) self.low=low; self.high=high end
+            function bar:setValue(value) self.value=value end
+            state.bars[x]=bar
+            return bar
+        end
+    end""")
+    setup(addon, state)
+    run: Any = lua.eval("function(source, addon) assert(loadstring(source))('Phantom',addon) end")
+    run(plugin.generate_lua("instance"), addon)
+    state.initialize(state)
+    bar = state.bars[4]
+    assert (bar.x, bar.width, bar.low, bar.high, bar.value) == (4, 5, 0, 5, 1)

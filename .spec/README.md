@@ -7,7 +7,7 @@
 发生冲突时，按以下顺序处理：
 
 1. 用户当前明确指令与已冻结任务计划。
-2. 本目录中的项目规范。
+2. 本目录中的系统规范与 `.plugin-development/` 插件开发规范。
 3. `.context/` 中的技术背景与核验记录。
 4. 外部第三方源码和历史项目实现。
 
@@ -20,7 +20,7 @@
 | 理解目标、范围和产品边界 | [project-overview.md](project-overview.md) |
 | 修改模块职责、运行流程或生成模型 | [architecture.md](architecture.md) |
 | 修改屏幕布局、采样或像素解码 | [pixel-protocol.md](pixel-protocol.md) |
-| 创建或修改条件、行为、截图插件 | [plugin-system.md](plugin-system.md) |
+| 创建或修改条件、行为、截图插件 | [plugin-system.md](plugin-system.md)、[插件开发手册](../.plugin-development/README.md) |
 | 修改 rotation TOML 或表达式语言 | [configuration.md](configuration.md) |
 | 修改 TUI 页面、应用配置、游戏检测或业务日志 | [tui.md](tui.md) |
 | 编写代码、查询 API、使用外部源码 | [development-rules.md](development-rules.md) |
@@ -37,7 +37,7 @@
 
 ## 文档语言
 
-- `.spec/` 与根 `AGENTS.md` 使用中文。
+- `.spec/`、`.plugin-development/` 与根 `AGENTS.md` 使用中文。
 - `.context/` 保持英文，避免技术翻译误差。
 - 文件名、配置字段、代码标识符和 API 名称保持英文。
 

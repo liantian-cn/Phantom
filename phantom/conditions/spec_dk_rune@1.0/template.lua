@@ -31,6 +31,11 @@ local Cell = addonTable.Cell -- 普通灰度 Cell
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享背景就绪后创建区域
 
 --[[  logical code  ]]
+
+local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local POSITION_X = {{x1}} -- 本实例冻结的横向位置
+local RUNE_COUNT = 6 -- 本版本统计的符文槽位数量
+local BRIGHTNESS_MAX = 255 -- Cell 亮度编码基数
 local runeCell -- 本实例输出区域
 local eventFrame = CreateFrame("Frame") -- 本实例独立事件框架
 
@@ -39,18 +44,18 @@ local function RefreshRunes()
         return
     end
     local readyRunes = 0 -- 当前就绪符文数量
-    for runeIndex = 1, 6 do
+    for runeIndex = 1, RUNE_COUNT do
         local _, _, runeReady = GetRuneCooldown(runeIndex)
         if runeReady then
             readyRunes = readyRunes + 1
         end
     end
-    local brightness = readyRunes / 255 -- 普通整数可直接转换灰度
+    local brightness = readyRunes / BRIGHTNESS_MAX -- 普通整数可直接转换灰度
     runeCell:setCellRGBA(brightness, brightness, brightness)
 end
 
 local function InitializeRunes()
-    runeCell = Cell:New({x = {{x1}}, y = 2})
+    runeCell = Cell:New({ x = POSITION_X, y = POSITION_Y })
     RefreshRunes()
 end
 

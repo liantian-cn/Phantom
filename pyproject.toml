@@ -13,7 +13,7 @@ pythonpath = ["."]
 python_version = "3.13"
 strict = true
 files = ["phantom", "rotations", "tests", "demo", "scripts"]
-exclude = ["demo_results/", "phantom[/\\\\]conditions[/\\\\][^/\\\\]+@"]
+exclude = ["demo_results/", "phantom[/\\\\](?:conditions|captures)[/\\\\][^/\\\\]+@"]
 
 [tool.ruff]
 target-version = "py313"

@@ -9,6 +9,7 @@ Key Variables:
     GDIBackend._bitmap: 与当前截图尺寸对应、读取时未选入 DC 的位图。
     GDIBackend._previous_dpi: 当前线程原 DPI 上下文，关闭后端时恢复。
 Change Log:
+    2026-09-13: Changed 公开统一 Plugin 入口并迁用截图核心契约。
     2026-09-11: Added gdi@1.0 截图线程后端。
 """
 
@@ -20,8 +21,8 @@ from ctypes import wintypes
 
 import numpy as np
 
-from phantom.captures.contracts import Bounds, RGBImage
-from phantom.captures.worker import ThreadCaptureWorker
+from phantom.core.capture.contracts import Bounds, RGBImage
+from phantom.core.capture.worker import ThreadCaptureWorker
 
 
 class BITMAPINFOHEADER(ctypes.Structure):
@@ -57,6 +58,8 @@ def checked_handle(value: int | None, operation: str) -> int:
 
 
 class GDIBackend:
+    """只持有当前采集线程的 Windows 资源，不负责定位或业务校验。"""
+
     def __init__(self) -> None:
         if sys.platform != "win32":
             raise OSError("GDI 截图仅支持 Windows")
@@ -83,6 +86,7 @@ class GDIBackend:
             raise
 
     def _declare_signatures(self) -> None:
+        """显式声明指针与句柄宽度，避免 64 位环境默认整数返回值截断。"""
         user32, gdi32 = self._user32, self._gdi32
         user32.SetThreadDpiAwarenessContext.argtypes = [wintypes.HANDLE]
         user32.SetThreadDpiAwarenessContext.restype = wintypes.HANDLE
@@ -126,6 +130,7 @@ class GDIBackend:
         gdi32.DeleteDC.restype = wintypes.BOOL
 
     def desktop_bounds(self) -> Bounds:
+        """取整个虚拟桌面的物理像素范围，左侧或上方显示器可产生负坐标。"""
         left = int(self._user32.GetSystemMetrics(76))  # SM_XVIRTUALSCREEN
         top = int(self._user32.GetSystemMetrics(77))  # SM_YVIRTUALSCREEN
         width = int(self._user32.GetSystemMetrics(78))  # SM_CXVIRTUALSCREEN
@@ -135,11 +140,13 @@ class GDIBackend:
         return Bounds(left, top, left + width, top + height)
 
     def capture(self, bounds: Bounds) -> RGBImage:
+        """复用同尺寸位图，交付不依赖 Windows 缓冲区的连续 RGB 快照。"""
         if self._screen_dc is None or self._memory_dc is None:
             raise OSError("GDI 后端已经关闭")
         width, height = bounds.width, bounds.height
         if width <= 0 or height <= 0:
             raise ValueError("截图区域宽高必须大于 0")
+        # 全屏定位切换到基板局部采集时才重建位图。
         if self._size != (width, height):
             if self._bitmap is not None:
                 if not self._gdi32.DeleteObject(self._bitmap):
@@ -174,7 +181,7 @@ class GDIBackend:
         bitmap_info = BITMAPINFO()
         bitmap_info.bmiHeader.biSize = ctypes.sizeof(BITMAPINFOHEADER)
         bitmap_info.bmiHeader.biWidth = width
-        bitmap_info.bmiHeader.biHeight = -height
+        bitmap_info.bmiHeader.biHeight = -height  # 负高度要求自顶向下，保持与屏幕坐标同向。
         bitmap_info.bmiHeader.biPlanes = 1
         bitmap_info.bmiHeader.biBitCount = 32
         bitmap_info.bmiHeader.biCompression = 0  # BI_RGB
@@ -184,10 +191,12 @@ class GDIBackend:
         )
         if lines != height:
             raise OSError(f"GetDIBits 只读取 {lines}/{height} 行")
+        # GDI 输出 BGRA；丢弃 alpha、反转颜色通道，再独立保存 RGB。
         bgra = np.frombuffer(buffer, dtype=np.uint8).reshape(height, width, 4)
         return np.ascontiguousarray(bgra[:, :, 2::-1])
 
     def close(self) -> None:
+        """尝试释放所有已申请资源并恢复线程 DPI；汇总释放错误。"""
         failures: list[str] = []
         if self._memory_dc is not None:
             if not self._gdi32.DeleteDC(self._memory_dc):
@@ -210,5 +219,11 @@ class GDIBackend:
 
 
 class GDIWorker(ThreadCaptureWorker):
+    """构造仅保存后端工厂；start 后由公共 worker 在线程内申请 GDI 资源。"""
+
     def __init__(self, fps: float = 15) -> None:
         super().__init__(GDIBackend, fps)
+
+
+# 版本加载器的统一入口；具体类名仍说明 GDI 的实现责任。
+Plugin = GDIWorker

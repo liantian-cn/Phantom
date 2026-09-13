@@ -105,3 +105,10 @@ Ruff 命令增加 scripts 目录。运行依赖新增 tomlkit==0.15.1，开发�
 TUI run_test 覆盖无游戏生成、错误后修复重试、同帧条件值、暂停/专精不匹配清空、慢速生成期间响应与退出等待。
 实际 `E:\World of Warcraft\_retail_\Interface\AddOns\Phantom` 已生成 23 个文件（含 6 个 media 资源），TOC 引用 16 个存在的 Lua，全部通过 Lua 5.1 解析，未引用 examples。
 没有启动游戏、安装宏绑定或发送按键；该记录仅证明离线生成与算法，不证明游戏端 API/渲染。
+
+## 插件职责重构验收（2026-09-13）
+
+核心与版本目录分离后，228 项 pytest 通过，scripts/check_types.py 严格检查核心及八个条件、一个截图入口通过；Ruff check 与 format --check 均通过。
+新增校验器/解码器边界、临时截图插件精确加载与错误上下文、默认与显式配置、UI 前失败、非默认 Lua 坐标/宽度、冷却全区间配对测试。
+Windows 使用核心截图注册器创建默认 GDI，以 5 FPS 完成两次启动和停止；均报告未找到非 DEBUG 基板，停止后没有 phantom- 线程。
+该 smoke 验证真实 GDI 调用、错误交付与资源释放，未取得游戏基板，不代表游戏内验收。

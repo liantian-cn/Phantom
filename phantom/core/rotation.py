@@ -8,6 +8,7 @@ Key Variables:
     Rotation.conditions: 按配置顺序保存的独立条件实例。
     CLASS_IDS: Blizzard 职业 token 对应的亮度 ID。
 Change Log:
+    2026-09-13: Changed 迁用条件核心与基础校验器。
     2026-09-12: Added 第 7–9 步 rotation 加载与布局回写。
 """
 
@@ -26,9 +27,13 @@ from uuid import UUID
 import tomlkit
 from tomlkit.items import AoT, Table
 
-from phantom.conditions.base import Condition, Value, allocate
-from phantom.conditions.registry import Registry
+from phantom.core.condition.base import Condition
+from phantom.core.condition.contracts import Value
+from phantom.core.condition.layout import allocate
+from phantom.core.condition.registry import Registry
 from phantom.core.pixels import PixelDecoder
+from phantom.core.validation import Fields, Items, String
+from phantom.core.validation import Table as TableValidator
 
 CLASS_IDS = {
     "WARRIOR": 1,
@@ -52,29 +57,19 @@ class RotationError(ValueError):
 
 
 def object_table(value: object, name: str) -> dict[str, object]:
-    if not isinstance(value, dict):
-        raise ValueError(f"{name} 必须为表")
-    return {str(key): item for key, item in value.items()}
+    return TableValidator().validate(value, name)
 
 
 def fields(table: dict[str, object], required: set[str], optional: set[str]) -> None:
-    missing = required - table.keys()
-    unknown = table.keys() - required - optional
-    if missing or unknown:
-        raise ValueError(f"缺少字段 {sorted(missing)}；未知字段 {sorted(unknown)}")
+    Fields(frozenset(required), frozenset(optional)).validate(table, "rotation")
 
 
 def string(table: dict[str, object], name: str, *, empty: bool = False) -> str:
-    value = table.get(name)
-    if not isinstance(value, str) or (not empty and not value.strip()):
-        raise ValueError(f"{name} 必须为{'可空' if empty else '非空'}字符串")
-    return value
+    return String(allow_empty=empty).validate(table.get(name), name)
 
 
 def tables(value: object, name: str) -> list[dict[str, object]]:
-    if not isinstance(value, list):
-        raise ValueError(f"{name} 必须为表数组")
-    return [object_table(item, name) for item in value]
+    return Items(TableValidator()).validate(value, name)
 
 
 def validate_addon_name(name: str) -> str:

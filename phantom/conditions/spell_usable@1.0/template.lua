@@ -67,10 +67,11 @@ local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后�
 
 --[[  logical code  ]]
 
+local REFRESH_INTERVAL = 0.1 -- 刷新间隔，严格超过后每帧最多刷新一次
 -- 条件实例参数与位置由 Python 生成器填入。
 local SPELL_IDS = { {{spell_ids}} }      -- 按优先顺序排列的候选技能 ID
-local POSITION_Y = 2                    -- 第二行，RotationsCell 对应的行
-local POSITION_X = {{x1}}                    -- 本实例分配的 Cell
+local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 
 local usableCell                        -- 等待 UI 初始化创建的可用状态 Cell
 local selectedSpellID                   -- 当前选中的首个法术书技能 ID
@@ -112,8 +113,8 @@ eventFrame:RegisterEvent("SPELLS_CHANGED")        -- 法术书变化时重新选
 eventFrame:SetScript("OnEvent", SelectSpell)      -- 只更新选择，颜色由下一次轮询刷新
 eventFrame:HookScript("OnUpdate", function(_, elapsed)
     fastTimeElapsed = fastTimeElapsed + elapsed   -- 累加本帧时间
-    if fastTimeElapsed > 0.1 then                 -- 每帧最多刷新一次，严格超过间隔才执行
-        fastTimeElapsed = fastTimeElapsed - 0.1   -- 保留剩余累计时间
+    if fastTimeElapsed > REFRESH_INTERVAL then                 -- 每帧最多刷新一次，严格超过间隔才执行
+        fastTimeElapsed = fastTimeElapsed - REFRESH_INTERVAL   -- 保留剩余累计时间
         RefreshUsableCell()
     end
 end)

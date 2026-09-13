@@ -20,8 +20,8 @@ from time import monotonic
 
 import numpy as np
 
-from phantom.captures.contracts import Bounds, CaptureBackend, CaptureResult, CaptureStatus
-from phantom.captures.imaging import find_bounds, markers_valid, validate_colors
+from phantom.core.capture.contracts import Bounds, CaptureBackend, CaptureResult, CaptureStatus
+from phantom.core.capture.imaging import find_bounds, markers_valid, validate_colors
 
 
 class CaptureSession:

@@ -15,14 +15,16 @@ import re
 import sys
 from pathlib import Path
 
-from phantom.conditions.base import Condition
+from phantom.core.condition.base import Condition
 
 PLUGIN_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*@[0-9]+(?:\.[0-9]+)+", re.ASCII)
 
 
 class Registry:
     def __init__(self, root: Path | None = None) -> None:
-        self.root: Path = (root or Path(__file__).parent).resolve()
+        self.root: Path = (
+            root if root is not None else Path(__file__).resolve().parents[2] / "conditions"
+        ).resolve()
         self._classes: dict[str, type[Condition]] = {}
 
     def create(self, identifier: str, args: dict[str, object]) -> Condition:

@@ -7,9 +7,9 @@ from time import monotonic, sleep
 import numpy as np
 import pytest
 
-from phantom.captures.contracts import Bounds, CaptureResult, RGBImage
-from phantom.captures.imaging import find_bounds, markers_valid, validate_colors
-from phantom.captures.worker import CaptureSession, ThreadCaptureWorker
+from phantom.core.capture.contracts import Bounds, CaptureResult, RGBImage
+from phantom.core.capture.imaging import find_bounds, markers_valid, validate_colors
+from phantom.core.capture.worker import CaptureSession, ThreadCaptureWorker
 
 
 def board(width: int = 32, flash: int = 0) -> RGBImage:

@@ -8,7 +8,7 @@ import xxhash
 from numpy.typing import NDArray
 
 from demo.demo01 import describe_result
-from phantom.captures.contracts import CaptureResult, CaptureStatus
+from phantom.core.capture.contracts import CaptureResult, CaptureStatus
 from phantom.core.pixels import Cell, IconTile, PixelDecoder, ValueBar
 
 

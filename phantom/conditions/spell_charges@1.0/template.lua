@@ -2,11 +2,11 @@
 original: ../conditions/spell_charges@1.0/template.lua
 uuid: {{uuid}}
 plugin: spell_charges@1.0
-摘要：在第三行第 1 条 ValueBar 中显示技能当前充能层数。
+摘要：在分配的第三行 ValueBar 中显示技能当前充能层数。
 
 描述：
     按候选 ID 顺序选择首个出现在玩家法术书中的技能，进入世界或法术书变化时重新选择。
-    通过 UIInitFuncs 创建宽度为 2 的 ValueBar，将范围固定为 0 到宽度并立即刷新。
+    通过 UIInitFuncs 创建宽度由 max_charges 决定的 ValueBar，将范围固定为 0 到宽度并立即刷新。
     充能变化时把 currentCharges 直接交给数值条；未选中技能或没有充能信息时显示 0。
 
 修改记录：
@@ -63,9 +63,10 @@ local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后�
 
 --[[  logical code  ]]
 
+local MIN_CHARGES = 0 -- 不可用时清空，亦为数值条范围下界
 -- 条件实例参数与位置由 Python 生成器填入。
 local SPELL_IDS = { {{spell_ids}} } -- 按优先顺序排列的候选技能 ID
-local POSITION_X = {{x1}}              -- 第 1 条数值条，包含左侧分隔的占位起点
+local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 local WIDTH = {{width1}}                   -- 内容宽度，同时作为最大充能层数
 local REVERSE = false             -- 是否反向填充
 
@@ -89,7 +90,7 @@ local function RefreshChargeBar()
     end
 
     if not selectedSpellID then -- 全部候选不在法术书中
-        chargeBar:setValue(0)
+        chargeBar:setValue(MIN_CHARGES)
         return
     end
 
@@ -97,13 +98,13 @@ local function RefreshChargeBar()
     if chargeInfo then
         chargeBar:setValue(chargeInfo.currentCharges) -- 可能为秘密值，直接交给 StatusBar 渲染
     else
-        chargeBar:setValue(0) -- 无技能或无充能信息时清空填充
+        chargeBar:setValue(MIN_CHARGES) -- 无技能或无充能信息时清空填充
     end
 end
 
 local function InitializeChargeBar()
     chargeBar = ValueBar:New(POSITION_X, WIDTH, REVERSE)
-    chargeBar:setMinMaxValues(0, WIDTH) -- 最大值与内容宽度一致，不采用运行期 maxCharges
+    chargeBar:setMinMaxValues(MIN_CHARGES, WIDTH) -- 最大值与内容宽度一致，不采用运行期 maxCharges
     SelectSpell()
     RefreshChargeBar()                 -- 立即替换构造器的默认半满状态
 end

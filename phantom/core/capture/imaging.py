@@ -13,7 +13,7 @@ Change Log:
 
 import numpy as np
 
-from phantom.captures.contracts import Bounds, CaptureStatus, RGBImage
+from phantom.core.capture.contracts import Bounds, CaptureStatus, RGBImage
 
 MARKER: RGBImage = np.array(
     [

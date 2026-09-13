@@ -65,8 +65,8 @@ local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后�
 
 -- 条件实例参数与位置由 Python 生成器填入。
 local SPELL_IDS = { {{spell_ids}} }      -- 按优先顺序排列的候选技能 ID
-local POSITION_Y = 2                    -- 第二行，RotationsCell 对应的行
-local POSITION_X = {{x1}}                    -- 本实例分配的 Cell
+local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 
 local overlayCell                       -- 等待 UI 初始化创建的高亮 Cell
 local selectedSpellID                   -- 当前选中的首个法术书技能 ID

@@ -46,14 +46,18 @@ local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后�
 
 --[[  logical code  ]]
 
+local UNIT_TOKEN = "player" -- 本版本固定采集玩家
+local RATIO_MIN = 0.0 -- 灰度曲线黑色端点
+local RATIO_MAX = 1.0 -- 灰度曲线白色端点
+local UNMODIFIED = false -- 使用非原始单位能量比例
 -- 条件实例位置由 Python 生成器填入。
-local POSITION_Y = 2                   -- 第二行，RotationsCell 对应的行
-local POSITION_X = {{x1}}                   -- 本实例分配的 Cell
+local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 
 local powerCurve = CreateColorCurve() -- 将首要能量比例直接映射为灰度颜色
 powerCurve:SetType(Linear)
-powerCurve:AddPoint(0.0, COLOR.BLACK)
-powerCurve:AddPoint(1.0, COLOR.WHITE)
+powerCurve:AddPoint(RATIO_MIN, COLOR.BLACK)
+powerCurve:AddPoint(RATIO_MAX, COLOR.WHITE)
 
 local powerCell                        -- 等待 UI 初始化创建的玩家能量 Cell
 local eventFrame = CreateFrame("Frame") -- 本例独立的玩家首要能量事件框架
@@ -63,7 +67,7 @@ local function RefreshPowerCell()
         return
     end
 
-    local color = UnitPowerPercent("player", UnitPowerType("player"), false, powerCurve)
+    local color = UnitPowerPercent(UNIT_TOKEN, UnitPowerType(UNIT_TOKEN), UNMODIFIED, powerCurve)
     powerCell:setCell(color) -- 使用局部曲线的颜色结果，不依赖 Cell 上不存在的曲线字段
 end
 
@@ -73,7 +77,7 @@ local function InitializePowerCell()
 end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")        -- 首次进入世界时刷新当前状态
-eventFrame:RegisterUnitEvent("UNIT_POWER_UPDATE", "player")    -- 只接收玩家当前首要能量变化
-eventFrame:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player") -- 只接收玩家显示能量类型变化
+eventFrame:RegisterUnitEvent("UNIT_POWER_UPDATE", UNIT_TOKEN)    -- 只接收玩家当前首要能量变化
+eventFrame:RegisterUnitEvent("UNIT_DISPLAYPOWER", UNIT_TOKEN) -- 只接收玩家显示能量类型变化
 eventFrame:SetScript("OnEvent", RefreshPowerCell)       -- 两类事件均重新查询当前比例
 insert(UIInitFuncs, InitializePowerCell)                -- 沿用共享布局、计数和缩放

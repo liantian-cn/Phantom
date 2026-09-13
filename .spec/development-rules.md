@@ -3,7 +3,7 @@
 ## 分支与范围
 
 - 只在 `develop` 分支修改 Phantom。用户负责把特定版本冻结到 `main`。
-- 根 `README.md` 预留给最终用户说明；架构和内部规则写入 `.spec/`。
+- 根 `README.md` 预留给最终用户说明；系统架构和内部规则写入 `.spec/`，插件作者规则写入 `.plugin-development/`。
 - 不得把 `/wow-ui-source`、`/PhantomProject`、`/Shigure` 或 `/midnight` 纳入 Phantom 仓库。
 - 四个外部源码目录作为只读参考。除非用户明确要求更新，不得修改、提交、切换分支、fetch、pull 或 reset。
 
@@ -67,7 +67,7 @@ Change Log:
     YYYY-MM-DD: Added/Changed/Removed/Improved 已知的具体变更
 ```
 
-不得编造历史。复杂函数内部只在有助于理解业务流程时增加解释，不以注释数量作为质量指标。条件插件还要满足 [plugin-system.md](plugin-system.md) 的专用契约说明。
+不得编造历史。复杂函数内部只在有助于理解业务流程时增加解释，不以注释数量作为质量指标。插件还要满足 [插件开发手册](../.plugin-development/README.md) 的专用说明。
 
 ## Lua 文件结构与注释
 
@@ -154,4 +154,4 @@ revision 缩写仅用于定位初始化快照；引用具体事实时记录完�
 Windows 下 `/wow-ui-source` 对应 `E:\Documents\GitHub\wow-ui-source`。该目录仅作只读参考；不得修改、提交或更新分支。引用技术事实时记录该目录实际版本与 revision，历史快照记录不改写。
 
 
-完整类型检查使用 `.venv/Scripts/python scripts/check_types.py`，覆盖核心和每个精确版本插件。`python -m mypy` 只检查普通模块，版本目录由该脚本逐个执行 mypy，避免同名 condition 模块冲突。详见测试规范。
+完整类型检查使用 `.venv/Scripts/python scripts/check_types.py`，覆盖核心和每个精确版本条件、截图插件。`python -m mypy` 只检查普通模块，版本目录由该脚本逐个执行 mypy，避免同名 condition/capture 模块冲突。详见测试规范。

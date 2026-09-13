@@ -11,7 +11,7 @@ import pytest
 from textual.color import Color
 from textual.widgets import Button, DataTable, Log, TabbedContent
 
-from phantom.captures.contracts import CaptureResult, CaptureStatus, RGBImage
+from phantom.core.capture.contracts import CaptureResult, CaptureStatus, RGBImage
 from phantom.core.configuration import AppConfig
 from phantom.core.game import GameStatus
 from phantom.core.generator import GenerationResult, generate

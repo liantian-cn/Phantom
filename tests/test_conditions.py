@@ -3,8 +3,10 @@ import math
 import numpy as np
 import pytest
 
-from phantom.conditions.base import Condition, Output, Value, allocate
-from phantom.conditions.registry import Registry
+from phantom.core.condition.base import Condition
+from phantom.core.condition.contracts import Output, Value
+from phantom.core.condition.layout import allocate
+from phantom.core.condition.registry import Registry
 from phantom.core.pixels import Cell, IconTile, PixelDecoder, ValueBar
 
 

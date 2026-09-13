@@ -26,6 +26,7 @@ local CreateColorCurve = C_CurveUtil.CreateColorCurve             -- 创建剩�
 local Linear = Enum.LuaCurveType.Linear                           -- 在相邻节点间线性插值
 local GetSpellCooldownDuration = C_Spell.GetSpellCooldownDuration -- 获取可直接用于颜色求值的冷却对象
 local random = math.random                                        -- 生成独立的首次刷新延迟
+local ipairs = ipairs -- 按节点顺序建立曲线
 local insert = table.insert                                       -- 注册 UI 初始化函数
 
 --[[
@@ -59,24 +60,21 @@ local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后�
 
 --[[  logical code  ]]
 
+local REFRESH_INTERVAL = 0.1 -- 刷新间隔，严格超过后每帧最多刷新一次
+local GCD_SPELL_ID = 61304 -- 固定公共冷却查询，不参与候选筛选
+local BRIGHTNESS_MAX = 255 -- RGB 通道归一化基数
+local COOLDOWN_POINTS = { {{cooldown_points}} } -- 秒数与亮度，来自本版本 Python 配对节点
 -- 条件实例参数与位置由 Python 生成器填入。
-local POSITION_Y = 2                                       -- 第二行，RotationsCell 对应的行
-local POSITION_X = {{x1}}                                       -- 本实例分配的 Cell
+local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 local IGNORE_GCD = false                                    -- 固定包含公共冷却，不作为插件入参
 
-local C0 = CreateColor(255 / 255, 255 / 255, 255 / 255, 1) -- 就绪时纯白
-local C1 = CreateColor(155 / 255, 155 / 255, 155 / 255, 1) -- 剩余 5 秒
-local C2 = CreateColor(105 / 255, 105 / 255, 105 / 255, 1) -- 剩余 30 秒
-local C3 = CreateColor(55 / 255, 55 / 255, 55 / 255, 1)    -- 剩余 155 秒
-local C4 = CreateColor(0 / 255, 0 / 255, 0 / 255, 1)       -- 剩余 375 秒
-
-local remainingCurve = CreateColorCurve()                  -- 不等距节点构成整体非线性的灰度变化
+local remainingCurve = CreateColorCurve() -- 非等距节点采用线性插值
 remainingCurve:SetType(Linear)
-remainingCurve:AddPoint(0.0, C0)
-remainingCurve:AddPoint(5.0, C1)
-remainingCurve:AddPoint(30.0, C2)
-remainingCurve:AddPoint(155.0, C3)
-remainingCurve:AddPoint(375.0, C4)
+for _, point in ipairs(COOLDOWN_POINTS) do
+    local brightness = point[2] / BRIGHTNESS_MAX -- 节点为普通配置常量
+    remainingCurve:AddPoint(point[1], CreateColor(brightness, brightness, brightness, 1))
+end
 
 local cooldownCell                      -- 等待 UI 初始化创建的冷却 Cell
 local eventFrame = CreateFrame("Frame") -- 本例独立的事件与轮询框架
@@ -87,7 +85,7 @@ local function RefreshCooldownCell()
         return
     end
 
-    local remaining = GetSpellCooldownDuration(61304, IGNORE_GCD)
+    local remaining = GetSpellCooldownDuration(GCD_SPELL_ID, IGNORE_GCD)
     if not remaining then -- API 可以没有返回对象，此时不视为就绪
         cooldownCell:setCell(COLOR.BLACK)
         return
@@ -102,8 +100,8 @@ end
 
 eventFrame:HookScript("OnUpdate", function(_, elapsed)
     fastTimeElapsed = fastTimeElapsed + elapsed   -- 累加本帧时间
-    if fastTimeElapsed > 0.1 then                 -- 每帧最多刷新一次，严格超过间隔才执行
-        fastTimeElapsed = fastTimeElapsed - 0.1   -- 保留剩余累计时间
+    if fastTimeElapsed > REFRESH_INTERVAL then                 -- 每帧最多刷新一次，严格超过间隔才执行
+        fastTimeElapsed = fastTimeElapsed - REFRESH_INTERVAL   -- 保留剩余累计时间
         RefreshCooldownCell()
     end
 end)

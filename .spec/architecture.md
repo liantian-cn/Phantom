@@ -71,6 +71,9 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 行
 phantom/
   ui/
   core/
+    condition/
+    capture/
+    pixels/
   lua/
     runtime/
     general/
@@ -91,7 +94,8 @@ rotations/
 `python -m rotations.main` 是 Textual 主程序入口：读取启动工作目录的应用配置、运行界面，并在退出时等待后台线程释放。
 截图与像素解析仍由 `demo/demo.py` 和 `demo/demo01.py` 独立验证，demo 不经过 TUI，也不读取应用配置。
 
-共享图像算法与线程调度位于 `phantom/captures/`。后端只负责截图，线程负责全屏定位、局部截图、校验和交付最新结果。
+共享图像算法与线程调度位于 `phantom/core/capture/`，`phantom/captures/` 只存放版本插件。后端只负责截图，线程负责全屏定位、局部截图、校验和交付最新结果。
+UI 通过截图核心注册器按 capture.plugin 创建后端，默认 gdi@1.0；不直接导入版本实现。
 截图使用独立后台线程，不使用子进程。主线程通过快照接口取得最新图像与状态，不排队保留历史帧。
 截图 FPS 仅限制采集，不定义未来 rotation 求值或动作发送的循环频率。
 
@@ -103,7 +107,7 @@ rotations/
 
 ## 单份生成器落地
 
-phantom/core/rotation.py 负责配置和布局回写，conditions/registry.py 负责精确加载，core/generator.py 负责生成。
+phantom/core/rotation.py 负责配置和布局回写，core/condition/registry.py 负责精确加载，core/generator.py 负责生成。
 当前单份入口输出 runtime/ 与 general/ 源码副本、完整 media/ 二进制资源、一个 UUID Lua 和同名 TOC；不复制 examples。字体与纹理由 Lua 路径访问，不加入 TOC。
 UUID Lua 开头检查玩家职业和专精，随后每个模板置于独立 do/end 作用域并注册 UIInitFuncs。
 生成所有声明的条件；模板只插入经过校验的参数与固定位置，不插入表达式或宏文本作为 Lua。

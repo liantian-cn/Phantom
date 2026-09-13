@@ -30,14 +30,15 @@ from textual.geometry import Size
 from textual.message import Message
 from textual.widgets import Button, DataTable, Label, Log, Static, TabbedContent, TabPane
 
-from phantom.captures.contracts import CaptureWorker
+from phantom.core.capture.contracts import CaptureWorker
+from phantom.core.capture.registry import Registry as CaptureRegistry
 from phantom.core.configuration import AppConfig
 from phantom.core.game import GameMonitor, GameStatus, detect_game
 from phantom.core.generator import GenerationResult, generate
 from phantom.core.pixels import PixelDecoder
 from phantom.core.rotation import Rotation, RotationError, load_rotation
 from phantom.ui.business_log import BusinessLog
-from phantom.ui.capture import GENERAL_FIELDS, GeneralData, create_capture, decode_general
+from phantom.ui.capture import GENERAL_FIELDS, GeneralData, decode_general
 from phantom.ui.theme import FLEXOKI, PHANTOM_THEME
 
 
@@ -106,7 +107,11 @@ class PhantomApp(App[None]):
         self.generating: bool = False
         self._generation_done: Event = Event()
         self._generation_done.set()
-        self.capture: CaptureWorker = capture if capture is not None else create_capture(config.fps)
+        self.capture: CaptureWorker = (
+            capture
+            if capture is not None
+            else CaptureRegistry().create(config.capture_plugin, fps=config.fps)
+        )
         self.game_status: GameStatus = GameStatus(description="正在检测游戏")
         self.collecting: bool = False
         self.stopping: bool = False

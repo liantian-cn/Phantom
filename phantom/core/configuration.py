@@ -8,18 +8,20 @@ Key Variables:
     AppConfig.path: 启动工作目录中的配置文件绝对路径。
     AppConfig.fps: 截图与界面读取最新快照的频率上限。
 Change Log:
+    2026-09-13: Changed 新增 capture.plugin，复用基础校验器。
     2026-09-12: Added 第 5、6 步的工作目录 TOML 配置。
     2026-09-12: Changed 支持单份 rotation、WoW 路径和生成包名。
 """
 
-import math
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
 from phantom.core.rotation import validate_addon_name
+from phantom.core.validation import PositiveInteger, PositiveNumber, String, Table
 
 DEFAULT_CONFIG = """[capture]
+plugin = "gdi@1.0"
 fps = 15
 
 [ui]
@@ -46,6 +48,7 @@ class ConfigurationError(ValueError):
 class AppConfig:
     path: Path
     fps: float = 15
+    capture_plugin: str = "gdi@1.0"
     min_width: int = 120
     min_height: int = 46
     log_max_lines: int = 1000
@@ -55,17 +58,7 @@ class AppConfig:
 
 
 def _table(document: dict[str, object], name: str) -> dict[str, object]:
-    value = document.get(name, {})
-    if not isinstance(value, dict):
-        raise ConfigurationError(f"[{name}] 必须为 TOML 表")
-    return {str(key): item for key, item in value.items()}
-
-
-def _positive_integer(table: dict[str, object], name: str, default: int) -> int:
-    value = table.get(name, default)
-    if type(value) is not int or value <= 0:
-        raise ConfigurationError(f"ui.{name} 必须为正整数")
-    return value
+    return Table().validate(document.get(name, {}), f"[{name}]")
 
 
 def load_config(working_directory: Path) -> AppConfig:
@@ -92,18 +85,17 @@ def load_config(working_directory: Path) -> AppConfig:
         assert isinstance(rotation_value, str) and isinstance(wow_value, str)
         assert isinstance(addon_name, str)
         validate_addon_name(addon_name)
-        fps = capture.get("fps", 15)
-        if isinstance(fps, bool) or not isinstance(fps, (int, float)):
-            raise ConfigurationError("capture.fps 必须为有限正数")
-        fps_number = float(fps)
-        if not math.isfinite(fps_number) or fps_number <= 0:
-            raise ConfigurationError("capture.fps 必须为有限正数")
+        fps_number = PositiveNumber().validate(capture.get("fps", 15), "capture.fps")
+        capture_plugin = String().validate(capture.get("plugin", "gdi@1.0"), "capture.plugin")
         return AppConfig(
             path=path,
             fps=fps_number,
-            min_width=_positive_integer(ui, "min_width", 120),
-            min_height=_positive_integer(ui, "min_height", 46),
-            log_max_lines=_positive_integer(ui, "log_max_lines", 1000),
+            capture_plugin=capture_plugin,
+            min_width=PositiveInteger().validate(ui.get("min_width", 120), "ui.min_width"),
+            min_height=PositiveInteger().validate(ui.get("min_height", 46), "ui.min_height"),
+            log_max_lines=PositiveInteger().validate(
+                ui.get("log_max_lines", 1000), "ui.log_max_lines"
+            ),
             rotation_path=(path.parent / rotation_value).resolve() if rotation_value else None,
             wow_executable=(path.parent / wow_value).resolve() if wow_value else None,
             addon_name=addon_name,

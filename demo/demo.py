@@ -15,7 +15,7 @@ import numpy as np
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from phantom.captures.contracts import CaptureResult  # noqa: E402
+from phantom.core.capture.contracts import CaptureResult  # noqa: E402
 
 
 def save_result(result: CaptureResult) -> Path:
@@ -35,10 +35,9 @@ def save_result(result: CaptureResult) -> Path:
 
 def main() -> None:
     print("演示内容：使用 GDI 截取游戏像素基板，保存最后一帧 RGB 数组和截图状态。", flush=True)
-    sys.path.insert(0, str(PROJECT_ROOT / "phantom/captures/gdi@1.0"))
-    from capture import GDIWorker
+    from phantom.core.capture.registry import Registry
 
-    worker = GDIWorker(fps=15)
+    worker = Registry().create("gdi@1.0", fps=15)
     print("3 秒后开始截图，运行 5 秒后停止。", flush=True)
     try:
         sleep(3)

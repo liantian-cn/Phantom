@@ -50,15 +50,18 @@ local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后�
 
 --[[  logical code  ]]
 
+local UNIT_TOKEN = "player" -- 本版本固定采集玩家
+local RATIO_MIN = 0.0 -- 灰度曲线黑色端点
+local RATIO_MAX = 1.0 -- 灰度曲线白色端点
 -- 条件实例位置由 Python 生成器填入。
-local POSITION_Y = 2                   -- 第二行，RotationsCell 对应的行
-local POSITION_X = {{x1}}                   -- 本实例分配的 Cell
-local USE_PREDICTED = true             -- 使用预测生命值，未来作为插件入参
+local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local POSITION_X = {{x1}} -- 本实例冻结的横向位置
+local USE_PREDICTED = true             -- 本版本固定使用预测生命值
 
 local healthCurve = CreateColorCurve() -- 将生命值比例直接映射为灰度颜色
 healthCurve:SetType(Linear)
-healthCurve:AddPoint(0.0, COLOR.BLACK)
-healthCurve:AddPoint(1.0, COLOR.WHITE)
+healthCurve:AddPoint(RATIO_MIN, COLOR.BLACK)
+healthCurve:AddPoint(RATIO_MAX, COLOR.WHITE)
 
 local healthCell                        -- 等待 UI 初始化创建的玩家血量 Cell
 local eventFrame = CreateFrame("Frame") -- 本例独立的玩家生命值事件框架
@@ -68,7 +71,7 @@ local function RefreshHealthCell()
         return
     end
 
-    local color = UnitHealthPercent("player", USE_PREDICTED, healthCurve)
+    local color = UnitHealthPercent(UNIT_TOKEN, USE_PREDICTED, healthCurve)
     healthCell:setCell(color) -- 使用局部曲线的颜色结果，不依赖 Cell 上不存在的曲线字段
 end
 
@@ -78,7 +81,7 @@ local function InitializeHealthCell()
 end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")        -- 首次进入世界时刷新当前状态
-eventFrame:RegisterUnitEvent("UNIT_HEALTH", "player")    -- 只接收玩家当前生命值变化
-eventFrame:RegisterUnitEvent("UNIT_MAXHEALTH", "player") -- 只接收玩家最大生命值变化
+eventFrame:RegisterUnitEvent("UNIT_HEALTH", UNIT_TOKEN)    -- 只接收玩家当前生命值变化
+eventFrame:RegisterUnitEvent("UNIT_MAXHEALTH", UNIT_TOKEN) -- 只接收玩家最大生命值变化
 eventFrame:SetScript("OnEvent", RefreshHealthCell)       -- 两类事件均重新查询当前比例
 insert(UIInitFuncs, InitializeHealthCell)                -- 沿用共享布局、计数和缩放
