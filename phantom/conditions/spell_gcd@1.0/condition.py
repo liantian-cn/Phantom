@@ -10,7 +10,7 @@ Description:
     解码：亮度255/155/105/55/0对应0/5/30/155/375秒，分段线性反算。
     不可用或解码异常兜底 375.0；冷却黑色兼容饱和与不可用，无额外状态位。
 Key Variables:
-    COOLDOWN_POINTS: 本版本亮度与剩余秒数节点，两端共用。
+    COOLDOWN_POINTS: 本版本 Python 解码的固定亮度与剩余秒数节点。
 Change Log:
     2026-09-13: Changed 组合校验器与解码器，保持 @1.0 配对语义。
     2026-09-12: Added spell_gcd@1.0 配对编解码。
@@ -56,14 +56,6 @@ class Plugin(Condition):
         self.decoder: CooldownDecoder = CooldownDecoder()
         # 输出声明只依赖已验证参数，随后由核心分配并冻结区域。
         super().__init__(Output("cell", value_type=float))
-
-    def template_parameters(self) -> dict[str, str]:
-        """Lua 曲线与 Python 反算共用本版本节点，避免两端漂移。"""
-        return {
-            "cooldown_points": ", ".join(
-                f"{{{seconds}, {brightness}}}" for brightness, seconds in reversed(COOLDOWN_POINTS)
-            )
-        }
 
     def decode_value(
         self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile]

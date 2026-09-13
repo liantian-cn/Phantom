@@ -70,20 +70,25 @@ local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后�
 --[[  logical code  ]]
 
 local REFRESH_INTERVAL = 0.1 -- 刷新间隔，严格超过后每帧最多刷新一次
-local BRIGHTNESS_MAX = 255 -- RGB 通道归一化基数
-local COOLDOWN_POINTS = { {{cooldown_points}} } -- 秒数与亮度，来自本版本 Python 配对节点
 -- 条件实例参数与位置由 Python 生成器填入。
 local SPELL_IDS = { {{spell_ids}} }                         -- 按优先顺序排列的候选技能 ID
 local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
 local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 local IGNORE_GCD = {{ignore_gcd}}                                    -- 由 ignore_gcd 参数决定是否忽略公共冷却
 
-local remainingCurve = CreateColorCurve() -- 非等距节点采用线性插值
+local C0 = CreateColor(255 / 255, 255 / 255, 255 / 255, 1) -- 就绪时纯白
+local C1 = CreateColor(155 / 255, 155 / 255, 155 / 255, 1) -- 剩余 5 秒
+local C2 = CreateColor(105 / 255, 105 / 255, 105 / 255, 1) -- 剩余 30 秒
+local C3 = CreateColor(55 / 255, 55 / 255, 55 / 255, 1)    -- 剩余 155 秒
+local C4 = CreateColor(0 / 255, 0 / 255, 0 / 255, 1)       -- 剩余 375 秒
+
+local remainingCurve = CreateColorCurve()                  -- 不等距节点构成整体非线性的灰度变化
 remainingCurve:SetType(Linear)
-for _, point in ipairs(COOLDOWN_POINTS) do
-    local brightness = point[2] / BRIGHTNESS_MAX -- 节点为普通配置常量
-    remainingCurve:AddPoint(point[1], CreateColor(brightness, brightness, brightness, 1))
-end
+remainingCurve:AddPoint(0.0, C0)
+remainingCurve:AddPoint(5.0, C1)
+remainingCurve:AddPoint(30.0, C2)
+remainingCurve:AddPoint(155.0, C3)
+remainingCurve:AddPoint(375.0, C4)
 
 local cooldownCell                      -- 等待 UI 初始化创建的冷却 Cell
 local selectedSpellID                   -- 当前选中的首个法术书技能 ID，没有匹配时为 nil

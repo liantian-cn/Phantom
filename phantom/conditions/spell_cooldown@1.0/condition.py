@@ -12,7 +12,7 @@ Description:
 Key Variables:
     spells: 按配置优先顺序的候选技能。
     ignore_gcd: 是否排除公共冷却。
-    COOLDOWN_POINTS: 本版本亮度与剩余秒数节点，两端共用。
+    COOLDOWN_POINTS: 本版本 Python 解码的固定亮度与剩余秒数节点。
 Change Log:
     2026-09-13: Changed 组合校验器与解码器，保持 @1.0 配对语义。
     2026-09-12: Added spell_cooldown@1.0 配对编解码。
@@ -78,9 +78,6 @@ class Plugin(Condition):
         return {
             "spell_ids": ", ".join(str(spell) for spell in self.spells),
             "ignore_gcd": str(self.ignore_gcd).lower(),
-            "cooldown_points": ", ".join(
-                f"{{{seconds}, {brightness}}}" for brightness, seconds in reversed(COOLDOWN_POINTS)
-            ),
         }
 
     def decode_value(
