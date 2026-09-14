@@ -8,6 +8,7 @@ Key Variables:
     AppConfig.path: 启动工作目录中的配置文件绝对路径。
     AppConfig.fps: 截图与界面读取最新快照的频率上限。
 Change Log:
+    2026-09-14: Changed 增加 keyboard.plugin 精确版本配置及默认值。
     2026-09-13: Changed 新增 capture.plugin，复用基础校验器。
     2026-09-12: Added 第 5、6 步的工作目录 TOML 配置。
     2026-09-12: Changed 支持单份 rotation、WoW 路径和生成包名。
@@ -23,6 +24,9 @@ from phantom.core.validation import PositiveInteger, PositiveNumber, String, Tab
 DEFAULT_CONFIG = """[capture]
 plugin = "liantian_cn.gdi@dev"
 fps = 15
+
+[keyboard]
+plugin = "liantian_cn.post_message@dev"
 
 [ui]
 min_width = 120
@@ -49,6 +53,7 @@ class AppConfig:
     path: Path
     fps: float = 15
     capture_plugin: str = "liantian_cn.gdi@dev"
+    keyboard_plugin: str = "liantian_cn.post_message@dev"
     min_width: int = 120
     min_height: int = 46
     log_max_lines: int = 1000
@@ -73,6 +78,7 @@ def load_config(working_directory: Path) -> AppConfig:
         with path.open("rb") as config_file:
             document = tomllib.load(config_file)
         capture = _table(document, "capture")
+        keyboard = _table(document, "keyboard")
         ui = _table(document, "ui")
         rotation = _table(document, "rotation")
         wow = _table(document, "wow")
@@ -93,6 +99,9 @@ def load_config(working_directory: Path) -> AppConfig:
             path=path,
             fps=fps_number,
             capture_plugin=capture_plugin,
+            keyboard_plugin=String().validate(
+                keyboard.get("plugin", "liantian_cn.post_message@dev"), "keyboard.plugin"
+            ),
             min_width=PositiveInteger().validate(ui.get("min_width", 120), "ui.min_width"),
             min_height=PositiveInteger().validate(ui.get("min_height", 46), "ui.min_height"),
             log_max_lines=PositiveInteger().validate(

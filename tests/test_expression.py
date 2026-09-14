@@ -95,13 +95,14 @@ def test_priority_idle_and_types(tmp_path: Path) -> None:
     path.write_bytes(Path("rotations/blood-dk.toml").read_bytes())
     rotation = load_rotation(path)
     values: list[Value] = [100.0, 6, 2, True, 0.0, 0.0, 40.0, True]
-    decision = rotation.decide(values)
-    assert decision.rule_index == 1 and decision.macro is not None
+    general = {"插件启用": True, "正在延迟": False}
+    decision = rotation.decide(values, general)
+    assert decision.rule_index == 2 and decision.macro is not None
     assert decision.macro.name == "灵界打击"
     values[7] = False
-    assert rotation.decide(values).rule_index == 2
+    assert rotation.decide(values, general).rule_index == 3
     values = [0.0, 0, 0, False, 0.0, 3.0, 100.0, False]
-    decision = rotation.decide(values)
+    decision = rotation.decide(values, general)
     assert decision.macro is None and decision.rule.macro == "Idle"
     with pytest.raises(ValueError):
         rotation.decide(values[:-1])
@@ -116,7 +117,7 @@ def test_invalid_expression_does_not_write_layout(tmp_path: Path) -> None:
     source = source.replace("符文数量>=1", "符文数量 + 1 > 0").replace("x = 7", "x = 99")
     path.write_text(source, encoding="utf-8")
     before = path.read_bytes()
-    with pytest.raises(RotationError, match=r"rotation\[5\]"):
+    with pytest.raises(RotationError, match=r"rotation\[6\]"):
         load_rotation(path)
     assert path.read_bytes() == before
 

@@ -127,6 +127,11 @@ key = "CTRL-NUMPAD4"
 bind_key = true
 
 [[rotation]]
+annotate = "插件关闭或延迟时跳过本轮"
+condition = "not 插件启用 or 正在延迟"
+macro = "Idle"
+
+[[rotation]]
 annotate = "血量低于50%，就打灵界打击回血"
 condition = "(玩家血量百分比 < 50) and 灵界打击可用 and (符文能量>=40)"
 macro = "灵界打击"

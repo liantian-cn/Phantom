@@ -6,14 +6,14 @@
 | --- | --- | --- |
 | 条件 | [条件插件](conditions.md) | `phantom/conditions/<author>.<name>@<version>/condition.py` 与 `template.lua` |
 | 截图 | [截图插件](captures.md) | `phantom/captures/<author>.<name>@<version>/capture.py` |
-| 行为 | 尚未实施 | 接口留待对应路线图任务确认，不自行设计并接入 |
+| 键盘 | [键盘插件](keyboards.md) | `phantom/keyboards/<author>.<name>@<version>/keyboard.py` |
 
 系统加载、生命周期及输出契约以 [插件系统](../.spec/plugin-system.md) 为准；像素单位以 [像素协议](../.spec/pixel-protocol.md) 为准。
 本手册与 `.spec` 分别维护作者要求与系统契约，具有相同的项目规范地位；同一规则只在一个位置维护，其他文档链接引用。
 
 ## 职责与依赖
 
-- 版本目录放插件实现、配套模板与供 Agent 阅读的 `plugin.toml`。公共条件设施位于 `phantom/core/condition/`，截图设施位于 `phantom/core/capture/`。
+- 版本目录放插件实现、配套模板与供 Agent 阅读的 `plugin.toml`。公共条件设施位于 `phantom/core/condition/`，截图设施位于 `phantom/core/capture/`，键盘设施位于 `phantom/core/keyboard/`。
 - 插件依赖核心的公开契约；核心不依赖具体技能、职业或专精规则，不按某个插件名称写分支。
 - 不导入另一个插件版本目录。通用数学与基础输入检查通过组合复用；业务字段、算法参数、业务范围和兜底留在本插件版本。
 - 不在 UI 中加载具体后端文件或引用其具体实现类；使用核心注册器。
@@ -55,6 +55,6 @@
 - 标识符使用英文，业务说明使用中文。解释业务步骤、边界和原因，不以注释数量为目标。
 - 项目通用文件头、Type Hint、Lua 分区、API 文档与事实核验规则统一见 [开发规则](../.spec/development-rules.md)；插件专属说明见各专题。
 - 注释必须与本实例和参数化行为一致，不能保留示例的固定坐标、固定宽度，或复制其他插件的兜底含义。
-- 新增与修改插件时验证正常输入、边界、不可用输入及失败路径。条件须验证 Lua/Python 配对，截图须验证图像与生命周期；检查方法见 [测试规则](../.spec/testing.md)。
+- 新增与修改插件时验证正常输入、边界、不可用输入及失败路径。条件须验证 Lua/Python 配对，截图须验证图像与生命周期，键盘须验证发送顺序和失败释放；检查方法见 [测试规则](../.spec/testing.md)。
 - 完整类型检查使用 `.venv/Scripts/python scripts/check_types.py`，包括每个精确版本入口；新增插件不得依靠目录特殊字符避开检查。
 - 离线测试、Windows 截图和游戏内验收分别记录，不把 API doubles 的结果写成游戏验证结论。

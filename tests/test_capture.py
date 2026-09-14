@@ -69,6 +69,30 @@ def await_result(
     pytest.fail("worker 没有在期限内交付预期图像结果")
 
 
+def test_sequence_tracks_publication_not_pixels_or_snapshot_reads() -> None:
+    worker = ThreadCaptureWorker(lambda: ImageBackend([desktop(board())]), fps=20)
+    worker.start()
+    try:
+        first = await_result(worker, lambda result: result.image is not None)
+        assert first.sequence is not None
+        copied = worker.get_latest_result()
+        assert copied.sequence is not None and copied.sequence >= first.sequence
+        second = await_result(worker, lambda result: result.sequence != first.sequence)
+        assert second.sequence is not None and second.sequence > first.sequence
+        np.testing.assert_array_equal(first.image, second.image)
+    finally:
+        worker.stop()
+    last = worker.get_latest_result()
+    assert worker.get_latest_result().sequence == last.sequence
+    worker.start()
+    try:
+        restarted = await_result(worker, lambda result: result.image is not None)
+        assert restarted.sequence is not None and last.sequence is not None
+        assert restarted.sequence > last.sequence
+    finally:
+        worker.stop()
+
+
 @pytest.mark.parametrize("width", [8, 12, 32, 152])
 @pytest.mark.parametrize("flash", [0, 255])
 def test_full_image_localization_and_exact_crop(width: int, flash: int) -> None:

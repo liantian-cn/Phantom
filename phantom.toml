@@ -15,3 +15,6 @@ executable = 'E:\World of Warcraft\_retail_\Wow.exe'
 
 [addon]
 name = "Phantom"
+
+[keyboard]
+plugin = "liantian_cn.post_message@dev"

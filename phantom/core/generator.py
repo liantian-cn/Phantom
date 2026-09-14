@@ -7,6 +7,7 @@ Description:
 Key Variables:
     GenerationResult.directory: 本次插件输出目录。
 Change Log:
+    2026-09-14: Changed 生成 bind_key 宏安全按钮，按 Lua 5.1 规则转义文本。
     2026-09-12: Added 第 10 步离线生成链路。
     2026-09-12: Fixed 生成包漏掉面板字体与图标边框资源。
 """
@@ -43,6 +44,21 @@ def render(rotation: Rotation, addon_name: str) -> dict[str, str]:
     for index, entry in enumerate(rotation.conditions):
         instance_id = str(uuid5(UUID(rotation.uuid), str(index)))
         source += "do\n" + entry.instance.generate_lua(instance_id) + "\nend\n\n"
+    for index, macro in enumerate(rotation.macros):
+        if not macro.bind_key:
+            continue
+        # 名称不包含用户文本；宏文本只作为字符串传给安全按钮。
+        button = addon_name + "Button" + UUID(rotation.uuid).hex + str(index)
+        source += (
+            "do\n"
+            f"    local buttonName = {lua_string(button)}\n"
+            '    local frame = CreateFrame("Button", buttonName, UIParent, "SecureActionButtonTemplate")\n'
+            '    frame:SetAttribute("type", "macro")\n'
+            f'    frame:SetAttribute("macrotext", {lua_string(macro.macro_text or "")})\n'
+            '    frame:RegisterForClicks("AnyDown", "AnyUp")\n'
+            f"    SetOverrideBindingClick(frame, true, {lua_string(macro.key)}, buttonName)\n"
+            "end\n\n"
+        )
     files[f"{rotation.uuid}.lua"] = source
     template = (LUA_ROOT / "addonTemplateName.toc").read_text(encoding="utf-8")
     metadata = [
@@ -53,6 +69,21 @@ def render(rotation: Rotation, addon_name: str) -> dict[str, str]:
     toc = "\n".join(metadata) + "\n\n" + "\n".join(name.replace("/", "\\") for name in files) + "\n"
     files[f"{addon_name}.toc"] = toc
     return files
+
+
+def lua_string(value: str) -> str:
+    """Lua 5.1 字符串转义；三位十进制转义避免与后继数字粘连。"""
+    escaped = "".join(
+        "\\\\"
+        if character == "\\"
+        else '\\"'
+        if character == '"'
+        else f"\\{ord(character):03d}"
+        if ord(character) < 32 or ord(character) == 127
+        else character
+        for character in value
+    )
+    return '"' + escaped + '"'
 
 
 def generate(

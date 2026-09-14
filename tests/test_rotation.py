@@ -22,7 +22,7 @@ def test_example_layout_idempotent_and_optional_class_id(tmp_path: Path) -> None
     rotation = load_rotation(path)
     assert rotation.profile.unit_class_id == 6
     assert rotation.board_width == 36
-    assert len(rotation.rules) == 6
+    assert len(rotation.rules) == 7
     assert len(rotation.macros) == 4
     assert rotation.conditions[4].plugin == "liantian_cn.spell_gcd@dev"
     assert [e.instance.regions[0].x for e in rotation.conditions] == [1, 2, 1, 3, 4, 5, 6, 7]
@@ -80,6 +80,6 @@ def test_implicit_idle_not_persisted_and_layout_repaired(tmp_path: Path) -> None
     assert rotation.rules[-1].macro == "Idle"
     saved = path.read_text(encoding="utf-8")
     assert "# 保留用户注释" in saved
-    assert 'macro = "Idle"' not in saved
+    assert saved.count('macro = "Idle"') == 1  # 显式启用/延迟规则保留；兜底不回写。
     assert "x = 99" not in saved
     assert 'macro_text = "/cast 死神的抚摩"' in saved

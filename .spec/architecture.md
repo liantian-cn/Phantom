@@ -11,7 +11,7 @@ Python 生成器 ──→ WoW 插件（共享基础模块 + UUID Lua）
                        ↓
                  画面角落像素协议
                        ↓
-Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 行为插件发送按键
+Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 键盘插件发送按键
                                       │
                                       └─ 无命中：本轮无动作
 ```
@@ -23,7 +23,8 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 行
 - 截图插件：在 Windows 上捕获约定屏幕区域，向条件层提供 NumPy 数组。
 - 像素解析：`phantom/core/pixels/` 提供 `PixelDecoder`、`Cell`、`ValueBar`、`IconTile`，将完整基板按 Lua 坐标切分为独立区域，读取通用原始值，不包含条件业务公式。
 - rotation 执行器：读取条件值，按配置顺序求值，返回首个命中的宏名称。
-- 行为插件：把宏条目的 WoW 格式键位映射为 Windows 消息并发送到游戏窗口。
+- rotation 内核：解析宏键位为平台中立的 KeyCombination，选择至多一个宏后交给键盘插件。
+- 键盘插件：只发送明确按键；各自负责设备编码与目标，PostMessageW 在插件内部查找窗口，未来驱动或串口不必具有窗口目标。
 - Textual TUI：承载采集启停、游戏与采集状态、第一行通用数据展示和业务日志；支持配置指定的单份 rotation 生成和条件值；多份选择和决策展示留到后续步骤（见 [tui.md](tui.md)）。
 
 ## Textual 通信与任务
@@ -65,7 +66,7 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 行
 
 ## 预定源码结构
 
-以下目录是代码工程的职责划分；`phantom/ui`、`phantom/core`、`phantom/captures`、`phantom/lua` 和 `rotations` 已在使用，`phantom/conditions` 已实现版本化条件，`phantom/actions` 仍是后续占位：
+以下目录是代码工程的职责划分；`phantom/ui`、`phantom/core`、`phantom/captures`、`phantom/lua` 和 `rotations` 已在使用，`phantom/conditions` 已实现版本化条件，`phantom/keyboards` 已实现首个版本化键盘插件：
 
 ```text
 phantom/
@@ -74,12 +75,13 @@ phantom/
   core/
     condition/
     capture/
+    keyboard/
     pixels/
   lua/
     runtime/
     general/
   conditions/
-  actions/
+  keyboards/
   captures/
 scripts/
 rotations/
@@ -98,11 +100,10 @@ rotations/
 共享图像算法与线程调度位于 `phantom/core/capture/`，`phantom/captures/` 只存放版本插件。后端只负责截图，线程负责全屏定位、局部截图、校验和交付最新结果。
 UI 通过截图核心注册器按 capture.plugin 创建后端，默认 liantian_cn.gdi@dev；不直接导入版本实现。
 截图使用独立后台线程，不使用子进程。主线程通过快照接口取得最新图像与状态，不排队保留历史帧。
-截图 FPS 仅限制采集，不定义未来 rotation 求值或动作发送的循环频率。
+持续运行采用新帧驱动：后台读取最新截图，单帧至多解码、求值和发送一次，不补跑积压帧；采集及读取上限沿用 capture.fps（默认 15）。截图耗时和发送耗时可能降低实际频率。
 
 ## 待定事项
 
-- 循环频率、节流策略和运行期调度模型。
 - 天赋感知的 rotation 路由和对应重载规则。
 
 
@@ -111,12 +112,12 @@ UI 通过截图核心注册器按 capture.plugin 创建后端，默认 liantian_
 phantom/core/rotation.py 负责配置和布局回写，core/condition/registry.py 负责精确加载，core/generator.py 负责生成。
 当前单份入口输出 runtime/ 与 general/ 源码副本、完整 media/ 二进制资源、一个 UUID Lua 和同名 TOC；不复制 examples。字体与纹理由 Lua 路径访问，不加入 TOC。
 UUID Lua 开头检查玩家职业和专精，随后每个模板置于独立 do/end 作用域并注册 UIInitFuncs。
-生成所有声明的条件；模板只插入经过校验的参数与固定位置，不插入表达式或宏文本作为 Lua。
+生成所有声明的条件；模板只插入经过校验的参数与固定位置。宏文本经过 Lua 5.1 字符串转义后作为安全按钮属性，不作为可执行 Lua 插入。
 同名文件覆盖、旧文件保留，TOC 最后写入且仅列本次产物。每个目标文件使用同目录临时文件替换，避免单文件截断；不提供整个目录的事务或备份。
-当前不生成安全按钮和覆盖键位；多 rotation 选择及宏绑定仍留待后续阶段。
+UUID Lua 为 bind_key=true 的宏生成安全按钮及覆盖绑定；按钮名由插件包名、rotation UUID 与宏序号确定。bind_key=false 不生成绑定。多 rotation 选择留待后续阶段。
 
 ## 单帧决策报告
 
 `core/expression.py` 负责加载期白名单／类型校验和运行期 AST 解释；`Rotation.trial` 依次进行同帧条件解码与首条命中求值。
 返回结果包含该帧条件值、命中规则与可选宏；Idle 的宏为空。
-TUI 启动后的采集流程与独立 `demo/demo02.py` 复用此入口，只输出决策，不接入 action。
+后台 RotationRuntime 与独立 `demo/demo02.py` 复用单帧决策入口。后台运行器在命中有键位宏时调用 keyboard.send，TUI 读取其同帧截图和决策；独立 demo 仍只报告，不发送按键。

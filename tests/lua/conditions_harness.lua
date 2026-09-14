@@ -25,14 +25,23 @@ C_CurveUtil = {
     end,
     EvaluateColorFromBoolean = function(value, yes, no) return value and yes or no end
 }
-CreateFrame = function()
-    local frame = {events = {}}
+CreateFrame = function(kind, name, parent, template)
+    local frame = {events = {}, attributes = {}, name = name, template = template}
+    function frame:SetAttribute(key, value) self.attributes[key] = value end
+    function frame:RegisterForClicks(down, up)
+        assert(down == "AnyDown" and up == "AnyUp")
+    end
     function frame:RegisterEvent(event) self.events[event] = true end
     function frame:RegisterUnitEvent(event, unit) assert(unit == "player"); self.events[event] = true end
     function frame:SetScript(event, fn) self[event] = fn end
     function frame:HookScript(event, fn) self[event] = fn end
     table.insert(state.frames, frame)
     return frame
+end
+SetOverrideBindingClick = function(frame, priority, key, name)
+    assert(priority == true and frame.name == name)
+    assert(frame.template == "SecureActionButtonTemplate")
+    assert(frame.attributes.type == "macro" and type(frame.attributes.macrotext) == "string")
 end
 UnitClass = function(unit) assert(unit == "player"); return "死亡骑士", state.class, 6 end
 C_SpecializationInfo = {GetSpecialization = function() return state.spec end}

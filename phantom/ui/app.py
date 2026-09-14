@@ -10,6 +10,7 @@ Key Variables:
     PhantomApp.stopping: 后台正在释放截图资源，期间禁止再次启动。
     PhantomApp.business_log: 主动业务日志入口，与 Textual 诊断日志分离。
 Change Log:
+    2026-09-14: Changed 接入后台新帧运行器及键盘停止清理，展示实际同帧决策。
     2026-09-13: Fixed 在 Textual 停止消息循环后拒绝采集刷新，避免访问已卸载控件。
     2026-09-13: Changed 将同帧决策与宏名称日志整合进启动后的采集流程。
     2026-09-12: Added 第 5、6 步 Textual 界面与采集展示生命周期。
@@ -37,8 +38,10 @@ from phantom.core.capture.registry import Registry as CaptureRegistry
 from phantom.core.configuration import AppConfig
 from phantom.core.game import GameMonitor, GameStatus, detect_game
 from phantom.core.generator import GenerationResult, generate
-from phantom.core.pixels import PixelDecoder
+from phantom.core.keyboard.contracts import Keyboard
+from phantom.core.keyboard.registry import Registry as KeyboardRegistry
 from phantom.core.rotation import Decision, Rotation, RotationError, load_rotation
+from phantom.core.runtime import RotationRuntime
 from phantom.ui.business_log import BusinessLog
 from phantom.ui.capture import GENERAL_FIELDS, GeneralData, decode_general
 from phantom.ui.theme import FLEXOKI, PHANTOM_THEME
@@ -96,9 +99,14 @@ class PhantomApp(App[None]):
         config: AppConfig,
         capture: CaptureWorker | None = None,
         game_detector: Callable[[], GameStatus] = detect_game,
+        keyboard: Keyboard | None = None,
     ) -> None:
         super().__init__()
         self.config: AppConfig = config
+        self.keyboard: Keyboard = (
+            keyboard if keyboard is not None else KeyboardRegistry().create(config.keyboard_plugin)
+        )
+        self.runtime: RotationRuntime | None = None
         self.decision: Decision | None = None
         self._decision_log: str = ""
         self.rotation: Rotation | None = None
@@ -286,8 +294,18 @@ class PhantomApp(App[None]):
             or not self.game_status.running
         ):
             return
-        self.capture.start()
+        self.runtime = None
         self.collecting = True
+        try:
+            self.capture.start()
+            if self.rotation is not None:
+                self.runtime = RotationRuntime(
+                    self.capture, self.keyboard, self.rotation, self.config.fps
+                )
+                self.runtime.start()
+        except Exception as error:
+            self._request_stop(f"启动失败：{error}")
+            return
         self._set_capture_state("等待截图")
         self.business_log.log("程序已启动")
         self._refresh_status()
@@ -306,7 +324,7 @@ class PhantomApp(App[None]):
         )
         return (
             f"第 {decision.rule_index} 条 · {decision.rule.condition or '兜底'}"
-            f" · {decision.rule.annotate} · {action}（仅报告）"
+            f" · {decision.rule.annotate} · {action}"
         )
 
     def _show_decision(self, decision: Decision | None) -> None:
@@ -315,7 +333,7 @@ class PhantomApp(App[None]):
             "决策：" + (self._decision_text(decision) if decision else "—")
         )
         message = (
-            f"拟执行宏：{decision.macro.name}"
+            f"已派发宏：{decision.macro.name}"
             if decision and decision.macro
             else "Idle：无动作"
             if decision
@@ -395,6 +413,8 @@ class PhantomApp(App[None]):
             return
         self.collecting = False
         self.stopping = True
+        if self.runtime is not None:
+            self.runtime.request_stop()
         self._show_data(None)
         self._set_capture_state("采集失败" if error else "已暂停", error)
         self.business_log.log("程序已暂停")
@@ -405,9 +425,18 @@ class PhantomApp(App[None]):
     def _stop_capture(self) -> None:
         error = ""
         try:
-            self.capture.stop()
+            if self.runtime is not None:
+                self.runtime.stop()
+                result = self.runtime.get_latest_result()
+                if result.fatal:
+                    error = result.error
         except Exception as exception:
             error = f"停止采集失败：{exception}"
+        finally:
+            try:
+                self.capture.stop()
+            except Exception as exception:
+                error += f" 停止采集失败：{exception}"
         self.post_message(CaptureStopped(error))
 
     def on_capture_stopped(self, message: CaptureStopped) -> None:
@@ -445,7 +474,11 @@ class PhantomApp(App[None]):
             return
         # 先检查存活，再取结果，保证线程结束时能读取它发布的最后错误。
         running = self.capture.is_running
-        result = self.capture.get_latest_result()
+        snapshot = self.runtime.get_latest_result() if self.runtime is not None else None
+        if snapshot is not None and snapshot.fatal:
+            self._request_stop(snapshot.error)
+            return
+        result = snapshot.capture if snapshot is not None else self.capture.get_latest_result()
         if not running:
             self._request_stop(result.status.description or "截图线程已结束")
             return
@@ -464,13 +497,12 @@ class PhantomApp(App[None]):
             else:
                 self._show_data(data)
                 condition_error = ""
-                if self.rotation is not None:
-                    try:
-                        decision = self.rotation.trial(PixelDecoder(result.image))
-                    except (ValueError, TypeError, IndexError) as error:
+                if snapshot is not None:
+                    if snapshot.error:
                         self._clear_conditions()
-                        condition_error = str(error)
-                    else:
+                        condition_error = snapshot.error
+                    elif snapshot.decision is not None:
+                        decision = snapshot.decision
                         table = self.query_one("#condition_table", DataTable)
                         self._show_decision(decision)
                         for index, value in enumerate(decision.values):
@@ -553,15 +585,25 @@ class PhantomApp(App[None]):
         )
 
     def close_resources(self) -> None:
+        if self.runtime is not None:
+            self.runtime.request_stop()
         try:
             self.game_monitor.stop()
         finally:
-            self.capture.stop()
+            try:
+                if self.runtime is not None:
+                    self.runtime.stop()
+                else:
+                    self.keyboard.close()
+            finally:
+                self.capture.stop()
 
     async def action_quit(self) -> None:
         if self.closing:
             return
         self.closing = True
+        if self.runtime is not None:
+            self.runtime.request_stop()
         self.collecting = False
         self._show_data(None)
         self._refresh_status()
@@ -577,5 +619,7 @@ class PhantomApp(App[None]):
         self._mounted_ui = False
         self.closing = True
         self.collecting = False
+        if self.runtime is not None:
+            self.runtime.request_stop()
         await asyncio.to_thread(self._generation_done.wait)
         await asyncio.to_thread(self.close_resources)

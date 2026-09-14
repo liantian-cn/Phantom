@@ -50,3 +50,14 @@ The four root-level reference repositories are evidence, not dependencies and no
 - Does the call mutate a protected object or binding during combat?
 - Does a third-party example target the same build?
 - Is every uncertain statement labeled unverified?
+
+## 2026-09-14 macro-binding verification
+
+The configured Windows checkout `E:\Documents\GitHub\wow-ui-source` is absent on this machine.
+The same recorded revision `a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58` was inspected online at
+[SecureTemplates.lua](https://raw.githubusercontent.com/Gethe/wow-ui-source/a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58/Interface/AddOns/Blizzard_FrameXML/SecureTemplates.lua).
+Its macro action reads `macrotext` when no macro-slot attribute is supplied and calls `C_Macro.RunMacroText`.
+The click handler selects the down or up action according to `useOnKeyDown` / `ActionButtonUseKeyDown`.
+This is pinned source evidence, not verification of a running game build or protected execution.
+The user designated [EZWowX2 Blood/Macro.lua](https://raw.githubusercontent.com/liantian-cn/EZWowX2/refs/heads/main/DejaVu/DejaVu_DeathKnight/Blood/Macro.lua)
+as the standard example for Phantom's generated bindings. Existing historical snapshots above remain unchanged.

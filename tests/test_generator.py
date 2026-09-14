@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -9,9 +10,53 @@ from phantom.core.condition.contracts import Region
 from phantom.core.condition.registry import Registry
 from phantom.core.generator import generate, render
 from phantom.core.pixels import PixelDecoder
-from phantom.core.rotation import load_rotation
+from phantom.core.rotation import Macro, load_rotation
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_macro_bindings_preserve_text_and_skip_existing_keys(tmp_path: Path) -> None:
+    rotation = load_rotation(copy_rotation(tmp_path))
+    text = '/cast [@target] 测试\n/say "quote" \\123\r\t\x00123'
+    rotation = replace(
+        rotation,
+        conditions=(),
+        macros=(
+            Macro("绑定", "CTRL-1", True, text),
+            Macro("已有键", "ALT-F4", False, "this must never be generated"),
+        ),
+    )
+    lua: Any = LuaRuntime(unpack_returned_tuples=True)
+    state: Any = lua.execute("""
+        local state = {buttons={}, bindings={}}
+        UnitClass = function() return "死亡骑士", "DEATHKNIGHT" end
+        C_SpecializationInfo = {GetSpecialization=function() return 1 end}
+        CreateFrame = function(kind, name, parent, template)
+            assert(kind == "Button" and template == "SecureActionButtonTemplate")
+            local frame = {name=name, attributes={}}
+            function frame:SetAttribute(key,value) self.attributes[key]=value end
+            function frame:RegisterForClicks(down,up)
+                assert(down=="AnyDown" and up=="AnyUp")
+                self.registered = true
+            end
+            table.insert(state.buttons, frame)
+            return frame
+        end
+        SetOverrideBindingClick = function(frame, priority, key, name)
+            assert(priority and frame.name==name and frame.registered)
+            table.insert(state.bindings, {key=key, frame=frame})
+        end
+        return state
+    """)
+    source = render(rotation, "TestPhantom")[rotation.uuid + ".lua"]
+    execute: Any = lua.eval("function(source) assert(loadstring(source))('TestPhantom', {}) end")
+    execute(source)
+    assert len(state.buttons) == len(state.bindings) == 1
+    assert state.buttons[1].attributes["type"] == "macro"
+    assert state.buttons[1].attributes.macrotext == text
+    assert state.bindings[1].key == "CTRL-1"
+    assert "this must never be generated" not in source
+    assert state.buttons[1].name.startswith("TestPhantomButton")
 
 
 def copy_rotation(tmp_path: Path) -> Path:

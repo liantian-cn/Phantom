@@ -9,6 +9,7 @@ Key Variables:
     ThreadCaptureWorker._latest: 最后采集结果，停止后仍保留。
     ThreadCaptureWorker._fps: 可在运行期间更新的频率上限。
 Change Log:
+    2026-09-14: Changed 发布时递增帧序号，快照复制保留同一帧身份。
     2026-09-11: Added 独立截图线程与图像业务流程。
     2026-09-12: Added 只读运行状态，供 TUI 识别截图线程已结束。
 """
@@ -55,6 +56,7 @@ class ThreadCaptureWorker:
         self._thread: Thread | None = None
         self._stop_requested: bool = True
         self._latest: CaptureResult = CaptureResult()
+        self._sequence: int = 0
         self._fps: float = 15
         self.set_fps(fps)
 
@@ -94,13 +96,16 @@ class ThreadCaptureWorker:
         with self._result_lock:
             result = self._latest
             return CaptureResult(
-                None if result.image is None else result.image.copy(), result.status
+                None if result.image is None else result.image.copy(),
+                result.status,
+                result.sequence,
             )
 
     def _publish(self, result: CaptureResult) -> None:
         image = None if result.image is None else np.array(result.image, copy=True, order="C")
         with self._result_lock:
-            self._latest = CaptureResult(image, result.status)
+            self._sequence += 1
+            self._latest = CaptureResult(image, result.status, self._sequence)
 
     def _run(self) -> None:
         backend: CaptureBackend | None = None

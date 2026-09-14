@@ -110,6 +110,8 @@ schema v1 支持：
 
 ## 宏与键位
 
+键位主键清单与标点语法见[键盘插件手册](../.plugin-development/keyboards.md#键位语法)。加载时拒绝未知键名，解析结果由内核持有，键盘后端不解释宏。
+
 - `key` 必填，使用大写 WoW 连字符格式，例如 `ALT-NUMPAD1`、`SHIFT-F8`；Python 端解析同一个字符串并映射到 Windows 输入。
 - `bind_key = true` 时，`macro_text` 必填。生成的 Lua 使用不可见 `SecureActionButtonTemplate` 设置 `type = "macro"` 与 `macrotext`，再通过 `SetOverrideBindingClick` 建立优先覆盖绑定。
 - 上述绑定不创建 WoW 已保存宏槽位，也不改写玩家的持久键位设置。
@@ -129,13 +131,15 @@ SetOverrideBindingClick(frame, true, macro.key, buttonName)
 
 ## 执行顺序
 
+内置布尔变量 `插件启用`、`爆发开启`、`正在延迟` 分别读取同帧第一行第 3、4、5 个 Cell。名称为保留条件名，不需要声明插件，也不占新布局。只读取本份 rotation 表达式引用的变量；引用值不是严格黑/白时该帧条件不可用，不回退成任意布尔值。未引用字段的异常不影响求值。
+
+这些变量不形成隐式门控。示例通过第一条 `not 插件启用 or 正在延迟` → `Idle` 跳过本轮。Idle 既可作为条件命中结果，也可作为末尾兜底；Sleep/Pass 仅为未来计划的 Idle 别名，本次不接入，也不增加等待语义。
+
 `rotation` 从上到下求值，第一个为真的条目胜出。每轮最多发送一个键；全部为假时本轮不执行动作。
 
 ## 待定事项
 
 - schema v1 之外的升级与迁移格式。
-- 键位语法的完整合法键名表和错误提示。
-- 循环频率、节流与相关配置字段。
 - 未来是否增加天赋路由字段。
 
 
@@ -147,7 +151,7 @@ SetOverrideBindingClick(frame, true, macro.key, buttonName)
 - 每次启动加载和点击生成重新分配，分类后按条件原始顺序排列，ValueBar 包含分隔。仅 layout 不同时保存，保留注释和其他内容，校验失败不回写。
 - 本阶段校验所有结构、基本类型、UUID、职业专精、名称/引用与插件参数，加载时一次性完成表达式白名单、引用与类型校验，运行时复用 AST。
 - 条件实例、宏和规则保持配置顺序；重复规则允许，条件标题与宏名称必须唯一。
-- 当前键位仅校验大写格式及 CTRL/ALT/SHIFT 修饰符，无重复修饰符；完整合法键名表留待绑定阶段。
+- 键位在加载时按键盘公共解析器完整校验并冻结为 KeyCombination；合法键名见[键盘插件手册](../.plugin-development/keyboards.md)。
 - 示例为 rotations/blood-dk.toml；每次生成所有声明的条件，包括尚未被规则引用的条件。
 
 ## 第 11–13 步求值边界
@@ -158,4 +162,4 @@ SetOverrideBindingClick(frame, true, macro.key, buttonName)
 - 支持链式比较及短路；列表仅允许同类型相等／不等判断，不支持排序比较。
 - 负号属于未开放的一元算术节点；非有限浮点字面量被拒绝。
 - 首条命中为 Idle 时本轮无宏；显式或内存追加的末尾 Idle 承接全部未命中。
-- 本阶段只报告拟执行宏和键位，不实现 action、宏绑定生成或真实按键发送。
+- 第 11–13 步历史上仅报告；第 14–17 步已通过独立运行器接入发送，单帧求值函数本身仍无发送副作用。

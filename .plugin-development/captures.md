@@ -8,6 +8,8 @@
 返回实例遵循 [截图 worker 契约](../.spec/plugin-system.md#截图-worker-契约)，包括只读 `is_running`、`start()`、`stop()`、`set_fps(fps=15)` 和 `get_latest_result()`。
 方法名相同不等于业务契约满足，仍需生命周期和图像测试。
 
+持续运行额外依赖 CaptureResult.sequence：每次发布递增的正整数，快照复制保留序号，不能用图像 hash 代替新帧身份。None 只适用于初始空结果、独立解码或旧离线用例；带图但无序号无法进入持续执行。ThreadCaptureWorker 自动维护序号，后端不重复实现。
+
 可组合 `phantom.core.capture.worker.ThreadCaptureWorker`：版本内后端实现 `CaptureBackend` 的 `desktop_bounds()`、`capture(bounds)`、`close()`，公共 worker 负责定位、校验、FPS、最新结果与停止。
 后端在采集线程内创建及关闭；释放资源后恢复该线程的 DPI 上下文。不要复制公共线程或定位算法到插件。
 

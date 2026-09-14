@@ -9,6 +9,7 @@ def main() -> None:
     root = Path(__file__).resolve().parents[1]
     sources = sorted((root / "phantom/conditions").glob("*@*/condition.py"))
     sources += sorted((root / "phantom/captures").glob("*@*/capture.py"))
+    sources += sorted((root / "phantom/keyboards").glob("*@*/keyboard.py"))
     commands = [[sys.executable, "-m", "mypy"]]
     commands.extend([sys.executable, "-m", "mypy", str(source)] for source in sources)
     failed = False

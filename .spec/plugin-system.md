@@ -5,7 +5,7 @@
 插件标识与版本的 Agent 作者约定见 [插件开发手册](../.plugin-development/README.md#版本与变更)。当前标识例如：
 
 - 条件：`liantian_cn.player_health_pct@dev`
-- 行为（尚未实现）：`liantian_cn.post_message@dev`
+- 键盘：`liantian_cn.post_message@dev`
 - 截图：`liantian_cn.gdi@dev`
 
 解析器以完整标识查找精确目录，不校验作者名、包名或版本格式，不自动改名、降级、升级或回退到相近版本。多个版本可以并存，共享配置继续引用作者已测试的版本。
@@ -25,14 +25,15 @@ phantom/conditions/liantian_cn.player_health_pct@dev/
 - `condition.py` 定义参数校验、输出描述、Lua 模板参数、解码和兜底。
 - `template.lua` 是该版本条件在游戏内采集和输出数据的模板。
 
-行为插件目录：
+键盘插件目录：
 
 ```text
-phantom/actions/liantian_cn.post_message@dev/
-  action.py
+phantom/keyboards/liantian_cn.post_message@dev/
+  keyboard.py
+  plugin.toml
 ```
 
-第一版只规划基于 `ctypes.windll.user32.PostMessageW` 的 `liantian_cn.post_message@dev`。
+首版 `liantian_cn.post_message@dev` 使用显式 ctypes Windows 签名调用 PostMessageW。契约见下方“键盘加载与发送”。
 
 截图插件目录：
 
@@ -52,10 +53,11 @@ phantom/captures/liantian_cn.gdi@dev/
 - worker 实例化接受 `fps=15`，提供 `start()`、`stop()`、`set_fps(fps=15)`、`get_latest_result()`。
 - FPS 必须为有限正数，允许运行中修改；GDI 实际应用上限，其他未来后端保留接口但可以不生效。
 - 重复 `start()` 不创建重复线程；`stop()` 唤醒等待并等待资源释放，重复停止无副作用。重新启动清除旧结果并重新定位。
-- `CaptureResult` 包含 `image` 和 `status`。图像为独立连续的 RGB `uint8` NumPy 数组，形状 `(height,width,3)`；未定位或底层截图失败时为 `None`。
+- `CaptureResult` 包含 `image`、`status` 和 `sequence`。图像为独立连续的 RGB `uint8` NumPy 数组，形状 `(height,width,3)`；未定位或底层截图失败时为 `None`。
 - 状态固定为 `has_error: bool` 和 `description: str`。有效帧为 `false`、空描述；未定位、多候选、校验失败及底层错误均为 `true`，描述具体原因。
 - 尚未启动的空结果为非错误；主动停止不改写最后采集结果。无效区域仍附图，不能作为有效业务输入。
 - 主线程取得最新结果的独立快照，不积压历史帧，不共享可被后续截图改写的缓冲区。
+- `sequence: int | None` 默认 None，表示尚无帧身份；纯解码及独立 demo 可使用无序号结果。持续执行要求有效图像带正整数序号，每次发布递增，重复读取保持原值；内容相同的新截图也递增。公共 worker 计数跨重启延续，初始空结果仍为 None。缺失、非法或倒退序号使执行暂停，不猜测图像是否为新帧。
 
 GDI worker 搜索整个虚拟桌面，包含负坐标显示器，按物理像素坐标截图。定位成功后仅截取完整基板区域。
 角标或尺寸失效时下一轮重新全屏搜索；角标有效但校验色错误时保持局部截图。定位与校验规则见像素协议。
@@ -101,8 +103,7 @@ GDI worker 搜索整个虚拟桌面，包含负坐标显示器，按物理像素
 
 ## 待定事项
 
-- 行为插件的公共基类接口。
-- 行为插件的发现扩展。
+无。新增后端和运行期热切换不属于当前范围。
 
 
 ## 第 7–10 步条件实现
@@ -140,3 +141,9 @@ spell_gcd 固定 GetSpellCooldownDuration(61304,false)，不查询法术书，�
 `Registry.create(identifier="liantian_cn.gdi@dev", fps=15)` 返回 CaptureWorker，每次构造独立实例。标识精确匹配、源码限定在版本目录。
 配置字段见 [TUI 应用配置](tui.md#应用配置)。非法选择、导入失败或不满足调用接口抛出带标识的 CapturePluginError，入口在进入 UI 前报告并非零退出。
 缺省配置采用 GDI；显式配置错误不回退。不提供热切换或热加载。
+
+## 键盘加载与发送
+
+`core/keyboard/registry.py` 按 `keyboard.plugin` 加载精确版本，默认 `liantian_cn.post_message@dev`。每次 create 返回独立实例，按实际源码路径隔离模块；目录穿越、逃逸、版本缺失、导入失败或接口错误均抛带标识的 KeyboardPluginError，主入口在进入 UI 前报告。
+
+`send(KeyCombination)` 与 `close()` 是公共接口。内核负责宏和键位字符串解析；后端负责明确按键的设备转换和目标选择，不接收宏、rotation 或公共 HWND。详见[键盘作者契约](../.plugin-development/keyboards.md)。当前不热加载、不回退，不增加第二种真实发送后端。

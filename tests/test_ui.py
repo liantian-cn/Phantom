@@ -15,6 +15,7 @@ from phantom.core.capture.contracts import CaptureResult, CaptureStatus, RGBImag
 from phantom.core.configuration import AppConfig
 from phantom.core.game import GameStatus
 from phantom.core.generator import GenerationResult, generate
+from phantom.core.keyboard.contracts import KeyCombination
 from phantom.ui.app import GameUpdated, PhantomApp
 from phantom.ui.business_log import BusinessLog
 from phantom.ui.capture import decode_general
@@ -49,6 +50,17 @@ class FakeCapture:
 
     def get_latest_result(self) -> CaptureResult:
         return self.result
+
+
+class FakeKeyboard:
+    def __init__(self) -> None:
+        self.sent: list[KeyCombination] = []
+
+    def send(self, keys: KeyCombination) -> None:
+        self.sent.append(keys)
+
+    def close(self) -> None:
+        pass
 
 
 def general_image(values: tuple[int, ...] = (6, 1, 255, 0, 0)) -> RGBImage:
@@ -321,7 +333,13 @@ def test_logs_bound_history_even_when_tab_hidden(tmp_path: Path) -> None:
     asyncio.run(scenario())
 
 
-def rotation_app(tmp_path: Path, capture: FakeCapture) -> PhantomApp:
+def rotation_app(
+    tmp_path: Path,
+    capture: FakeCapture,
+    *,
+    game: bool = False,
+    keyboard: FakeKeyboard | None = None,
+) -> PhantomApp:
     root = Path(__file__).resolve().parents[1]
     rotation_path = tmp_path / "blood.toml"
     rotation_path.write_bytes((root / "rotations/blood-dk.toml").read_bytes())
@@ -333,7 +351,8 @@ def rotation_app(tmp_path: Path, capture: FakeCapture) -> PhantomApp:
             tmp_path / "phantom.toml", rotation_path=rotation_path, wow_executable=executable
         ),
         capture=capture,
-        game_detector=lambda: GameStatus(False),
+        game_detector=lambda: GameStatus(game),
+        keyboard=keyboard if keyboard is not None else FakeKeyboard(),
     )
 
 
@@ -375,7 +394,7 @@ def test_generation_without_game_and_error_recovery(tmp_path: Path) -> None:
 def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
     async def scenario() -> None:
         capture = FakeCapture()
-        app = rotation_app(tmp_path, capture)
+        app = rotation_app(tmp_path, capture, game=True)
         async with app.run_test(size=(120, 46)) as pilot:
             await pilot.pause()
             app.on_game_updated(GameUpdated(GameStatus(True)))
@@ -385,12 +404,14 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
             image = np.zeros((20, 36, 3), dtype=np.uint8)
             image[:4, 4:8] = 6
             image[:4, 8:12] = 1
+            image[:4, 12:16] = 255
             for index, brightness in enumerate((85, 3, 255, 205, 255, 102, 255), 1):
                 image[4:8, 4 * index : 4 * index + 4] = brightness
             image[8:12, 4:6] = [255, 0, 0]
             image[8:12, 6:10] = 255
             image[8:12, 14:16] = [255, 0, 0]
-            capture.result = CaptureResult(image)
+            capture.result = CaptureResult(image.copy(), sequence=1)
+            await pilot.pause(0.15)
             app.refresh_capture()
             assert [table.get_cell(str(i), "value") for i in range(8)] == [
                 "40.0",
@@ -402,22 +423,26 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
                 "40.0",
                 "True",
             ]
-            assert app.decision is not None and app.decision.rule_index == 1
+            assert app.decision is not None and app.decision.rule_index == 2
             assert app.decision.macro is not None
             assert app.decision.macro.name == "灵界打击"
             await pilot.pause()
             log = app.query_one("#business_log", Log)
-            assert any("拟执行宏：灵界打击" in line for line in log.lines)
+            assert any("已派发宏：灵界打击" in line for line in log.lines)
             count = len(log.lines)
             app.refresh_capture()
             await pilot.pause()
             assert len(log.lines) == count
             image[:4, 8:12] = 2
+            capture.result = CaptureResult(image.copy(), sequence=2)
+            await pilot.pause(0.15)
             app.refresh_capture()
             assert all(table.get_cell(str(i), "value") == "—" for i in range(8))
             assert app.decision is None
             await pilot.pause()
             image[:4, 8:12] = 1
+            capture.result = CaptureResult(image.copy(), sequence=3)
+            await pilot.pause(0.15)
             app.refresh_capture()
             assert table.get_cell("0", "value") == "40.0"
             # 同一帧使全部规则为假，不能保留此前命中的宏。
@@ -425,10 +450,13 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
             image[4:8, 12:16] = 0
             image[4:8, 20:24] = 0
             image[4:8, 28:32] = 0
+            capture.result = CaptureResult(image.copy(), sequence=4)
+            await pilot.pause(0.15)
             app.refresh_capture()
             assert app.decision is not None and app.decision.macro is None
             assert app.decision.rule.macro == "Idle"
             capture.result = CaptureResult(status=CaptureStatus(True, "截图不可用"))
+            await pilot.pause(0.15)
             app.refresh_capture()
             assert app.decision is None
             app.stop_collection()
@@ -436,6 +464,96 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
             await pilot.pause()
             assert all(table.get_cell(str(i), "value") == "—" for i in range(8))
             assert not app.query_one("#generate", Button).disabled
+
+    asyncio.run(scenario())
+
+
+def execution_frame(sequence: int) -> CaptureResult:
+    image = np.zeros((20, 36, 3), dtype=np.uint8)
+    image[:4, 4:8] = 6
+    image[:4, 8:12] = 1
+    image[:4, 12:16] = 255
+    image[4:8, 20:24] = 255
+    return CaptureResult(image, sequence=sequence)
+
+
+def test_keyboard_error_requires_manual_restart(tmp_path: Path) -> None:
+    class FailingKeyboard(FakeKeyboard):
+        fail: bool = True
+
+        def send(self, keys: KeyCombination) -> None:
+            super().send(keys)
+            if self.fail:
+                raise OSError("发送失败测试")
+
+    async def scenario() -> None:
+        capture, keyboard = FakeCapture(), FailingKeyboard()
+        app = rotation_app(tmp_path, capture, game=True, keyboard=keyboard)
+        async with app.run_test(size=(120, 46)) as pilot:
+            await pilot.pause()
+            app.start_collection()
+            capture.result = execution_frame(1)
+            await pilot.pause(0.25)
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert not app.collecting and "发送失败测试" in app.capture_error
+            assert not capture.is_running and app.decision is None
+            keyboard.fail = False
+            await pilot.pause(0.1)
+            assert len(keyboard.sent) == 1
+            app.start_collection()
+            capture.result = execution_frame(1)
+            await pilot.pause(0.2)
+            assert len(keyboard.sent) == 2 and app.decision is not None
+            app.stop_collection()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            # A later collection-only start must not reuse the prior runtime snapshot.
+            app.rotation = None
+            app.start_collection()
+            capture.result = CaptureResult(general_image())
+            await pilot.pause(0.15)
+            assert app.runtime is None and app.decision is None
+            assert app.general_data is not None
+
+    asyncio.run(scenario())
+
+
+def test_keyboard_release_does_not_block_ui_stop(tmp_path: Path) -> None:
+    class SlowKeyboard(FakeKeyboard):
+        def __init__(self) -> None:
+            super().__init__()
+            self.entered: Event = Event()
+            self.release: Event = Event()
+
+        def send(self, keys: KeyCombination) -> None:
+            super().send(keys)
+            self.entered.set()
+            assert self.release.wait(5)
+
+    async def scenario() -> None:
+        capture, keyboard = FakeCapture(), SlowKeyboard()
+        app = rotation_app(tmp_path, capture, game=True, keyboard=keyboard)
+        async with app.run_test(size=(120, 46)) as pilot:
+            await pilot.pause()
+            app.start_collection()
+            capture.result = execution_frame(1)
+            try:
+                await pilot.pause(0.15)
+                assert keyboard.entered.is_set()
+                app.stop_collection()
+                capture.result = execution_frame(2)
+                await pilot.press("tab")
+                assert app.query_one("#pages", TabbedContent).active == "general"
+                assert app.stopping and app.query_one("#start", Button).disabled
+                assert app.decision is None
+            finally:
+                keyboard.release.set()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert not capture.is_running and len(keyboard.sent) == 1
+            assert not app.stopping and app.decision is None
+        assert not any(thread.name == "phantom-rotation" for thread in enumerate_threads())
 
     asyncio.run(scenario())
 

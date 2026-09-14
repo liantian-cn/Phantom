@@ -8,6 +8,7 @@ Key Variables:
     CaptureResult.image: 当前区域图像；尚无区域时为 None。
     CaptureStatus.has_error: 本次采集是否没有可用结果。
 Change Log:
+    2026-09-14: Changed 增加可选帧序号以识别持续执行的新截图。
     2026-09-11: Added 截图基础公共契约。
     2026-09-12: Added 截图 worker 契约的只读运行状态。
 """
@@ -52,6 +53,7 @@ class CaptureStatus:
 class CaptureResult:
     image: RGBImage | None = None
     status: CaptureStatus = CaptureStatus()
+    sequence: int | None = None
 
 
 class CaptureBackend(Protocol):
