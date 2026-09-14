@@ -7,6 +7,7 @@ Key Variables:
     Output: 输出类型、数量、业务类型与形状。
     Region: 分配后的坐标与宽度。
 Change Log:
+    2026-09-14: Changed 增加不分配像素区域的 none 输出契约。
     2026-09-13: Changed 按确认计划拆分条件核心职责。
 """
 
@@ -18,7 +19,7 @@ from phantom.core.pixels import Cell, IconTile, ValueBar
 type Scalar = bool | int | float | str
 type Value = Scalar | list[Scalar]
 type Raw = tuple[list[Cell], list[ValueBar], list[IconTile]]
-type OutputType = Literal["cell", "value_bar", "icon_tile"]
+type OutputType = Literal["cell", "value_bar", "icon_tile", "none"]
 
 
 @dataclass(frozen=True)
@@ -30,9 +31,14 @@ class Output:
     widths: tuple[int, ...] = ()
 
     def __post_init__(self) -> None:
-        if self.output_type not in ("cell", "value_bar", "icon_tile"):
+        if self.output_type not in ("cell", "value_bar", "icon_tile", "none"):
             raise ValueError("未知输出类型")
-        if type(self.output_count) is not int or self.output_count < 1:
+        if type(self.output_count) is not int:
+            raise ValueError("输出数量必须为整数")
+        if self.output_type == "none":
+            if self.output_count != 0:
+                raise ValueError("none 输出数量必须为 0")
+        elif self.output_count < 1:
             raise ValueError("输出数量必须为正整数")
         if self.value_type not in (bool, int, float, str):
             raise ValueError("未知业务值类型")

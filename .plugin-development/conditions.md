@@ -17,8 +17,16 @@
 `Decoder.decode` 返回解码结果，失败交由 Condition 的既有异常边界调用插件兜底。
 例如 `SpellIDs` 在本插件内组合 `Items(PositiveInteger(), nonempty=True)`，保留技能候选顺序；冷却解码器在本版本内组合 `Gray` 和带本地节点的 `PiecewiseLinear`。
 
-`decode_value(cells, value_bars, icon_tiles)` 将所需区域交给实例的解码对象；未使用的列表为空。
-每个插件独立实现 `fallback_value()`，解释为何选择该值。兜底须符合输出声明；不要把布局越界伪装成可用业务值。
+`decode_value(cells, value_bars, icon_tiles, *, decoder: PixelDecoder)` 将所需区域交给实例的解码对象；未使用的列表为空。`value` 也要求传入同一个 decoder，签名不兼容旧 `@dev` 接口。
+插件可调用 `decoder.getCell(x, y)`、`decoder.getValueBar(x, width)`、`decoder.getIconTile(x)` 读取任意有效区域；坐标与宽度沿用像素协议。不得修改帧数据或缓存 decoder 供后续帧使用。
+每个插件独立实现 `fallback_value()`，解释为何选择该值。兜底须符合输出声明。框架分配区域越界在调用层失败；插件额外读取异常与业务解码异常使用插件兜底。
+
+## 无 Lua 与零区域插件
+
+`template.lua` 可省略，生成器保留空的实例 `do/end` 块。存在模板时仍正常渲染并检查路径与占位符错误，不将损坏模板当成缺失模板。
+不新增像素区域时使用 `Output("none", output_count=0, value_type=...)`，不声明 widths；框架冻结空 regions，向解码方法传三个空列表。仍必须声明业务值类型、形状和兜底。
+模板与区域分配相互独立：零区域插件可以提供 Lua；有分配区域的插件也可以省略模板，但插件作者须确保该区域有实际有效的数据来源。
+三个状态读取插件示例见系统的[通用状态读取插件](../.spec/plugin-system.md#通用状态读取插件)。它们依赖保留的第一行 Cell，不调用 WoW API、不重复生成 Cell。
 
 ## 模板参数与常量
 

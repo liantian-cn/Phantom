@@ -15,7 +15,7 @@ class Plugin(Condition):
     def __init__(self, args):
         super().__init__(Output("cell", value_type=float))
 
-    def decode_value(self, cells, value_bars, icon_tiles):
+    def decode_value(self, cells, value_bars, icon_tiles, *, decoder):
         return 1.0
 
     def fallback_value(self):

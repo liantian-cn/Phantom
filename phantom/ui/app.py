@@ -528,7 +528,7 @@ class PhantomApp(App[None]):
             return
         self.general_data = data
         table = self.query_one("#general_table", DataTable)
-        for index in range(5):
+        for index in range(len(GENERAL_FIELDS)):
             rgb, mean = data.cells[index] if data is not None else ("—", "—")
             table.update_cell(str(index), "rgb", rgb)
             table.update_cell(str(index), "mean", mean)

@@ -4,7 +4,7 @@
 
 | 插件类型 | 专题 | 当前入口 |
 | --- | --- | --- |
-| 条件 | [条件插件](conditions.md) | `phantom/conditions/<author>.<name>@<version>/condition.py` 与 `template.lua` |
+| 条件 | [条件插件](conditions.md) | `phantom/conditions/<author>.<name>@<version>/condition.py` 与可选 `template.lua` |
 | 截图 | [截图插件](captures.md) | `phantom/captures/<author>.<name>@<version>/capture.py` |
 | 键盘 | [键盘插件](keyboards.md) | `phantom/keyboards/<author>.<name>@<version>/keyboard.py` |
 
@@ -26,7 +26,7 @@
 - 插件标识使用 `repo作者名.包名@版本号`，包名沿用英文 `snake_case`。作者名应为可用的 Python 包名（合法标识符且不是保留词）；本仓库作者 `liantian-cn` 使用 `liantian_cn`。
 - 数字或点分数字版本（如 `1`、`1.0`、`1.2.3`）是正式版本，接口参数和逻辑不得原地修改；需要修改时创建另一版本。
 - 其余非数字版本是测试版本，例如 `dev`、`beta`、`1.0-beta`，允许修改接口参数和逻辑；仍需同步受影响配置、说明并验证业务行为。
-- 当前八个条件插件和 GDI 截图插件统一为 `liantian_cn.<原包名>@dev`，本次迁移不改变业务契约，不保留旧别名。
+- 条件插件和 GDI 截图插件统一使用 `liantian_cn.<名称>@dev`，不保留旧标识别名。2026-09-14 条件接口增加必填同帧 decoder，并新增三个无 Lua 状态读取插件；原有八个条件保持业务解码语义。
 
 运行时只按完整目录名精确加载，不做版本回退、作者名自动转换或跨版本隐式复用，保留路径安全及接口检查。
 

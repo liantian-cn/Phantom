@@ -7,6 +7,7 @@ Description:
 Key Variables:
     Registry._classes: 当前 registry 生命周期内的精确版本类缓存。
 Change Log:
+    2026-09-14: Changed 允许无 Lua 模板插件，保留存在模板的路径与文件校验。
     2026-09-13: Changed 命名交由作者规则约束，精确加载并检查目录与源码边界。
     2026-09-12: Added 条件插件发现与参数校验入口。
 """
@@ -43,8 +44,10 @@ class Registry:
             source = directory / "condition.py"
             if any(path.resolve().parent != directory.resolve() for path in (source, template)):
                 raise ValueError("条件源码与模板必须位于精确版本目录内")
-            if not source.is_file() or not template.is_file():
-                raise ValueError("缺少精确版本的 condition.py 或 template.lua")
+            if not source.is_file():
+                raise ValueError("缺少精确版本的 condition.py")
+            if (template.exists() or template.is_symlink()) and not template.is_file():
+                raise ValueError("template.lua 必须为可读取的文件")
             if identifier not in self._classes:
                 digest = hashlib.sha256(str(source.resolve()).encode()).hexdigest()
                 module_name = f"phantom_condition_{digest}"
@@ -63,7 +66,8 @@ class Registry:
                     sys.modules.pop(module_name, None)
                     raise
             instance = self._classes[identifier](args)  # type: ignore[arg-type]
-            instance.set_template(template)
+            if template.is_file():
+                instance.set_template(template)
             return instance
         except Exception as error:
             raise ValueError(f"插件 {identifier}：{error}") from error

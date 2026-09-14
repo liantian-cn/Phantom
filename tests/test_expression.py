@@ -94,15 +94,14 @@ def test_priority_idle_and_types(tmp_path: Path) -> None:
     path = tmp_path / "rotation.toml"
     path.write_bytes(Path("rotations/blood-dk.toml").read_bytes())
     rotation = load_rotation(path)
-    values: list[Value] = [100.0, 6, 2, True, 0.0, 0.0, 40.0, True]
-    general = {"插件启用": True, "正在延迟": False}
-    decision = rotation.decide(values, general)
+    values: list[Value] = [100.0, 6, 2, True, 0.0, 0.0, 40.0, True, True, False]
+    decision = rotation.decide(values)
     assert decision.rule_index == 2 and decision.macro is not None
     assert decision.macro.name == "灵界打击"
     values[7] = False
-    assert rotation.decide(values, general).rule_index == 3
-    values = [0.0, 0, 0, False, 0.0, 3.0, 100.0, False]
-    decision = rotation.decide(values, general)
+    assert rotation.decide(values).rule_index == 3
+    values = [0.0, 0, 0, False, 0.0, 3.0, 100.0, False, True, False]
+    decision = rotation.decide(values)
     assert decision.macro is None and decision.rule.macro == "Idle"
     with pytest.raises(ValueError):
         rotation.decide(values[:-1])

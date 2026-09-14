@@ -8,6 +8,7 @@ Key Variables:
     Rotation.conditions: 按配置顺序保存的独立条件实例。
     CLASS_IDS: Blizzard 职业 token 对应的亮度 ID。
 Change Log:
+    2026-09-14: Changed 仅以配置条件求值，向插件传递当前帧解码器。
     2026-09-14: Changed 冻结解析后的按键组合，支持内置通用布尔表达式变量。
     2026-09-13: Changed 加载时校验表达式类型并提供单帧优先级试运行。
     2026-09-13: Changed 迁用条件核心与基础校验器。
@@ -22,7 +23,6 @@ import os
 import re
 import tempfile
 import tomllib
-from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from uuid import UUID
@@ -39,8 +39,6 @@ from phantom.core.keyboard.contracts import KeyCombination, parse_key
 from phantom.core.pixels import PixelDecoder
 from phantom.core.validation import Fields, Items, String
 from phantom.core.validation import Table as TableValidator
-
-GENERAL_BOOLEAN_CELLS: dict[str, int] = {"插件启用": 3, "爆发开启": 4, "正在延迟": 5}
 
 CLASS_IDS = {
     "WARRIOR": 1,
@@ -138,7 +136,6 @@ class Decision:
     rule_index: int
     rule: Rule
     macro: Macro | None
-    general_values: tuple[tuple[str, bool], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -150,23 +147,8 @@ class Rotation:
     macros: tuple[Macro, ...]
     rules: tuple[Rule, ...]
     board_width: int
-    general_names: tuple[str, ...] = field(init=False)
 
-    def __post_init__(self) -> None:
-        referenced = {
-            node.id
-            for rule in self.rules
-            if rule.expression is not None
-            for node in ast.walk(rule.expression)
-            if isinstance(node, ast.Name)
-        }
-        object.__setattr__(
-            self,
-            "general_names",
-            tuple(name for name in GENERAL_BOOLEAN_CELLS if name in referenced),
-        )
-
-    def decide(self, values: list[Value], general: Mapping[str, bool] | None = None) -> Decision:
+    def decide(self, values: list[Value]) -> Decision:
         if len(values) != len(self.conditions) or any(
             not entry.instance.output.accepts(value)
             for entry, value in zip(self.conditions, values)
@@ -176,12 +158,6 @@ class Rotation:
             entry.title: value.copy() if isinstance(value, list) else value
             for entry, value in zip(self.conditions, values)
         }
-        general = general or {}
-        if any(
-            name not in general or type(general[name]) is not bool for name in self.general_names
-        ):
-            raise ValueError("缺少表达式引用的通用布尔值")
-        snapshot.update({name: general[name] for name in self.general_names})
         for index, rule in enumerate(self.rules, 1):
             if rule.expression is None or evaluate(rule.expression, snapshot):
                 macro = next((item for item in self.macros if item.name == rule.macro), None)
@@ -190,19 +166,12 @@ class Rotation:
                     index,
                     rule,
                     macro,
-                    tuple((name, general[name]) for name in self.general_names),
                 )
         raise ValueError("rotation 缺少 Idle 兜底")
 
     def trial(self, decoder: PixelDecoder) -> Decision:
         """同一帧解码与求值；发送由运行器负责。"""
-        general: dict[str, bool] = {}
-        for name in self.general_names:
-            cell = decoder.getCell(GENERAL_BOOLEAN_CELLS[name], 1)
-            if not bool((cell.inner == 0).all() or (cell.inner == 255).all()):
-                raise ValueError(f"通用字段 {name} 不是有效黑白值")
-            general[name] = bool((cell.inner == 255).all())
-        return self.decide(self.values(decoder), general)
+        return self.decide(self.values(decoder))
 
     def values(self, decoder: PixelDecoder) -> list[Value]:
         for x, expected in ((1, self.profile.unit_class_id), (2, self.profile.unit_spec)):
@@ -211,7 +180,10 @@ class Rotation:
                 raise ValueError("截图职业或专精与当前 rotation 不匹配")
         # 先提取全部区域，确保任何越界都不会产生半新半旧的业务快照。
         raw = [entry.instance.raw_value(decoder) for entry in self.conditions]
-        return [entry.instance.value(*regions) for entry, regions in zip(self.conditions, raw)]
+        return [
+            entry.instance.value(*regions, decoder=decoder)
+            for entry, regions in zip(self.conditions, raw)
+        ]
 
 
 def parse_profile(value: object) -> Profile:
@@ -306,7 +278,6 @@ def load_rotation(path: Path, registry: Registry | None = None) -> Rotation:
                 or not title.isidentifier()
                 or keyword.iskeyword(title)
                 or title in names
-                or title in GENERAL_BOOLEAN_CELLS
             ):
                 raise ValueError(f"条件标题非法或重复：{title}")
             names.add(title)
@@ -315,10 +286,7 @@ def load_rotation(path: Path, registry: Registry | None = None) -> Rotation:
             entries.append(ConditionEntry(title, plugin, loader.create(plugin, args)))
         rules = parse_rules(
             document["rotation"],
-            {
-                **{entry.title: entry.instance.output for entry in entries},
-                **{name: Output("cell", value_type=bool) for name in GENERAL_BOOLEAN_CELLS},
-            },
+            {entry.title: entry.instance.output for entry in entries},
             {macro.name for macro in macros},
         )
         board_width = allocate([entry.instance for entry in entries])

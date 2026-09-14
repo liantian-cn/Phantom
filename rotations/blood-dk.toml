@@ -102,6 +102,22 @@ output_type = "cell"
 [[conditions.layout.regions]]
 x = 7
 y = 2
+[[conditions]]
+title = "插件启用"
+plugin = "liantian_cn.enable@dev"
+
+[conditions.layout]
+output_type = "none"
+regions = []
+
+[[conditions]]
+title = "正在延迟"
+plugin = "liantian_cn.delaying@dev"
+
+[conditions.layout]
+output_type = "none"
+regions = []
+
 [[macros]]
 name = "灵界打击"
 macro_text = "/cast [@target] 灵界打击"

@@ -10,6 +10,10 @@ from phantom.core.condition.registry import Registry
 from phantom.core.pixels import Cell, IconTile, PixelDecoder, ValueBar
 
 
+def empty_decoder() -> PixelDecoder:
+    return PixelDecoder(np.zeros((20, 44, 3), dtype=np.uint8))
+
+
 def cell(brightness: int) -> Cell:
     return Cell(1, 2, np.full((4, 4, 3), brightness, dtype=np.uint8))
 
@@ -34,13 +38,16 @@ def test_scalar_decode(
 ) -> None:
     plugin = Registry().create("liantian_cn." + name + "@dev", args)
     allocate([plugin])
-    result = plugin.value([cell(brightness)], [], [])
+    result = plugin.value([cell(brightness)], [], [], decoder=empty_decoder())
     assert result == expected
     assert type(result) is type(expected)
-    assert plugin.value([], [], []) == plugin.fallback_value()
+    assert plugin.value([], [], [], decoder=empty_decoder()) == plugin.fallback_value()
     damaged = np.full((4, 4, 3), 255, dtype=np.uint8)
     damaged[1, 1] = [255, 0, 0]
-    assert plugin.value([Cell(1, 2, damaged)], [], []) == plugin.fallback_value()
+    assert (
+        plugin.value([Cell(1, 2, damaged)], [], [], decoder=empty_decoder())
+        == plugin.fallback_value()
+    )
 
 
 @pytest.mark.parametrize("name", ["spell_cooldown", "spell_gcd"])
@@ -64,7 +71,7 @@ def test_cooldown_segments(name: str, brightness: int, seconds: float) -> None:
     )
     plugin = Registry().create("liantian_cn." + name + "@dev", args)
     allocate([plugin])
-    assert plugin.value([cell(brightness)], [], []) == seconds
+    assert plugin.value([cell(brightness)], [], [], decoder=empty_decoder()) == seconds
 
 
 @pytest.mark.parametrize("white_columns", [0, 2, 4, 6, 8])
@@ -77,9 +84,11 @@ def test_charges_half_up_and_red_separator(white_columns: int) -> None:
     pixels[:, :2] = [255, 0, 0]
     pixels[:, -2:] = [255, 0, 0]
     pixels[:, 2 : 2 + white_columns] = 255
-    assert plugin.value([], [ValueBar(1, 2, pixels)], []) == math.floor(white_columns / 4 + 0.5)
+    assert plugin.value([], [ValueBar(1, 2, pixels)], [], decoder=empty_decoder()) == math.floor(
+        white_columns / 4 + 0.5
+    )
     pixels[:] = [255, 0, 0]
-    assert plugin.value([], [ValueBar(1, 2, pixels)], []) == 0
+    assert plugin.value([], [ValueBar(1, 2, pixels)], [], decoder=empty_decoder()) == 0
 
 
 @pytest.mark.parametrize(
@@ -101,7 +110,12 @@ def test_plugin_arguments(name: str, args: dict[str, object]) -> None:
 
 class Multi(Condition):
     def decode_value(
-        self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile]
+        self,
+        cells: list[Cell],
+        value_bars: list[ValueBar],
+        icon_tiles: list[IconTile],
+        *,
+        decoder: PixelDecoder,
     ) -> Value:
         return [icon.hash or "empty" for icon in icon_tiles]
 
@@ -124,23 +138,33 @@ def test_multi_output_layout_freeze_and_snapshots() -> None:
     pixels[12:20, 12:20] = [0, 100, 0]
     decoder = PixelDecoder(pixels)
     raw = icons.raw_value(decoder)
-    result = icons.value(*raw)
+    result = icons.value(*raw, decoder=decoder)
     assert isinstance(result, list) and result[0] == "empty" and len(str(result[1])) == 16
     pixels[:] = 0
-    assert icons.value(*raw) == result
+    assert icons.value(*raw, decoder=decoder) == result
     assert [bar.width for bar in bars.raw_value(decoder)[1]] == [2, 3]
 
 
 class WrongType(Multi):
     def decode_value(
-        self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile]
+        self,
+        cells: list[Cell],
+        value_bars: list[ValueBar],
+        icon_tiles: list[IconTile],
+        *,
+        decoder: PixelDecoder,
     ) -> Value:
         return True
 
 
 class Exploding(Multi):
     def decode_value(
-        self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile]
+        self,
+        cells: list[Cell],
+        value_bars: list[ValueBar],
+        icon_tiles: list[IconTile],
+        *,
+        decoder: PixelDecoder,
     ) -> Value:
         raise RuntimeError("unreadable")
 
@@ -151,7 +175,7 @@ def test_wrong_type_and_exception_fallback() -> None:
         Exploding(Output("cell", value_type=str, value_shape="list")),
     ):
         allocate([plugin])
-        assert plugin.value([cell(0)], [], []) == []
+        assert plugin.value([cell(0)], [], [], decoder=empty_decoder()) == []
 
 
 def test_registry_instances_are_independent() -> None:

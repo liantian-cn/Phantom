@@ -159,20 +159,21 @@ def test_send_failure_stops_without_retry(tmp_path: Path) -> None:
         runtime.stop()
 
 
-def test_builtin_values_and_unreferenced_invalid_fields(tmp_path: Path) -> None:
+def test_state_fallback_and_undeclared_burst(tmp_path: Path) -> None:
     rotation = rotation_copy(tmp_path)
     result = frame(1)
     assert result.image is not None
     result.image[:4, 16:20] = 123  # burst is not referenced by the example
     assert rotation.trial(PixelDecoder(result.image)).macro is not None
     result.image[1, 13] = 254
-    with pytest.raises(ValueError, match="插件启用"):
-        rotation.trial(PixelDecoder(result.image))
+    decision = rotation.trial(PixelDecoder(result.image))
+    assert decision.macro is not None
+    assert decision.values[-2:] == (True, False)
     ungated = replace(rotation, rules=rotation.rules[1:])
     assert ungated.trial(PixelDecoder(result.image)).macro is not None
 
 
-def test_reserved_builtin_name_rejected_before_write(tmp_path: Path) -> None:
+def test_duplicate_condition_name_rejected_before_write(tmp_path: Path) -> None:
     path = tmp_path / "blood.toml"
     source = Path("rotations/blood-dk.toml").read_text(encoding="utf-8")
     source = source.replace('title = "符文能量"', 'title = "插件启用"')

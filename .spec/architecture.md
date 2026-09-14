@@ -19,7 +19,7 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 键
 ## 组件职责
 
 - 生成器：校验配置与插件参数，实例化条件，冻结布局，生成一个插件包。
-- 条件插件：生成本实例 Lua、声明输出契约、读取原始区域并转换为业务值。
+- 条件插件：声明输出契约，按需生成本实例 Lua，读取分配区域并可通过同帧 PixelDecoder 读取额外坐标，转换为业务值。允许无 Lua、零新增像素区域。
 - 截图插件：在 Windows 上捕获约定屏幕区域，向条件层提供 NumPy 数组。
 - 像素解析：`phantom/core/pixels/` 提供 `PixelDecoder`、`Cell`、`ValueBar`、`IconTile`，将完整基板按 Lua 坐标切分为独立区域，读取通用原始值，不包含条件业务公式。
 - rotation 执行器：读取条件值，按配置顺序求值，返回首个命中的宏名称。
@@ -112,7 +112,7 @@ UI 通过截图核心注册器按 capture.plugin 创建后端，默认 liantian_
 phantom/core/rotation.py 负责配置和布局回写，core/condition/registry.py 负责精确加载，core/generator.py 负责生成。
 当前单份入口输出 runtime/ 与 general/ 源码副本、完整 media/ 二进制资源、一个 UUID Lua 和同名 TOC；不复制 examples。字体与纹理由 Lua 路径访问，不加入 TOC。
 UUID Lua 开头检查玩家职业和专精，随后每个模板置于独立 do/end 作用域并注册 UIInitFuncs。
-生成所有声明的条件；模板只插入经过校验的参数与固定位置。宏文本经过 Lua 5.1 字符串转义后作为安全按钮属性，不作为可执行 Lua 插入。
+生成所有声明的条件；可选模板只插入经过校验的参数与固定位置，无模板时保留空的实例 do/end 块。Lua 状态、面板及第一行五个 Cell 保留；enable、爆发、delay 的 Python 读取改为显式条件插件，框架只保留职业与专精匹配检查。宏文本经过 Lua 5.1 字符串转义后作为安全按钮属性，不作为可执行 Lua 插入。
 同名文件覆盖、旧文件保留，TOC 最后写入且仅列本次产物。每个目标文件使用同目录临时文件替换，避免单文件截断；不提供整个目录的事务或备份。
 UUID Lua 为 bind_key=true 的宏生成安全按钮及覆盖绑定；按钮名由插件包名、rotation UUID 与宏序号确定。bind_key=false 不生成绑定。多 rotation 选择留待后续阶段。
 

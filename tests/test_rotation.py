@@ -25,7 +25,16 @@ def test_example_layout_idempotent_and_optional_class_id(tmp_path: Path) -> None
     assert len(rotation.rules) == 7
     assert len(rotation.macros) == 4
     assert rotation.conditions[4].plugin == "liantian_cn.spell_gcd@dev"
-    assert [e.instance.regions[0].x for e in rotation.conditions] == [1, 2, 1, 3, 4, 5, 6, 7]
+    assert [e.instance.regions[0].x for e in rotation.conditions if e.instance.regions] == [
+        1,
+        2,
+        1,
+        3,
+        4,
+        5,
+        6,
+        7,
+    ]
     old = path.read_bytes()
     modified = path.stat().st_mtime_ns
     load_rotation(path)

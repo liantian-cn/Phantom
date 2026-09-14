@@ -23,7 +23,7 @@ phantom/conditions/liantian_cn.player_health_pct@dev/
 ```
 
 - `condition.py` 定义参数校验、输出描述、Lua 模板参数、解码和兜底。
-- `template.lua` 是该版本条件在游戏内采集和输出数据的模板。
+- `template.lua` 是可选的游戏内采集和输出模板；缺失时生成空的实例 `do/end` 块，存在时仍检查模板路径与渲染错误。
 
 键盘插件目录：
 
@@ -77,14 +77,17 @@ GDI worker 搜索整个虚拟桌面，包含负坐标显示器，按物理像素
 3. 由布局器分配连续区域并冻结位置与数量。
 4. 生成本实例对应的 Lua。
 5. 运行时从截图区域读取 `raw_value(decoder)`。
-6. 由 `value()` 调用插件的 `decode_value(cells, value_bars, icon_tiles)` 得到普通 Python 业务值。
+6. 由 `value(cells, value_bars, icon_tiles, *, decoder)` 调用同签名的插件 `decode_value`，得到普通 Python 业务值。
+
+不新增区域的插件声明 `output_type="none"`、`output_count=0`，无 widths，冻结后 regions 为空。冻结状态独立记录，零区域也只能冻结一次。Lua 模板是否存在与是否分配区域互相独立；无输出插件仍声明业务类型、形状与兜底。
 
 ## 基类契约
 
 - 基类公开 `raw_value(decoder)`，按冻结的输出描述读取原始区域。
-- 基类公开 `value(cells, value_bars, icon_tiles)`，三项均为列表，未使用的类型传空列表，并交给插件实现的 `decode_value(cells, value_bars, icon_tiles)`。
-- 每个条件插件必须实现 `decode_value(cells, value_bars, icon_tiles)` 和 `fallback_value()`；任一缺失时，该插件类保持抽象，不能实例化。
-- `decode_value(cells, value_bars, icon_tiles)` 抛出任何异常时，`value()` 必须捕获异常并返回 `fallback_value()`。
+- 基类公开 `value(cells, value_bars, icon_tiles, *, decoder)`，前三项均为列表，未使用的类型传空列表，并交给插件实现的同签名 `decode_value`。
+- `decoder: PixelDecoder` 为必填关键字参数，所有实例收到本轮 rotation 使用的同一个解码器；插件可按公开坐标接口读取任意有效区域，不得修改帧数据或持有解码器供以后帧使用。
+- 每个条件插件必须实现 `decode_value` 和 `fallback_value()`；任一缺失时，该插件类保持抽象，不能实例化。现有 `@dev` 插件统一迁移，不保留旧签名兼容层。
+- `decode_value` 中的额外读取或业务解码抛出任何异常时，`value()` 必须捕获异常并返回 `fallback_value()`。
 - 插件可以在识别到业务不可用状态时主动返回自己的兜底值。
 - `value()` 必须始终返回与声明的 `value_type` 和 `value_shape` 相符的值；核心不使用通用 `None` 业务值。
 
@@ -114,7 +117,7 @@ GDI worker 搜索整个虚拟桌面，包含负坐标显示器，按物理像素
 非法标识、版本缺失、模块或参数错误均附带插件名称；无版本回退和热加载。
 output_count 与 value_shape 独立，ValueBar 的 widths 为每条内容宽度，支持单实例多区域。
 冻结前验证兜底类型；输入列表数量错误、解码异常或业务类型不符返回已声明兜底。
-区域越界由调用层报告，不将整个错误布局伪装为正常业务值。
+框架分配区域的越界由调用层报告，不将整个错误布局伪装为正常业务值；插件通过 decoder 主动额外读取的异常在插件解码兜底边界内处理。
 
 | 插件（统一为 liantian_cn.名称@dev） | 参数 | 输出与解码 | 兜底 |
 | --- | --- | --- | --- |
@@ -134,6 +137,18 @@ spell_gcd 固定 GetSpellCooldownDuration(61304,false)，不查询法术书，�
 灰度 Cell 必须纯灰，布尔必须纯黑/白；整数采用非负数四舍五入而非银行家舍入。
 能量与血量直接把曲线返回颜色交给渲染，充能直接传秘密 currentCharges；符文仅统计非秘密 runeReady，不读取秘密事件参数。
 事件与节流沿用对应模板；GCD 与普通冷却均独立随机错峰、严格超过 0.1 秒轮询。
+
+## 通用状态读取插件
+
+现有 Lua 状态、聊天命令、面板与第一行五个 Cell 保留。以下三个无参数条件插件没有 Lua、不分配新区域，仅在配置声明时实例化；条件标题完全由配置决定，不形成隐式执行门控。
+
+| 插件 | 读取坐标 | 类型 | 非黑白值或解码异常兜底 |
+| --- | --- | --- | --- |
+| `liantian_cn.enable@dev` | Cell(3, 1) | bool | True |
+| `liantian_cn.in_burst@dev` | Cell(4, 1) | bool | False |
+| `liantian_cn.delaying@dev` | Cell(5, 1) | bool | False |
+
+兜底后继续求值；enable 与 delay 的上述兜底允许配置规则继续执行动作，这是已确认的业务语义。
 
 ## 截图加载与配置
 

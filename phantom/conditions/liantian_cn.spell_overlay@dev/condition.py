@@ -12,6 +12,7 @@ Description:
 Key Variables:
     spells: 按配置优先顺序的候选技能。
 Change Log:
+    2026-09-14: Changed 解码接口接收同帧 PixelDecoder，保留原有业务解码。
     2026-09-13: Changed 组合校验器与解码器，保持 @1.0 配对语义。
     2026-09-12: Added spell_overlay@1.0 配对编解码。
 """
@@ -21,7 +22,7 @@ from phantom.core.condition.contracts import Output
 from phantom.core.condition.decoders import (
     BlackWhite,
 )
-from phantom.core.pixels import Cell, IconTile, ValueBar
+from phantom.core.pixels import Cell, IconTile, PixelDecoder, ValueBar
 from phantom.core.validation import (
     Fields,
     Items,
@@ -52,7 +53,12 @@ class Plugin(Condition):
         return {"spell_ids": ", ".join(str(spell) for spell in self.spells)}
 
     def decode_value(
-        self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile]
+        self,
+        cells: list[Cell],
+        value_bars: list[ValueBar],
+        icon_tiles: list[IconTile],
+        *,
+        decoder: PixelDecoder,
     ) -> bool:
         return self.decoder.decode(cells[0])
 

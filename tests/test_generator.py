@@ -153,7 +153,18 @@ def test_generated_lua_roundtrip_gcd_and_events(tmp_path: Path) -> None:
     pixels[8:12, 6:10] = 255
     pixels[8:12, 14:16] = [255, 0, 0]
     assert state.bars[1].value == 1
-    assert rotation.values(PixelDecoder(pixels)) == [40.0, 3, 1, True, 2.5, 0.0, 40.0, True]
+    assert rotation.values(PixelDecoder(pixels)) == [
+        40.0,
+        3,
+        1,
+        True,
+        2.5,
+        0.0,
+        40.0,
+        True,
+        False,
+        False,
+    ]
     state.runes = 5
     state.event(state, "RUNE_POWER_UPDATE")
     assert state.cells[2].brightness == 5
@@ -239,7 +250,10 @@ def test_generated_cooldown_curve_roundtrips_all_segments(identifier: str, secon
     pixels = np.zeros((20, 32, 3), dtype=np.uint8)
     pixels[4:8, 4:8] = round(state.cells[1].brightness)
     # 像素量化在最慢区间每级为 4 秒，误差最多半级。
-    assert plugin.value(*plugin.raw_value(PixelDecoder(pixels))) == pytest.approx(seconds, abs=2.0)
+    decoder = PixelDecoder(pixels)
+    assert plugin.value(*plugin.raw_value(decoder), decoder=decoder) == pytest.approx(
+        seconds, abs=2.0
+    )
 
 
 def test_charge_template_uses_nondefault_width_and_position() -> None:

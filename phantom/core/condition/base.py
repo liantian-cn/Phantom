@@ -6,6 +6,7 @@ Description:
 Key Variables:
     Condition._regions: 本实例冻结的输出区域。
 Change Log:
+    2026-09-14: Changed 支持同帧解码器、零区域冻结与可选 Lua 模板。
     2026-09-13: Changed 按确认计划拆分条件核心职责。
 """
 
@@ -21,6 +22,7 @@ class Condition(ABC):
     def __init__(self, output: Output) -> None:
         self._output: Output = output
         self._regions: tuple[Region, ...] = ()
+        self._frozen: bool = False
         self._template: Path | None = None
 
     @property
@@ -32,13 +34,14 @@ class Condition(ABC):
         return self._regions
 
     def freeze(self, regions: tuple[Region, ...]) -> None:
-        if self._regions:
+        if self._frozen:
             raise ValueError("条件布局已冻结")
         if len(regions) != self.output.output_count:
             raise ValueError("布局数量与输出声明不符")
         if not self.output.accepts(self.fallback_value()):
             raise ValueError("插件兜底与业务类型声明不符")
         self._regions = regions
+        self._frozen = True
 
     def set_template(self, path: Path) -> None:
         self._template = path
@@ -50,7 +53,7 @@ class Condition(ABC):
         }
 
     def raw_value(self, decoder: PixelDecoder) -> Raw:
-        if not self.regions:
+        if not self._frozen:
             raise ValueError("条件尚未分配布局")
         cells: list[Cell] = []
         bars: list[ValueBar] = []
@@ -67,7 +70,12 @@ class Condition(ABC):
         return cells, bars, icons
 
     def value(
-        self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile]
+        self,
+        cells: list[Cell],
+        value_bars: list[ValueBar],
+        icon_tiles: list[IconTile],
+        *,
+        decoder: PixelDecoder,
     ) -> Value:
         try:
             lengths = {
@@ -80,7 +88,7 @@ class Condition(ABC):
                 for kind, length in lengths.items()
             ):
                 raise ValueError("输入区域数量与输出声明不符")
-            result = self.decode_value(cells, value_bars, icon_tiles)
+            result = self.decode_value(cells, value_bars, icon_tiles, decoder=decoder)
             if not self.output.accepts(result):
                 raise ValueError("解码返回值与声明不符")
             return result
@@ -88,8 +96,10 @@ class Condition(ABC):
             return self.fallback_value()
 
     def generate_lua(self, instance_id: str) -> str:
-        if self._template is None or not self.regions:
-            raise ValueError("模板或布局尚未就绪")
+        if not self._frozen:
+            raise ValueError("布局尚未就绪")
+        if self._template is None:
+            return ""
         return render_template(
             self._template, self.regions, self.template_parameters(), instance_id
         )
@@ -99,7 +109,12 @@ class Condition(ABC):
 
     @abstractmethod
     def decode_value(
-        self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile]
+        self,
+        cells: list[Cell],
+        value_bars: list[ValueBar],
+        icon_tiles: list[IconTile],
+        *,
+        decoder: PixelDecoder,
     ) -> Value:
         raise NotImplementedError
 

@@ -12,6 +12,7 @@ Description:
 Key Variables:
     COOLDOWN_POINTS: 本版本 Python 解码的固定亮度与剩余秒数节点。
 Change Log:
+    2026-09-14: Changed 解码接口接收同帧 PixelDecoder，保留原有业务解码。
     2026-09-13: Changed 组合校验器与解码器，保持 @1.0 配对语义。
     2026-09-12: Added spell_gcd@1.0 配对编解码。
 """
@@ -23,7 +24,7 @@ from phantom.core.condition.decoders import (
     Gray,
     PiecewiseLinear,
 )
-from phantom.core.pixels import Cell, IconTile, ValueBar
+from phantom.core.pixels import Cell, IconTile, PixelDecoder, ValueBar
 from phantom.core.validation import (
     Fields,
 )
@@ -58,7 +59,12 @@ class Plugin(Condition):
         super().__init__(Output("cell", value_type=float))
 
     def decode_value(
-        self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile]
+        self,
+        cells: list[Cell],
+        value_bars: list[ValueBar],
+        icon_tiles: list[IconTile],
+        *,
+        decoder: PixelDecoder,
     ) -> float:
         return self.decoder.decode(cells[0])
 

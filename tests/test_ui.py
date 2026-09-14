@@ -78,16 +78,13 @@ def make_app(tmp_path: Path, capture: FakeCapture, game: bool = True) -> Phantom
     )
 
 
-def test_decode_five_cells_purity_and_invalid_input() -> None:
+def test_decode_class_and_spec_purity_and_invalid_input() -> None:
     image = general_image()
     data = decode_general(CaptureResult(image))
     assert (data.width, data.height) == (32, 20)
     assert data.cells == (
         ("6,6,6", "6"),
         ("1,1,1", "1"),
-        ("255,255,255", "255"),
-        ("0,0,0", "0"),
-        ("0,0,0", "0"),
     )
     image[1, 5] = (255, 0, 0)
     mixed = decode_general(CaptureResult(image))
@@ -98,7 +95,7 @@ def test_decode_five_cells_purity_and_invalid_input() -> None:
     with pytest.raises(ValueError):
         decode_general(CaptureResult())
     with pytest.raises(ValueError):
-        decode_general(CaptureResult(image[:, :24]))
+        decode_general(CaptureResult(image[:, :12]))
 
 
 def test_business_log_deduplicates_body_before_timestamp() -> None:
@@ -181,8 +178,9 @@ def test_valid_failed_and_paused_data_never_reuse_old_frame(tmp_path: Path) -> N
             capture.result = CaptureResult(general_image())
             app.refresh_capture()
             assert table.get_cell("0", "rgb") == "6,6,6"
-            assert table.get_cell("2", "mean") == "255"
-            assert all(table.get_cell(str(index), "display") == "" for index in range(5))
+            assert table.row_count == 2
+            assert table.get_cell("1", "mean") == "1"
+            assert all(table.get_cell(str(index), "display") == "" for index in range(2))
             capture.result = CaptureResult(general_image(), CaptureStatus(True, "校验失败"))
             app.refresh_capture()
             assert table.get_cell("0", "rgb") == "—"
@@ -190,14 +188,14 @@ def test_valid_failed_and_paused_data_never_reuse_old_frame(tmp_path: Path) -> N
             capture.result = CaptureResult(general_image((3, 2, 0, 255, 255)))
             app.refresh_capture()
             assert table.get_cell("0", "mean") == "3"
-            assert table.get_cell("3", "mean") == "255"
+            assert table.get_cell("1", "mean") == "2"
             await pilot.pause()
             assert any("采集已恢复" in line for line in app.query_one(Log).lines)
             await pilot.click("#stop")
             await pilot.pause()
             app.refresh_capture()
             assert table.get_cell("0", "rgb") == "—"
-            assert all(table.get_cell(str(index), "display") == "" for index in range(5))
+            assert all(table.get_cell(str(index), "display") == "" for index in range(2))
             await pilot.click("#start")
             app.refresh_capture()
             assert table.get_cell("0", "rgb") == "—"
@@ -364,7 +362,7 @@ def test_generation_without_game_and_error_recovery(tmp_path: Path) -> None:
             assert app.query_one("#start", Button).disabled
             assert not app.query_one("#generate", Button).disabled
             table = app.query_one("#condition_table", DataTable)
-            assert table.row_count == 8
+            assert table.row_count == 10
             assert table.get_cell("4", "plugin") == "liantian_cn.spell_gcd@dev"
             app.generate_addon()
             assert app.generating
@@ -386,7 +384,7 @@ def test_generation_without_game_and_error_recovery(tmp_path: Path) -> None:
             await app.workers.wait_for_complete()
             await pilot.pause()
             assert app.rotation is not None and not app.rotation_error
-            assert table.row_count == 8
+            assert table.row_count == 10
 
     asyncio.run(scenario())
 
@@ -413,7 +411,7 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
             capture.result = CaptureResult(image.copy(), sequence=1)
             await pilot.pause(0.15)
             app.refresh_capture()
-            assert [table.get_cell(str(i), "value") for i in range(8)] == [
+            assert [table.get_cell(str(i), "value") for i in range(10)] == [
                 "40.0",
                 "3",
                 "1",
@@ -422,7 +420,11 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
                 "0.0",
                 "40.0",
                 "True",
+                "True",
+                "False",
             ]
+            assert table.get_cell("8", "name") == "插件启用"
+            assert table.get_cell("9", "name") == "正在延迟"
             assert app.decision is not None and app.decision.rule_index == 2
             assert app.decision.macro is not None
             assert app.decision.macro.name == "灵界打击"
@@ -437,7 +439,7 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
             capture.result = CaptureResult(image.copy(), sequence=2)
             await pilot.pause(0.15)
             app.refresh_capture()
-            assert all(table.get_cell(str(i), "value") == "—" for i in range(8))
+            assert all(table.get_cell(str(i), "value") == "—" for i in range(10))
             assert app.decision is None
             await pilot.pause()
             image[:4, 8:12] = 1
@@ -462,7 +464,7 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
             app.stop_collection()
             await app.workers.wait_for_complete()
             await pilot.pause()
-            assert all(table.get_cell(str(i), "value") == "—" for i in range(8))
+            assert all(table.get_cell(str(i), "value") == "—" for i in range(10))
             assert not app.query_one("#generate", Button).disabled
 
     asyncio.run(scenario())
