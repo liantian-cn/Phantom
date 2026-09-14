@@ -1,0 +1,14 @@
+name = "liantian_cn.player_melee_enemies_count@dev"
+display_name = "玩家近战范围敌人数量"
+description = "inRange = C_Spell.IsSpellInRange(spellID, unitToken)；返回 bool 或 nil，可能秘密。UnitExists(unit)、UnitCanAttack(\"player\", unit) 返回存在及可攻击布尔值。扫描 nameplate1–40；秘密或 nil 距离结果不计数。灰度 count/40，Python 四舍五入至 0–40。"
+recommended_condition_name = "玩家近战范围敌人数量"
+
+[parameters.spell_id]
+type = "int"
+required = true
+description = "用于检测近战范围的技能 ID，正整数。"
+
+[returns]
+type = "int"
+description = "扫描 nameplate1–40；秘密或 nil 距离结果不计数。灰度 count/40，Python 四舍五入至 0–40。"
+fallback = 0

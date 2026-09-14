@@ -1,0 +1,14 @@
+name = "liantian_cn.player_has_buff@dev"
+display_name = "玩家是否有任一指定增益"
+description = "AuraContainer:AddAuraSlot(key, \"HELPFUL\", options)；options.candidateFilters.includeSpellIDs 为技能 ID 布尔映射；玩家 HELPFUL 身份过滤允许。UpdateAllAuras() 请求刷新。参考 04_player_buff.lua，单 slot 匹配任一 ID，白色贴图覆盖黑底；不读取 aura 数据或显示状态。"
+recommended_condition_name = "玩家是否有任一指定增益"
+
+[parameters.buff_ids]
+type = "list[int]"
+required = true
+description = "非空正整数增益技能 ID 列表，任一存在即为真。"
+
+[returns]
+type = "bool"
+description = "参考 04_player_buff.lua，单 slot 匹配任一 ID，白色贴图覆盖黑底；不读取 aura 数据或显示状态。"
+fallback = false

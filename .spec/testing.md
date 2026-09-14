@@ -1,5 +1,20 @@
 # 测试规则
 
+## 玩家条件迁移验收（2026-09-15）
+
+新增 23 个 `liantian_cn.player_*@dev` 条件插件，新增 159 项测试；完整 pytest 为 562 passed、5 skipped。
+跳过项仍是 Windows 缺少符号链接权限的既有路径逃逸测试，不计为验证通过。
+`scripts/check_types.py` 严格检查通过，包含全部 34 个条件版本入口及截图、键盘插件；Ruff check 与 format --check 通过。
+
+- Python：参数缺失/多余/非法类型，ID 列表、饰品位置、零阈值及数值精度上限、驱散空表/全 false；灰度/黑白/图标解码与异常兜底。
+- 配对：职责四值、近战计数 0–40、全部 player/party/raid 目标、施法与通道进度端点及中间值，IconTile hash 与空字符串。
+- Lua 5.1：实际生成模板配合项目真实 Cell/IconTile 实现执行，验证提前到达的世界事件、单位过滤、下一帧移动刷新、独立随机错峰及余量、饰品双实例、施法/通道/蓄力转换、技能刷新取消和目标清理。
+- 受管显示：AuraContainer doubles 检查固定 slot、候选过滤、白色贴图及公开刷新入口；StatusBar doubles 接收原始不透明秘密对象，验证 N/N+1 边界和秘密颜色/纹理直接传递。
+- 生成：全部 23 个条件同份 rotation 的 Lua 5.1 语法、第二行 22 个 Cell 与第四行一个 IconTile 的独立布局、同帧 PixelDecoder 读取。
+
+秘密对象 doubles 只能发现部分不允许的普通操作，不等价于 WoW 引擎的全部访问限制。AuraContainer doubles 验证声明的过滤和显示契约，不冒充真实光环筛选或游戏渲染。
+本次未安装到游戏目录、未向游戏发送按键；实际 WoW 12.1 渲染与受限环境验收仍待游戏内验证。
+
 ## 同帧插件接口验收（2026-09-14）
 
 当前完整 pytest 为 386 passed、5 skipped；跳过项均为 Windows 缺少符号链接创建权限的既有路径逃逸测试，不计为验证通过。`scripts/check_types.py` 严格检查核心、测试及十一种条件、截图和键盘版本入口通过；Ruff check 与 format --check 通过。
