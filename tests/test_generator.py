@@ -18,14 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_macro_bindings_preserve_text_and_skip_existing_keys(tmp_path: Path) -> None:
     rotation = load_rotation(copy_rotation(tmp_path))
     text = '/cast [@target] 测试\n/say "quote" \\123\r\t\x00123'
-    rotation = replace(
-        rotation,
-        conditions=(),
-        macros=(
-            Macro("绑定", "CTRL-1", True, text),
-            Macro("已有键", "ALT-F4", False, "this must never be generated"),
-        ),
-    )
+    rotation = replace(rotation, conditions=(), macros=(Macro("绑定", "CTRL-1", True, text), Macro("已有键", "ALT-F4", False, "this must never be generated")))
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     state: Any = lua.execute("""
         local state = {buttons={}, bindings={}}
@@ -82,11 +75,7 @@ def test_generate_real_tree_overwrites_and_retains_stale_files(tmp_path: Path) -
     toc = result.directory / "TestPhantom.toc"
     toc.write_text("outdated", encoding="utf-8")
     generate(path, executable, "TestPhantom")
-    references = [
-        line
-        for line in toc.read_text(encoding="utf-8").splitlines()
-        if line and not line.startswith("##")
-    ]
+    references = [line for line in toc.read_text(encoding="utf-8").splitlines() if line and not line.startswith("##")]
     assert len(references) == 16
     assert all((result.directory / name.replace("\\", "/")).is_file() for name in references)
     assert all("examples" not in name and "old.lua" not in name for name in references)
@@ -104,10 +93,7 @@ def test_invalid_generation_does_not_touch_existing_output(tmp_path: Path) -> No
     executable = fake_executable(tmp_path)
     result = generate(path, executable)
     old = {name: (result.directory / name).read_bytes() for name in result.files}
-    path.write_text(
-        path.read_text(encoding="utf-8").replace("max_power = 120", "max_power = 0"),
-        encoding="utf-8",
-    )
+    path.write_text(path.read_text(encoding="utf-8").replace("max_power = 120", "max_power = 0"), encoding="utf-8")
     with pytest.raises(ValueError):
         generate(path, executable)
     assert old == {name: (result.directory / name).read_bytes() for name in result.files}
@@ -118,9 +104,7 @@ def test_invalid_generation_does_not_touch_existing_output(tmp_path: Path) -> No
 def test_lua51_syntax_for_every_generated_file(tmp_path: Path) -> None:
     rotation = load_rotation(copy_rotation(tmp_path))
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
-    compile_lua: Any = lua.eval(
-        "function(source) local f,err=loadstring(source); assert(f,err); return true end"
-    )
+    compile_lua: Any = lua.eval("function(source) local f,err=loadstring(source); assert(f,err); return true end")
     for name, content in render(rotation, "Phantom").items():
         assert "{{" not in content, name
         if name.endswith(".lua"):
@@ -133,12 +117,8 @@ def test_generated_lua_roundtrip_gcd_and_events(tmp_path: Path) -> None:
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     state: Any
     addon: Any
-    state, addon = lua.execute(
-        (ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8")
-    )
-    execute: Any = lua.eval(
-        "function(source, addon) local f=assert(loadstring(source)); f('Phantom', addon) end"
-    )
+    state, addon = lua.execute((ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8"))
+    execute: Any = lua.eval("function(source, addon) local f=assert(loadstring(source)); f('Phantom', addon) end")
     execute(source, addon)
     state.initialize(state)
     state.update(state)
@@ -153,18 +133,7 @@ def test_generated_lua_roundtrip_gcd_and_events(tmp_path: Path) -> None:
     pixels[8:12, 6:10] = 255
     pixels[8:12, 14:16] = [255, 0, 0]
     assert state.bars[1].value == 1
-    assert rotation.values(PixelDecoder(pixels)) == [
-        40.0,
-        3,
-        1,
-        True,
-        2.5,
-        0.0,
-        40.0,
-        True,
-        False,
-        False,
-    ]
+    assert rotation.values(PixelDecoder(pixels)) == [40.0, 3, 1, True, 2.5, 0.0, 40.0, True, False, False]
     state.runes = 5
     state.event(state, "RUNE_POWER_UPDATE")
     assert state.cells[2].brightness == 5
@@ -192,9 +161,7 @@ def test_lua_guard_registers_no_conditions(tmp_path: Path, unit_class: str, spec
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     state: Any
     addon: Any
-    state, addon = lua.execute(
-        (ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8")
-    )
+    state, addon = lua.execute((ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8"))
     state["class"] = unit_class
     state.spec = spec
     run: Any = lua.eval("function(source, addon) assert(loadstring(source))('Phantom',addon) end")
@@ -220,9 +187,7 @@ def test_templates_use_frozen_xy(identifier: str, args: dict[str, object]) -> No
     # 非默认行揭示模板中隐藏的 y=2；注册器本身不决定布局策略。
     plugin.freeze((Region(7, 1),))
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
-    state, addon = lua.execute(
-        (ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8")
-    )
+    state, addon = lua.execute((ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8"))
     run: Any = lua.eval("function(source, addon) assert(loadstring(source))('Phantom',addon) end")
     run(plugin.generate_lua("instance"), addon)
     assert len(state.cells) == 0  # 构造仍延迟到 UIInitFuncs。
@@ -233,15 +198,11 @@ def test_templates_use_frozen_xy(identifier: str, args: dict[str, object]) -> No
 @pytest.mark.parametrize("identifier", ["spell_cooldown", "spell_gcd"])
 @pytest.mark.parametrize("seconds", [0.0, 2.5, 5.0, 17.5, 30.0, 92.5, 155.0, 265.0, 375.0])
 def test_generated_cooldown_curve_roundtrips_all_segments(identifier: str, seconds: float) -> None:
-    args: dict[str, object] = (
-        {"spell_ids": [195292], "ignore_gcd": True} if identifier == "spell_cooldown" else {}
-    )
+    args: dict[str, object] = {"spell_ids": [195292], "ignore_gcd": True} if identifier == "spell_cooldown" else {}
     plugin = Registry().create("liantian_cn." + identifier + "@dev", args)
     plugin.freeze((Region(1, 2),))
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
-    state, addon = lua.execute(
-        (ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8")
-    )
+    state, addon = lua.execute((ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8"))
     state.remaining[195292 if identifier == "spell_cooldown" else 61304] = seconds
     run: Any = lua.eval("function(source, addon) assert(loadstring(source))('Phantom',addon) end")
     run(plugin.generate_lua("instance"), addon)
@@ -251,20 +212,14 @@ def test_generated_cooldown_curve_roundtrips_all_segments(identifier: str, secon
     pixels[4:8, 4:8] = round(state.cells[1].brightness)
     # 像素量化在最慢区间每级为 4 秒，误差最多半级。
     decoder = PixelDecoder(pixels)
-    assert plugin.value(*plugin.raw_value(decoder), decoder=decoder) == pytest.approx(
-        seconds, abs=2.0
-    )
+    assert plugin.value(*plugin.raw_value(decoder), decoder=decoder) == pytest.approx(seconds, abs=2.0)
 
 
 def test_charge_template_uses_nondefault_width_and_position() -> None:
-    plugin = Registry().create(
-        "liantian_cn.spell_charges@dev", {"spell_ids": [50842], "max_charges": 5}
-    )
+    plugin = Registry().create("liantian_cn.spell_charges@dev", {"spell_ids": [50842], "max_charges": 5})
     plugin.freeze((Region(4, width=5),))
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
-    state, addon = lua.execute(
-        (ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8")
-    )
+    state, addon = lua.execute((ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8"))
     setup: Any = lua.eval("""function(addon, state)
         addon.ValueBar.New = function(self, x, width, reverse)
             assert(reverse == false)

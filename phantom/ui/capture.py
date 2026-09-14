@@ -34,10 +34,4 @@ def decode_general(result: CaptureResult) -> GeneralData:
         raise ValueError("尚无有效截图")
     decoder = PixelDecoder(result.image)
     cells = [decoder.getCell(index, 1) for index in range(1, 3)]
-    return GeneralData(
-        width=result.image.shape[1],
-        height=result.image.shape[0],
-        cells=tuple(
-            (cell.color_string, f"{cell.mean:g}" if cell.is_pure else "—") for cell in cells
-        ),
-    )
+    return GeneralData(width=result.image.shape[1], height=result.image.shape[0], cells=tuple((cell.color_string, f"{cell.mean:g}" if cell.is_pure else "—") for cell in cells))

@@ -95,11 +95,7 @@ class ThreadCaptureWorker:
     def get_latest_result(self) -> CaptureResult:
         with self._result_lock:
             result = self._latest
-            return CaptureResult(
-                None if result.image is None else result.image.copy(),
-                result.status,
-                result.sequence,
-            )
+            return CaptureResult(None if result.image is None else result.image.copy(), result.status, result.sequence)
 
     def _publish(self, result: CaptureResult) -> None:
         image = None if result.image is None else np.array(result.image, copy=True, order="C")
@@ -131,6 +127,4 @@ class ThreadCaptureWorker:
                 try:
                     backend.close()
                 except Exception as error:
-                    self._publish(
-                        CaptureResult(status=CaptureStatus(True, f"截图资源释放失败：{error}"))
-                    )
+                    self._publish(CaptureResult(status=CaptureStatus(True, f"截图资源释放失败：{error}")))

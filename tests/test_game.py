@@ -38,14 +38,8 @@ class Process:
         return self._executable
 
 
-def test_detection_handles_exit_denied_path_and_multiple_games(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    processes = [
-        Process("wow.exe", psutil.NoSuchProcess(123)),
-        Process("wow.exe", psutil.AccessDenied(456)),
-        Process("wow.exe", r"E:\_classic_\wow.exe"),
-    ]
+def test_detection_handles_exit_denied_path_and_multiple_games(monkeypatch: pytest.MonkeyPatch) -> None:
+    processes = [Process("wow.exe", psutil.NoSuchProcess(123)), Process("wow.exe", psutil.AccessDenied(456)), Process("wow.exe", r"E:\_classic_\wow.exe")]
     monkeypatch.setattr(psutil, "process_iter", lambda: iter(processes))
     assert not detect_game().running
     assert "无法核验" in detect_game().description

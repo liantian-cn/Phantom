@@ -19,17 +19,11 @@ from phantom.core.capture.contracts import CaptureResult  # noqa: E402
 
 
 def save_result(result: CaptureResult) -> Path:
-    output = (
-        Path(__file__).resolve().parent
-        / "demo_results"
-        / datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    )
+    output = Path(__file__).resolve().parent / "demo_results" / datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     output.mkdir(parents=True, exist_ok=False)
     if result.image is not None:
         np.save(output / "result.npy", result.image, allow_pickle=False)
-    (output / "result.txt").write_text(
-        json.dumps(asdict(result.status), ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+    (output / "result.txt").write_text(json.dumps(asdict(result.status), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return output
 
 

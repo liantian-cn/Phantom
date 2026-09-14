@@ -23,13 +23,7 @@ Change Log:
 from phantom.core.condition.base import Condition
 from phantom.core.condition.contracts import Output
 from phantom.core.pixels import Cell, IconTile, PixelDecoder, ValueBar
-from phantom.core.validation import (
-    Boolean,
-    Fields,
-    Items,
-    PositiveInteger,
-    Validator,
-)
+from phantom.core.validation import Boolean, Fields, Items, PositiveInteger, Validator
 
 
 class SpellIDs(Validator[tuple[int, ...]]):
@@ -40,13 +34,7 @@ class SpellIDs(Validator[tuple[int, ...]]):
 
 
 # 本版本的亮度到剩余秒数配对节点；黑色兼有饱和与不可用含义。
-COOLDOWN_POINTS: tuple[tuple[float, float], ...] = (
-    (0.0, 375.0),
-    (55.0, 155.0),
-    (105.0, 30.0),
-    (155.0, 5.0),
-    (255.0, 0.0),
-)
+COOLDOWN_POINTS: tuple[tuple[float, float], ...] = ((0.0, 375.0), (55.0, 155.0), (105.0, 30.0), (155.0, 5.0), (255.0, 0.0))
 
 
 class Plugin(Condition):
@@ -61,19 +49,9 @@ class Plugin(Condition):
 
     def template_parameters(self) -> dict[str, str]:
         """只序列化已验证的插件参数；布局坐标由核心另行注入。"""
-        return {
-            "spell_ids": ", ".join(str(spell) for spell in self.spells),
-            "ignore_gcd": str(self.ignore_gcd).lower(),
-        }
+        return {"spell_ids": ", ".join(str(spell) for spell in self.spells), "ignore_gcd": str(self.ignore_gcd).lower()}
 
-    def decode_value(
-        self,
-        cells: list[Cell],
-        value_bars: list[ValueBar],
-        icon_tiles: list[IconTile],
-        *,
-        decoder: PixelDecoder,
-    ) -> float:
+    def decode_value(self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> float:
         cell = cells[0]
         if not cell.is_pure or not bool((cell.inner[0, 0] == cell.inner[0, 0, 0]).all()):
             raise ValueError("需要纯灰色 Cell")

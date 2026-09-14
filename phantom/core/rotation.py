@@ -40,21 +40,7 @@ from phantom.core.pixels import PixelDecoder
 from phantom.core.validation import Fields, Items, String
 from phantom.core.validation import Table as TableValidator
 
-CLASS_IDS = {
-    "WARRIOR": 1,
-    "PALADIN": 2,
-    "HUNTER": 3,
-    "ROGUE": 4,
-    "PRIEST": 5,
-    "DEATHKNIGHT": 6,
-    "SHAMAN": 7,
-    "MAGE": 8,
-    "WARLOCK": 9,
-    "MONK": 10,
-    "DRUID": 11,
-    "DEMONHUNTER": 12,
-    "EVOKER": 13,
-}
+CLASS_IDS = {"WARRIOR": 1, "PALADIN": 2, "HUNTER": 3, "ROGUE": 4, "PRIEST": 5, "DEATHKNIGHT": 6, "SHAMAN": 7, "MAGE": 8, "WARLOCK": 9, "MONK": 10, "DRUID": 11, "DEMONHUNTER": 12, "EVOKER": 13}
 
 
 class RotationError(ValueError):
@@ -149,24 +135,13 @@ class Rotation:
     board_width: int
 
     def decide(self, values: list[Value]) -> Decision:
-        if len(values) != len(self.conditions) or any(
-            not entry.instance.output.accepts(value)
-            for entry, value in zip(self.conditions, values)
-        ):
+        if len(values) != len(self.conditions) or any(not entry.instance.output.accepts(value) for entry, value in zip(self.conditions, values)):
             raise ValueError("决策条件值与声明不匹配")
-        snapshot = {
-            entry.title: value.copy() if isinstance(value, list) else value
-            for entry, value in zip(self.conditions, values)
-        }
+        snapshot = {entry.title: value.copy() if isinstance(value, list) else value for entry, value in zip(self.conditions, values)}
         for index, rule in enumerate(self.rules, 1):
             if rule.expression is None or evaluate(rule.expression, snapshot):
                 macro = next((item for item in self.macros if item.name == rule.macro), None)
-                return Decision(
-                    tuple(snapshot[entry.title] for entry in self.conditions),
-                    index,
-                    rule,
-                    macro,
-                )
+                return Decision(tuple(snapshot[entry.title] for entry in self.conditions), index, rule, macro)
         raise ValueError("rotation 缺少 Idle 兜底")
 
     def trial(self, decoder: PixelDecoder) -> Decision:
@@ -180,10 +155,7 @@ class Rotation:
                 raise ValueError("截图职业或专精与当前 rotation 不匹配")
         # 先提取全部区域，确保任何越界都不会产生半新半旧的业务快照。
         raw = [entry.instance.raw_value(decoder) for entry in self.conditions]
-        return [
-            entry.instance.value(*regions, decoder=decoder)
-            for entry, regions in zip(self.conditions, raw)
-        ]
+        return [entry.instance.value(*regions, decoder=decoder) for entry, regions in zip(self.conditions, raw)]
 
 
 def parse_profile(value: object) -> Profile:
@@ -198,9 +170,7 @@ def parse_profile(value: object) -> Profile:
     spec = table["unit_spec"]
     if type(spec) is not int or not 1 <= spec <= 4:
         raise ValueError("unit_spec 必须为专精顺序索引 1–4")
-    return Profile(
-        string(table, "title"), string(table, "description", empty=True), token, class_id, spec
-    )
+    return Profile(string(table, "title"), string(table, "description", empty=True), token, class_id, spec)
 
 
 def parse_macros(value: object) -> tuple[Macro, ...]:
@@ -222,9 +192,7 @@ def parse_macros(value: object) -> tuple[Macro, ...]:
     return tuple(result)
 
 
-def parse_rules(
-    value: object, outputs: dict[str, Output], macro_names: set[str]
-) -> tuple[Rule, ...]:
+def parse_rules(value: object, outputs: dict[str, Output], macro_names: set[str]) -> tuple[Rule, ...]:
     result: list[Rule] = []
     rows = tables(value, "rotation")
     for index, table in enumerate(rows):
@@ -254,11 +222,7 @@ def load_rotation(path: Path, registry: Registry | None = None) -> Rotation:
     try:
         source = path.read_bytes().decode("utf-8")
         document = object_table(tomllib.loads(source), "rotation document")
-        fields(
-            document,
-            {"schema_version", "uuid", "profile", "conditions", "macros", "rotation"},
-            set(),
-        )
+        fields(document, {"schema_version", "uuid", "profile", "conditions", "macros", "rotation"}, set())
         if type(document["schema_version"]) is not int or document["schema_version"] != 1:
             raise ValueError("schema_version 必须为整数 1")
         identifier = string(document, "uuid")
@@ -273,22 +237,13 @@ def load_rotation(path: Path, registry: Registry | None = None) -> Rotation:
         for table in tables(document["conditions"], "conditions"):
             fields(table, {"title", "plugin"}, {"plugin_args", "layout"})
             title = string(table, "title")
-            if (
-                re.fullmatch(r"[A-Za-z\u3400-\u9fff][A-Za-z0-9_\u3400-\u9fff]*", title) is None
-                or not title.isidentifier()
-                or keyword.iskeyword(title)
-                or title in names
-            ):
+            if re.fullmatch(r"[A-Za-z\u3400-\u9fff][A-Za-z0-9_\u3400-\u9fff]*", title) is None or not title.isidentifier() or keyword.iskeyword(title) or title in names:
                 raise ValueError(f"条件标题非法或重复：{title}")
             names.add(title)
             plugin = string(table, "plugin")
             args = object_table(table.get("plugin_args", {}), f"{title}.plugin_args")
             entries.append(ConditionEntry(title, plugin, loader.create(plugin, args)))
-        rules = parse_rules(
-            document["rotation"],
-            {entry.title: entry.instance.output for entry in entries},
-            {macro.name for macro in macros},
-        )
+        rules = parse_rules(document["rotation"], {entry.title: entry.instance.output for entry in entries}, {macro.name for macro in macros})
         board_width = allocate([entry.instance for entry in entries])
         # 所有用户内容与插件均通过后才回写排错坐标，失败配置不被部分修改。
         editable = tomlkit.parse(source)

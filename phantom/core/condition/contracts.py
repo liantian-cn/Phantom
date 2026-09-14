@@ -45,9 +45,7 @@ class Output:
         if self.value_shape not in ("scalar", "list"):
             raise ValueError("未知业务值形状")
         if self.output_type == "value_bar":
-            if len(self.widths) != self.output_count or any(
-                type(width) is not int or width < 1 for width in self.widths
-            ):
+            if len(self.widths) != self.output_count or any(type(width) is not int or width < 1 for width in self.widths):
                 raise ValueError("每条 ValueBar 必须声明正整数内容宽度")
         elif self.widths:
             raise ValueError("只有 ValueBar 可以声明宽度")

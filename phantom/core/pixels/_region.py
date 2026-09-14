@@ -31,9 +31,7 @@ class PixelRegion:
         if pix_array.shape[:2] != shape:
             raise ValueError(f"区域尺寸必须为 {shape}，实际为 {pix_array.shape[:2]}")
         # bytes 提供不可写的独立底层存储，输入后续变化不会使缓存失效。
-        self.pix_array: RGBImage = np.frombuffer(pix_array.tobytes(), dtype=np.uint8).reshape(
-            *shape, 3
-        )
+        self.pix_array: RGBImage = np.frombuffer(pix_array.tobytes(), dtype=np.uint8).reshape(*shape, 3)
 
     @property
     def pos(self) -> tuple[int, int]:

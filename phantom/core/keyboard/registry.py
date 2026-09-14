@@ -25,27 +25,16 @@ class KeyboardPluginError(ValueError):
 
 class Registry:
     def __init__(self, root: Path | None = None) -> None:
-        self.root: Path = (
-            root if root is not None else Path(__file__).resolve().parents[2] / "keyboards"
-        ).resolve()
+        self.root: Path = (root if root is not None else Path(__file__).resolve().parents[2] / "keyboards").resolve()
         self._classes: dict[str, type[object]] = {}
 
     def create(self, identifier: str = "liantian_cn.post_message@dev") -> Keyboard:
         try:
-            if (
-                not identifier
-                or identifier in {".", ".."}
-                or any(character in identifier for character in "/\\:")
-                or identifier.endswith((".", " "))
-                or Path(identifier).is_absolute()
-            ):
+            if not identifier or identifier in {".", ".."} or any(character in identifier for character in "/\\:") or identifier.endswith((".", " ")) or Path(identifier).is_absolute():
                 raise ValueError("插件标识必须是单个安全目录名")
             directory = self.root / identifier
             source = directory / "keyboard.py"
-            if (
-                directory.resolve().parent != self.root
-                or source.resolve().parent != directory.resolve()
-            ):
+            if directory.resolve().parent != self.root or source.resolve().parent != directory.resolve():
                 raise ValueError("键盘源码必须位于精确版本目录内")
             if not source.is_file():
                 raise ValueError("缺少精确版本的 keyboard.py")
@@ -68,10 +57,7 @@ class Registry:
                     sys.modules.pop(name, None)
                     raise
             instance = self._classes[identifier]()
-            for method_name, arguments in (
-                ("send", (KeyCombination((Key.A,)),)),
-                ("close", ()),
-            ):
+            for method_name, arguments in (("send", (KeyCombination((Key.A,)),)), ("close", ())):
                 method = getattr(instance, method_name, None)
                 if not callable(method):
                     raise ValueError(f"缺少接口 {method_name}")

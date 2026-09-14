@@ -29,9 +29,7 @@ def frame() -> PixelDecoder:
     return PixelDecoder(pixels)
 
 
-@pytest.mark.parametrize(
-    "name,x,fallback", [("enable", 3, True), ("in_burst", 4, False), ("delaying", 5, False)]
-)
+@pytest.mark.parametrize("name,x,fallback", [("enable", 3, True), ("in_burst", 4, False), ("delaying", 5, False)])
 def test_state_plugins_read_existing_pixels_and_fallback(name: str, x: int, fallback: bool) -> None:
     plugin = Registry().create(f"liantian_cn.{name}@dev", {})
     assert allocate([plugin]) == 28
@@ -57,51 +55,23 @@ def test_state_plugins_read_existing_pixels_and_fallback(name: str, x: int, fall
 
 
 class Combined(Condition):
-    def decode_value(
-        self,
-        cells: list[Cell],
-        value_bars: list[ValueBar],
-        icon_tiles: list[IconTile],
-        *,
-        decoder: PixelDecoder,
-    ) -> Value:
-        return [
-            str(cells[0].mean),
-            str(decoder.getCell(3, 1).mean),
-            str(decoder.getValueBar(1, 1).ratio),
-            decoder.getIconTile(1).hash or "empty",
-        ]
+    def decode_value(self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> Value:
+        return [str(cells[0].mean), str(decoder.getCell(3, 1).mean), str(decoder.getValueBar(1, 1).ratio), decoder.getIconTile(1).hash or "empty"]
 
     def fallback_value(self) -> Value:
         return ["fallback"]
 
 
-def test_same_decoder_across_instances_and_new_frames(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_same_decoder_across_instances_and_new_frames(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     rotation = example(tmp_path)
-    plugins: list[Condition] = [
-        Combined(Output("cell", value_type=str, value_shape="list")) for _ in range(2)
-    ]
+    plugins: list[Condition] = [Combined(Output("cell", value_type=str, value_shape="list")) for _ in range(2)]
     allocate(plugins)
-    rotation = replace(
-        rotation,
-        conditions=tuple(
-            ConditionEntry(f"reader{index}", "test", plugin) for index, plugin in enumerate(plugins)
-        ),
-    )
+    rotation = replace(rotation, conditions=tuple(ConditionEntry(f"reader{index}", "test", plugin) for index, plugin in enumerate(plugins)))
     current = frame()
     original = Combined.decode_value
     seen: list[int] = []
 
-    def observe(
-        self: Combined,
-        cells: list[Cell],
-        value_bars: list[ValueBar],
-        icon_tiles: list[IconTile],
-        *,
-        decoder: PixelDecoder,
-    ) -> Value:
+    def observe(self: Combined, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> Value:
         assert decoder is current
         seen.append(id(decoder))
         return original(self, cells, value_bars, icon_tiles, decoder=decoder)
@@ -120,15 +90,11 @@ def test_same_decoder_across_instances_and_new_frames(
     assert previous == [["0.0", "0.0", "0.0", "empty"]] * 2
 
 
-def test_allocated_bounds_fail_before_any_plugin_decodes(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_allocated_bounds_fail_before_any_plugin_decodes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     rotation = example(tmp_path)
     invalid = Combined(Output("cell", value_type=str, value_shape="list"))
     invalid.freeze((Region(100, 2),))
-    rotation = replace(
-        rotation, conditions=(*rotation.conditions, ConditionEntry("invalid", "test", invalid))
-    )
+    rotation = replace(rotation, conditions=(*rotation.conditions, ConditionEntry("invalid", "test", invalid)))
     calls: list[str] = []
 
     def unexpected(*args: object, **kwargs: object) -> Value:
@@ -143,9 +109,7 @@ def test_allocated_bounds_fail_before_any_plugin_decodes(
 
 @pytest.mark.parametrize("output", [Output("none", 0, bool), Output("cell", value_type=bool)])
 @pytest.mark.parametrize("template", [None, "", "addonTable.visits = (addonTable.visits or 0) + 1"])
-def test_optional_lua_independent_of_layout(
-    tmp_path: Path, output: Output, template: str | None
-) -> None:
+def test_optional_lua_independent_of_layout(tmp_path: Path, output: Output, template: str | None) -> None:
     directory = tmp_path / "plugins/test@dev"
     directory.mkdir(parents=True)
     source = f"""
@@ -174,17 +138,11 @@ class Plugin(Condition):
     assert plugin.value(*plugin.raw_value(decoder), decoder=decoder) is False
     decoder.pix_array[:4, 12:16] = 255
     assert plugin.value(*plugin.raw_value(decoder), decoder=decoder) is True
-    rotation = replace(
-        example(tmp_path), conditions=(ConditionEntry("reader", "test@dev", plugin),), macros=()
-    )
+    rotation = replace(example(tmp_path), conditions=(ConditionEntry("reader", "test@dev", plugin),), macros=())
     generated = render(rotation, "Test")[rotation.uuid + ".lua"]
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
-    lua.execute(
-        'UnitClass = function() return "", "DEATHKNIGHT" end; C_SpecializationInfo = {GetSpecialization=function() return 1 end}'
-    )
-    run: Any = lua.eval(
-        'function(source) local addon={visits=0}; assert(loadstring(source))("Test", addon); return addon.visits end'
-    )
+    lua.execute('UnitClass = function() return "", "DEATHKNIGHT" end; C_SpecializationInfo = {GetSpecialization=function() return 1 end}')
+    run: Any = lua.eval('function(source) local addon={visits=0}; assert(loadstring(source))("Test", addon); return addon.visits end')
     assert run(generated) == (1 if template else 0)
     if not template:
         assert "do\n\nend" in generated
@@ -214,9 +172,7 @@ def test_zero_regions_still_validate_fallback_before_freezing() -> None:
 def test_existing_template_errors_are_not_treated_as_optional(tmp_path: Path) -> None:
     directory = tmp_path / "test@dev"
     directory.mkdir()
-    (directory / "condition.py").write_bytes(
-        Path("phantom/conditions/liantian_cn.enable@dev/condition.py").read_bytes()
-    )
+    (directory / "condition.py").write_bytes(Path("phantom/conditions/liantian_cn.enable@dev/condition.py").read_bytes())
     template = directory / "template.lua"
     template.mkdir()
     with pytest.raises(ValueError, match="template.lua"):
@@ -245,25 +201,12 @@ def test_old_implicit_names_rejected_without_rewriting(tmp_path: Path, name: str
 
 def test_renamed_duplicate_and_omitted_states(tmp_path: Path) -> None:
     rotation = example(tmp_path)
-    source = (
-        rotation.path.read_text(encoding="utf-8")
-        .replace("插件启用", "允许执行")
-        .replace("正在延迟", "等待中")
-    )
-    source = source.replace(
-        "[[macros]]",
-        '[[conditions]]\ntitle = "另一开关"\nplugin = "liantian_cn.enable@dev"\n\n[[conditions]]\ntitle = "爆发开启"\nplugin = "liantian_cn.in_burst@dev"\n\n[[macros]]',
-        1,
-    )
+    source = rotation.path.read_text(encoding="utf-8").replace("插件启用", "允许执行").replace("正在延迟", "等待中")
+    source = source.replace("[[macros]]", '[[conditions]]\ntitle = "另一开关"\nplugin = "liantian_cn.enable@dev"\n\n[[conditions]]\ntitle = "爆发开启"\nplugin = "liantian_cn.in_burst@dev"\n\n[[macros]]', 1)
     rotation.path.write_text(source, encoding="utf-8")
     rotation = load_rotation(rotation.path)
     assert rotation.board_width == 36
-    assert [entry.title for entry in rotation.conditions[-4:]] == [
-        "允许执行",
-        "等待中",
-        "另一开关",
-        "爆发开启",
-    ]
+    assert [entry.title for entry in rotation.conditions[-4:]] == ["允许执行", "等待中", "另一开关", "爆发开启"]
     assert rotation.conditions[-4].instance is not rotation.conditions[-2].instance
     decoder = frame()
     assert rotation.trial(decoder).macro is None

@@ -15,9 +15,7 @@ from pathlib import Path
 from phantom.core.condition.contracts import Region
 
 
-def render_template(
-    path: Path, regions: tuple[Region, ...], parameters: dict[str, str], instance_id: str
-) -> str:
+def render_template(path: Path, regions: tuple[Region, ...], parameters: dict[str, str], instance_id: str) -> str:
     values = dict(parameters)
     values["uuid"] = instance_id
     for index, region in enumerate(regions, 1):

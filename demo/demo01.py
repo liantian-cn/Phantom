@@ -34,11 +34,7 @@ def describe_result(result: CaptureResult) -> list[str]:
 
 
 def main() -> None:
-    print(
-        "演示内容：解析游戏像素基板，输出 Cell(x=1–5, y=1–2) 的亮度、"
-        "ValueBar(x=1, width=2) 的 ratio/percent 和 IconTile(x=1,2) 的 hash。",
-        flush=True,
-    )
+    print("演示内容：解析游戏像素基板，输出 Cell(x=1–5, y=1–2) 的亮度、ValueBar(x=1, width=2) 的 ratio/percent 和 IconTile(x=1,2) 的 hash。", flush=True)
     # 与现有 demo 一样直接加载指定 GDI 版本，通用插件发现留待后续阶段。
     from phantom.core.capture.registry import Registry
 

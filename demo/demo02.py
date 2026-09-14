@@ -23,26 +23,15 @@ def describe_result(rotation: Rotation, result: CaptureResult) -> list[str]:
         raise ValueError("截图没有返回图像")
     decision = rotation.trial(PixelDecoder(result.image))
     lines = [f"当前 rotation：{rotation.profile.title} · 画布：{result.image.shape}"]
-    lines.extend(
-        f"{entry.title}：{value}" for entry, value in zip(rotation.conditions, decision.values)
-    )
-    lines.append(
-        f"命中第 {decision.rule_index} 条：{decision.rule.condition or '兜底'}"
-        f" · {decision.rule.annotate}"
-    )
-    lines.append(
-        f"拟执行宏：{decision.macro.name} · 键位：{decision.macro.key}（仅报告）"
-        if decision.macro
-        else "Idle：无动作"
-    )
+    lines.extend(f"{entry.title}：{value}" for entry, value in zip(rotation.conditions, decision.values))
+    lines.append(f"命中第 {decision.rule_index} 条：{decision.rule.condition or '兜底'} · {decision.rule.annotate}")
+    lines.append(f"拟执行宏：{decision.macro.name} · 键位：{decision.macro.key}（仅报告）" if decision.macro else "Idle：无动作")
     return lines
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "rotation", nargs="?", type=Path, default=PROJECT_ROOT / "rotations/blood-dk.toml"
-    )
+    parser.add_argument("rotation", nargs="?", type=Path, default=PROJECT_ROOT / "rotations/blood-dk.toml")
     args = parser.parse_args()
     print("演示内容：同帧解码条件并按优先级单次求值，只报告宏和键位，不发送按键。", flush=True)
     try:

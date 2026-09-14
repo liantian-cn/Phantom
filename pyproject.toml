@@ -17,8 +17,14 @@ exclude = ["demo_results/", "phantom[/\\\\](?:conditions|captures|keyboards)[/\\
 
 [tool.ruff]
 target-version = "py313"
-line-length = 100
+line-length = 240
 extend-exclude = ["demo_results"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "UP"]
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false

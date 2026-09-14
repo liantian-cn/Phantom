@@ -27,12 +27,7 @@ class GameStatus:
 
 def is_retail_wow(name: str, executable: str) -> bool:
     path = PureWindowsPath(executable)
-    return (
-        name.casefold() == "wow.exe"
-        and path.is_absolute()
-        and path.name.casefold() == "wow.exe"
-        and path.parent.name.casefold() == "_retail_"
-    )
+    return name.casefold() == "wow.exe" and path.is_absolute() and path.name.casefold() == "wow.exe" and path.parent.name.casefold() == "_retail_"
 
 
 def detect_game() -> GameStatus:
@@ -63,11 +58,7 @@ def detect_game() -> GameStatus:
 
 
 class GameMonitor:
-    def __init__(
-        self,
-        publish: Callable[[GameStatus], None],
-        detector: Callable[[], GameStatus] = detect_game,
-    ) -> None:
+    def __init__(self, publish: Callable[[GameStatus], None], detector: Callable[[], GameStatus] = detect_game) -> None:
         self._publish: Callable[[GameStatus], None] = publish
         self._detector: Callable[[], GameStatus] = detector
         self._stop: Event = Event()

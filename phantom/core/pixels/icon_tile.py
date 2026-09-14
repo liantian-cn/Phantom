@@ -45,7 +45,5 @@ class IconTile(PixelRegion):
         if self.is_black:
             return None
         if self._hash_cache is None:
-            self._hash_cache = xxhash.xxh3_64_hexdigest(
-                np.ascontiguousarray(self.inner).tobytes(), seed=0
-            )
+            self._hash_cache = xxhash.xxh3_64_hexdigest(np.ascontiguousarray(self.inner).tobytes(), seed=0)
         return self._hash_cache

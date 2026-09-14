@@ -5,9 +5,7 @@ import pytest
 from phantom.core.configuration import ConfigurationError, load_config
 
 
-def test_config_uses_launch_directory_and_preserves_existing_file(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_config_uses_launch_directory_and_preserves_existing_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     launch = tmp_path / "shortcut-start"
     program = tmp_path / "program"
     launch.mkdir()

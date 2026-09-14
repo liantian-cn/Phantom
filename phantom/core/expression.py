@@ -76,9 +76,7 @@ def parse_expression(source: str, outputs: Mapping[str, Output]) -> ast.Expressi
                 if type(operation) not in COMPARISONS:
                     raise ValueError("不允许此比较运算符")
                 if isinstance(operation, (ast.In, ast.NotIn)):
-                    valid = (
-                        not left.is_list and right.is_list and right.scalar in (None, left.scalar)
-                    )
+                    valid = not left.is_list and right.is_list and right.scalar in (None, left.scalar)
                 else:
                     numeric = left.scalar in (int, float) and right.scalar in (int, float)
                     valid = left == right or (numeric and not left.is_list and not right.is_list)

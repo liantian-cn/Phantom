@@ -71,21 +71,14 @@ def general_image(values: tuple[int, ...] = (6, 1, 255, 0, 0)) -> RGBImage:
 
 
 def make_app(tmp_path: Path, capture: FakeCapture, game: bool = True) -> PhantomApp:
-    return PhantomApp(
-        AppConfig(tmp_path / "phantom.toml", log_max_lines=6),
-        capture=capture,
-        game_detector=lambda: GameStatus(game),
-    )
+    return PhantomApp(AppConfig(tmp_path / "phantom.toml", log_max_lines=6), capture=capture, game_detector=lambda: GameStatus(game))
 
 
 def test_decode_class_and_spec_purity_and_invalid_input() -> None:
     image = general_image()
     data = decode_general(CaptureResult(image))
     assert (data.width, data.height) == (32, 20)
-    assert data.cells == (
-        ("6,6,6", "6"),
-        ("1,1,1", "1"),
-    )
+    assert data.cells == (("6,6,6", "6"), ("1,1,1", "1"))
     image[1, 5] = (255, 0, 0)
     mixed = decode_general(CaptureResult(image))
     assert mixed.cells[0] == ("255,0,0", "—")
@@ -278,9 +271,7 @@ def test_capture_termination_pauses_and_explicit_restart_works(tmp_path: Path) -
 
 
 @pytest.mark.parametrize("capture_running", [True, False])
-def test_shutdown_refresh_ignores_removed_widgets(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capture_running: bool
-) -> None:
+def test_shutdown_refresh_ignores_removed_widgets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capture_running: bool) -> None:
     async def scenario() -> None:
         capture = FakeCapture()
         app = make_app(tmp_path, capture)
@@ -331,27 +322,14 @@ def test_logs_bound_history_even_when_tab_hidden(tmp_path: Path) -> None:
     asyncio.run(scenario())
 
 
-def rotation_app(
-    tmp_path: Path,
-    capture: FakeCapture,
-    *,
-    game: bool = False,
-    keyboard: FakeKeyboard | None = None,
-) -> PhantomApp:
+def rotation_app(tmp_path: Path, capture: FakeCapture, *, game: bool = False, keyboard: FakeKeyboard | None = None) -> PhantomApp:
     root = Path(__file__).resolve().parents[1]
     rotation_path = tmp_path / "blood.toml"
     rotation_path.write_bytes((root / "rotations/blood-dk.toml").read_bytes())
     executable = tmp_path / "_retail_/Wow.exe"
     executable.parent.mkdir()
     executable.touch()
-    return PhantomApp(
-        AppConfig(
-            tmp_path / "phantom.toml", rotation_path=rotation_path, wow_executable=executable
-        ),
-        capture=capture,
-        game_detector=lambda: GameStatus(game),
-        keyboard=keyboard if keyboard is not None else FakeKeyboard(),
-    )
+    return PhantomApp(AppConfig(tmp_path / "phantom.toml", rotation_path=rotation_path, wow_executable=executable), capture=capture, game_detector=lambda: GameStatus(game), keyboard=keyboard if keyboard is not None else FakeKeyboard())
 
 
 def test_generation_without_game_and_error_recovery(tmp_path: Path) -> None:
@@ -411,18 +389,7 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
             capture.result = CaptureResult(image.copy(), sequence=1)
             await pilot.pause(0.15)
             app.refresh_capture()
-            assert [table.get_cell(str(i), "value") for i in range(10)] == [
-                "40.0",
-                "3",
-                "1",
-                "True",
-                "2.5",
-                "0.0",
-                "40.0",
-                "True",
-                "True",
-                "False",
-            ]
+            assert [table.get_cell(str(i), "value") for i in range(10)] == ["40.0", "3", "1", "True", "2.5", "0.0", "40.0", "True", "True", "False"]
             assert table.get_cell("8", "name") == "插件启用"
             assert table.get_cell("9", "name") == "正在延迟"
             assert app.decision is not None and app.decision.rule_index == 2
@@ -560,9 +527,7 @@ def test_keyboard_release_does_not_block_ui_stop(tmp_path: Path) -> None:
     asyncio.run(scenario())
 
 
-def test_slow_generation_exit_waits_for_output(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_slow_generation_exit_waits_for_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     entered = Event()
     release = Event()
 

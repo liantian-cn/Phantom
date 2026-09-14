@@ -95,9 +95,7 @@ def test_bar_excludes_border_rows_and_non_black_white_pixels() -> None:
     assert ValueBar(1, 2, pixels).percent == 0.0
 
 
-def test_icon_entire_inner_and_cached_independent_snapshot(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_icon_entire_inner_and_cached_independent_snapshot(monkeypatch: pytest.MonkeyPatch) -> None:
     pixels = np.full((8, 8, 3), 255, dtype=np.uint8)
     pixels[1:7, 1:7] = 0
     empty = IconTile(1, pixels)
@@ -165,10 +163,7 @@ def test_invalid_requests_and_region_shapes() -> None:
 
 
 def test_invalid_dtype_channels_and_non_integer_arguments() -> None:
-    for image in (
-        np.zeros((20, 40, 3), dtype=np.float64),
-        np.zeros((20, 40), dtype=np.uint8),
-    ):
+    for image in (np.zeros((20, 40, 3), dtype=np.float64), np.zeros((20, 40), dtype=np.uint8)):
         with pytest.raises(ValueError):
             PixelDecoder(cast(NDArray[np.uint8], image))
     decoder = PixelDecoder(board_image())

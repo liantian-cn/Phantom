@@ -57,9 +57,7 @@ class ImageBackend:
         self.closed.set()
 
 
-def await_result(
-    worker: ThreadCaptureWorker, predicate: Callable[[CaptureResult], bool]
-) -> CaptureResult:
+def await_result(worker: ThreadCaptureWorker, predicate: Callable[[CaptureResult], bool]) -> CaptureResult:
     deadline = monotonic() + 3
     while monotonic() < deadline:
         result = worker.get_latest_result()
@@ -151,9 +149,7 @@ def test_invalid_board_geometry_and_noncontiguous_rgb() -> None:
     assert find_bounds(padded[:, ::2])[0] == Bounds(0, 0, 32, 20)
 
 
-@pytest.mark.parametrize(
-    "x,y", [(0, 4), (0, 8), (0, 12), (28, 12), (28, 8), (28, 4), (28, 0), (0, 16)]
-)
+@pytest.mark.parametrize("x,y", [(0, 4), (0, 8), (0, 12), (28, 12), (28, 8), (28, 4), (28, 0), (0, 16)])
 def test_calibration_ignores_edges_but_rejects_one_bad_center_pixel(x: int, y: int) -> None:
     image = board()
     image[y, x : x + 4] = (123, 45, 67)
@@ -184,16 +180,7 @@ def test_image_sequence_search_lock_color_failure_recovery_and_relocation() -> N
     good = board()
     bad = good.copy()
     bad[5, 1] = 17
-    backend = ImageBackend(
-        [
-            blank,
-            desktop(good),
-            desktop(bad),
-            desktop(good),
-            desktop(good, x=80, y=35),
-            desktop(good, x=80, y=35),
-        ]
-    )
+    backend = ImageBackend([blank, desktop(good), desktop(bad), desktop(good), desktop(good, x=80, y=35), desktop(good, x=80, y=35)])
     session = CaptureSession(backend)
     missing = session.capture_next()
     assert missing.image is None and missing.status.has_error
@@ -211,14 +198,7 @@ def test_image_sequence_search_lock_color_failure_recovery_and_relocation() -> N
     relocated = session.capture_next()
     assert not relocated.status.has_error
     assert session.bounds == Bounds(0, 5, 32, 25)
-    assert backend.requests == [
-        backend.desktop_bounds(),
-        backend.desktop_bounds(),
-        Bounds(-68, -22, -36, -2),
-        Bounds(-68, -22, -36, -2),
-        Bounds(-68, -22, -36, -2),
-        backend.desktop_bounds(),
-    ]
+    assert backend.requests == [backend.desktop_bounds(), backend.desktop_bounds(), Bounds(-68, -22, -36, -2), Bounds(-68, -22, -36, -2), Bounds(-68, -22, -36, -2), backend.desktop_bounds()]
 
 
 def test_worker_latest_frame_ownership_stop_and_restart() -> None:
@@ -246,9 +226,7 @@ def test_worker_latest_frame_ownership_stop_and_restart() -> None:
         np.testing.assert_array_equal(worker.get_latest_result().image, first)
         started = monotonic()
         worker.set_fps(100)
-        newest = await_result(
-            worker, lambda result: result.image is not None and result.image[0, 4, 0] == 84
-        )
+        newest = await_result(worker, lambda result: result.image is not None and result.image[0, 4, 0] == 84)
         assert monotonic() - started < 0.8  # FPS 更新应唤醒原来的一秒等待。
         assert newest.image is not None and newest.image.flags.c_contiguous
         assert len(backends) == 1

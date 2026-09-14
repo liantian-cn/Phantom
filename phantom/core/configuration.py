@@ -92,21 +92,15 @@ def load_config(working_directory: Path) -> AppConfig:
         assert isinstance(addon_name, str)
         validate_addon_name(addon_name)
         fps_number = PositiveNumber().validate(capture.get("fps", 15), "capture.fps")
-        capture_plugin = String().validate(
-            capture.get("plugin", "liantian_cn.gdi@dev"), "capture.plugin"
-        )
+        capture_plugin = String().validate(capture.get("plugin", "liantian_cn.gdi@dev"), "capture.plugin")
         return AppConfig(
             path=path,
             fps=fps_number,
             capture_plugin=capture_plugin,
-            keyboard_plugin=String().validate(
-                keyboard.get("plugin", "liantian_cn.post_message@dev"), "keyboard.plugin"
-            ),
+            keyboard_plugin=String().validate(keyboard.get("plugin", "liantian_cn.post_message@dev"), "keyboard.plugin"),
             min_width=PositiveInteger().validate(ui.get("min_width", 120), "ui.min_width"),
             min_height=PositiveInteger().validate(ui.get("min_height", 46), "ui.min_height"),
-            log_max_lines=PositiveInteger().validate(
-                ui.get("log_max_lines", 1000), "ui.log_max_lines"
-            ),
+            log_max_lines=PositiveInteger().validate(ui.get("log_max_lines", 1000), "ui.log_max_lines"),
             rotation_path=(path.parent / rotation_value).resolve() if rotation_value else None,
             wow_executable=(path.parent / wow_value).resolve() if wow_value else None,
             addon_name=addon_name,

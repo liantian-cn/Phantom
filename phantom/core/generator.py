@@ -35,12 +35,7 @@ def render(rotation: Rotation, addon_name: str) -> dict[str, str]:
         for path in sorted((LUA_ROOT / directory).glob("*.lua")):
             files[path.relative_to(LUA_ROOT).as_posix()] = path.read_text(encoding="utf-8")
     # 配置中的文本不会作为 Lua 代码插入；token 已经过职业白名单校验。
-    source = (
-        "local addonName, addonTable = ...\n"
-        f'if select(2, UnitClass("player")) ~= "{rotation.profile.unit_class}" '
-        f"or C_SpecializationInfo.GetSpecialization() ~= {rotation.profile.unit_spec} then\n"
-        "    return\nend\n\n"
-    )
+    source = f'local addonName, addonTable = ...\nif select(2, UnitClass("player")) ~= "{rotation.profile.unit_class}" or C_SpecializationInfo.GetSpecialization() ~= {rotation.profile.unit_spec} then\n    return\nend\n\n'
     for index, entry in enumerate(rotation.conditions):
         instance_id = str(uuid5(UUID(rotation.uuid), str(index)))
         source += "do\n" + entry.instance.generate_lua(instance_id) + "\nend\n\n"
@@ -61,11 +56,7 @@ def render(rotation: Rotation, addon_name: str) -> dict[str, str]:
         )
     files[f"{rotation.uuid}.lua"] = source
     template = (LUA_ROOT / "addonTemplateName.toc").read_text(encoding="utf-8")
-    metadata = [
-        line.replace("addonTemplateName", addon_name)
-        for line in template.splitlines()
-        if line.startswith("##")
-    ]
+    metadata = [line.replace("addonTemplateName", addon_name) for line in template.splitlines() if line.startswith("##")]
     toc = "\n".join(metadata) + "\n\n" + "\n".join(name.replace("/", "\\") for name in files) + "\n"
     files[f"{addon_name}.toc"] = toc
     return files
@@ -73,29 +64,14 @@ def render(rotation: Rotation, addon_name: str) -> dict[str, str]:
 
 def lua_string(value: str) -> str:
     """Lua 5.1 字符串转义；三位十进制转义避免与后继数字粘连。"""
-    escaped = "".join(
-        "\\\\"
-        if character == "\\"
-        else '\\"'
-        if character == '"'
-        else f"\\{ord(character):03d}"
-        if ord(character) < 32 or ord(character) == 127
-        else character
-        for character in value
-    )
+    escaped = "".join("\\\\" if character == "\\" else '\\"' if character == '"' else f"\\{ord(character):03d}" if ord(character) < 32 or ord(character) == 127 else character for character in value)
     return '"' + escaped + '"'
 
 
-def generate(
-    rotation_path: Path, executable: Path, addon_name: str = "Phantom"
-) -> GenerationResult:
+def generate(rotation_path: Path, executable: Path, addon_name: str = "Phantom") -> GenerationResult:
     validate_addon_name(addon_name)
     executable = executable.resolve()
-    if (
-        executable.name.casefold() != "wow.exe"
-        or executable.parent.name.casefold() != "_retail_"
-        or not executable.is_file()
-    ):
+    if executable.name.casefold() != "wow.exe" or executable.parent.name.casefold() != "_retail_" or not executable.is_file():
         raise ValueError("wow.executable 必须指向实际存在的 _retail_/Wow.exe")
     rotation = load_rotation(rotation_path)
     sources = render(rotation, addon_name)

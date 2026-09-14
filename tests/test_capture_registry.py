@@ -66,9 +66,7 @@ def test_same_identifier_in_different_roots(tmp_path: Path) -> None:
     assert (first_image == 15).all() and (second_image == 88).all()
 
 
-@pytest.mark.parametrize(
-    "identifier", ["GDI@1.0", "gdi", "../liantian_cn.gdi@dev", "gdi@1.1", "gdi@1"]
-)
+@pytest.mark.parametrize("identifier", ["GDI@1.0", "gdi", "../liantian_cn.gdi@dev", "gdi@1.1", "gdi@1"])
 def test_invalid_or_missing_capture_never_falls_back(tmp_path: Path, identifier: str) -> None:
     install(tmp_path, "liantian_cn.gdi@dev")
     with pytest.raises(CapturePluginError):
@@ -83,17 +81,8 @@ def test_invalid_or_missing_capture_never_falls_back(tmp_path: Path, identifier:
         (PLUGIN_SOURCE.replace("fps: float = 15) -> None:", ") -> None:", 1), "fps"),
         (PLUGIN_SOURCE.replace("def stop(self)", "def missing_stop(self)"), "stop"),
         (PLUGIN_SOURCE.replace("def start(self)", "def start(self, required)"), "required"),
-        (
-            PLUGIN_SOURCE.replace("self.is_running: bool = False", "self.is_running: bool = True"),
-            "未启动",
-        ),
-        (
-            PLUGIN_SOURCE.replace(
-                "return CaptureResult(np.full((20, 8, 3), int(self.fps), dtype=np.uint8))",
-                "return None",
-            ),
-            "CaptureResult",
-        ),
+        (PLUGIN_SOURCE.replace("self.is_running: bool = False", "self.is_running: bool = True"), "未启动"),
+        (PLUGIN_SOURCE.replace("return CaptureResult(np.full((20, 8, 3), int(self.fps), dtype=np.uint8))", "return None"), "CaptureResult"),
     ],
 )
 def test_broken_capture_reports_plugin_and_cause(tmp_path: Path, source: str, reason: str) -> None:
@@ -104,9 +93,7 @@ def test_broken_capture_reports_plugin_and_cause(tmp_path: Path, source: str, re
     assert caught.value.__cause__ is not None
 
 
-def test_config_selection_reaches_ui_factory(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_config_selection_reaches_ui_factory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     install(tmp_path / "plugins", "alternate@2.0")
     content = '[capture]\nplugin = "alternate@2.0"\nfps = 23\n'
     path = tmp_path / "phantom.toml"
@@ -122,9 +109,7 @@ def test_config_selection_reaches_ui_factory(
         app.close_resources()
 
 
-def test_bad_selection_exits_before_ui(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_bad_selection_exits_before_ui(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     content = '[capture]\nplugin = "missing@9.9"\n'
     path = tmp_path / "phantom.toml"
     path.write_text(content, encoding="utf-8")

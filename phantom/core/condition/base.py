@@ -47,10 +47,7 @@ class Condition(ABC):
         self._template = path
 
     def layout(self) -> dict[str, object]:
-        return {
-            "output_type": self.output.output_type,
-            "regions": [region.metadata() for region in self.regions],
-        }
+        return {"output_type": self.output.output_type, "regions": [region.metadata() for region in self.regions]}
 
     def raw_value(self, decoder: PixelDecoder) -> Raw:
         if not self._frozen:
@@ -69,24 +66,10 @@ class Condition(ABC):
                 icons.append(decoder.getIconTile(region.x))
         return cells, bars, icons
 
-    def value(
-        self,
-        cells: list[Cell],
-        value_bars: list[ValueBar],
-        icon_tiles: list[IconTile],
-        *,
-        decoder: PixelDecoder,
-    ) -> Value:
+    def value(self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> Value:
         try:
-            lengths = {
-                "cell": len(cells),
-                "value_bar": len(value_bars),
-                "icon_tile": len(icon_tiles),
-            }
-            if any(
-                length != (self.output.output_count if kind == self.output.output_type else 0)
-                for kind, length in lengths.items()
-            ):
+            lengths = {"cell": len(cells), "value_bar": len(value_bars), "icon_tile": len(icon_tiles)}
+            if any(length != (self.output.output_count if kind == self.output.output_type else 0) for kind, length in lengths.items()):
                 raise ValueError("输入区域数量与输出声明不符")
             result = self.decode_value(cells, value_bars, icon_tiles, decoder=decoder)
             if not self.output.accepts(result):
@@ -100,22 +83,13 @@ class Condition(ABC):
             raise ValueError("布局尚未就绪")
         if self._template is None:
             return ""
-        return render_template(
-            self._template, self.regions, self.template_parameters(), instance_id
-        )
+        return render_template(self._template, self.regions, self.template_parameters(), instance_id)
 
     def template_parameters(self) -> dict[str, str]:
         return {}
 
     @abstractmethod
-    def decode_value(
-        self,
-        cells: list[Cell],
-        value_bars: list[ValueBar],
-        icon_tiles: list[IconTile],
-        *,
-        decoder: PixelDecoder,
-    ) -> Value:
+    def decode_value(self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> Value:
         raise NotImplementedError
 
     @abstractmethod

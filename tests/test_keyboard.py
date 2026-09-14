@@ -37,22 +37,7 @@ def test_key_combinations(source: str, keys: tuple[Key, ...]) -> None:
     assert parse_key(source).keys == keys
 
 
-@pytest.mark.parametrize(
-    "source",
-    [
-        "",
-        "ctrl-1",
-        "CTRL-CTRL-A",
-        "CTRL",
-        "A-B",
-        "F25",
-        "CTRL+1",
-        "CTRL-",
-        "ALT--A",
-        " M",
-        "BUTTON1",
-    ],
-)
+@pytest.mark.parametrize("source", ["", "ctrl-1", "CTRL-CTRL-A", "CTRL", "A-B", "F25", "CTRL+1", "CTRL-", "ALT--A", " M", "BUTTON1"])
 def test_invalid_keys(source: str) -> None:
     with pytest.raises(ValueError):
         parse_key(source)
@@ -106,10 +91,7 @@ def test_send_order_and_failure_release(monkeypatch: pytest.MonkeyPatch, fail_at
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows API callback type")
-@pytest.mark.parametrize(
-    "titles, expected",
-    [(["魔兽世界"], 1), (["魔兽世界测试"], None), (["魔兽世界", "魔兽世界"], None)],
-)
+@pytest.mark.parametrize("titles, expected", [(["魔兽世界"], 1), (["魔兽世界测试"], None), (["魔兽世界", "魔兽世界"], None)])
 def test_target_requires_unique_exact_title(titles: list[str], expected: int | None) -> None:
     messages: Any = backend_module().WindowsMessages()
 
@@ -149,15 +131,7 @@ def test_registry_and_configuration(tmp_path: Path) -> None:
         registry.create(load_config(tmp_path).keyboard_plugin)
 
 
-@pytest.mark.parametrize(
-    "source",
-    [
-        "Plugin = 0",
-        "raise RuntimeError('broken')",
-        "class Plugin:\n    pass",
-        "class Plugin:\n    def send(self): pass\n    def close(self): pass",
-    ],
-)
+@pytest.mark.parametrize("source", ["Plugin = 0", "raise RuntimeError('broken')", "class Plugin:\n    pass", "class Plugin:\n    def send(self): pass\n    def close(self): pass"])
 def test_invalid_plugin_interface(tmp_path: Path, source: str) -> None:
     directory = tmp_path / "broken@dev"
     directory.mkdir()
@@ -171,34 +145,13 @@ def test_real_post_message_to_owned_hidden_window(monkeypatch: pytest.MonkeyPatc
     module = backend_module()
     messages: Any = module.WindowsMessages()
     user32 = messages.user32
-    user32.CreateWindowExW.argtypes = [
-        wintypes.DWORD,
-        wintypes.LPCWSTR,
-        wintypes.LPCWSTR,
-        wintypes.DWORD,
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
-        wintypes.HWND,
-        wintypes.HMENU,
-        wintypes.HINSTANCE,
-        wintypes.LPVOID,
-    ]
+    user32.CreateWindowExW.argtypes = [wintypes.DWORD, wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.HWND, wintypes.HMENU, wintypes.HINSTANCE, wintypes.LPVOID]
     user32.CreateWindowExW.restype = wintypes.HWND
     user32.DestroyWindow.argtypes = [wintypes.HWND]
     user32.DestroyWindow.restype = wintypes.BOOL
-    user32.PeekMessageW.argtypes = [
-        ctypes.POINTER(wintypes.MSG),
-        wintypes.HWND,
-        wintypes.UINT,
-        wintypes.UINT,
-        wintypes.UINT,
-    ]
+    user32.PeekMessageW.argtypes = [ctypes.POINTER(wintypes.MSG), wintypes.HWND, wintypes.UINT, wintypes.UINT, wintypes.UINT]
     user32.PeekMessageW.restype = wintypes.BOOL
-    hwnd = user32.CreateWindowExW(
-        0, "STATIC", "Phantom-test-" + uuid4().hex, 0, 0, 0, 1, 1, None, None, None, None
-    )
+    hwnd = user32.CreateWindowExW(0, "STATIC", "Phantom-test-" + uuid4().hex, 0, 0, 0, 1, 1, None, None, None, None)
     assert hwnd, ctypes.WinError(ctypes.get_last_error())
     try:
         # Only the test-owned HWND can receive these messages; no game enumeration.
@@ -211,16 +164,7 @@ def test_real_post_message_to_owned_hidden_window(monkeypatch: pytest.MonkeyPatc
         message = wintypes.MSG()
         while user32.PeekMessageW(ctypes.byref(message), hwnd, 0x100, 0x101, 1):
             received.append((message.message, message.wParam, message.lParam))
-        assert received == [
-            (0x100, 0x11, 0),
-            (0x100, 0x31, 0),
-            (0x101, 0x31, 0),
-            (0x101, 0x11, 0),
-            (0x100, 0x12, 0),
-            (0x100, 0x73, 0),
-            (0x101, 0x73, 0),
-            (0x101, 0x12, 0),
-        ]
+        assert received == [(0x100, 0x11, 0), (0x100, 0x31, 0), (0x101, 0x31, 0), (0x101, 0x11, 0), (0x100, 0x12, 0), (0x100, 0x73, 0), (0x101, 0x73, 0), (0x101, 0x12, 0)]
         plugin.close()
     finally:
         assert user32.DestroyWindow(hwnd)

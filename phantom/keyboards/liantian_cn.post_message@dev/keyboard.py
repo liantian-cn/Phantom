@@ -56,9 +56,7 @@ VIRTUAL_KEYS: dict[Key, int] = {
     Key.MINUS: 0xBD,
     Key.GRAVE: 0xC0,
 }
-VIRTUAL_KEYS.update(
-    {Key(character): ord(character) for character in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"}
-)
+VIRTUAL_KEYS.update({Key(character): ord(character) for character in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"})
 VIRTUAL_KEYS.update({Key(f"F{number}"): 0x6F + number for number in range(1, 25)})
 VIRTUAL_KEYS.update({Key(f"NUMPAD{number}"): 0x60 + number for number in range(10)})
 
@@ -75,12 +73,7 @@ class WindowsMessages:
         self.user32.GetWindowTextLengthW.restype = ctypes.c_int
         self.user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
         self.user32.GetWindowTextW.restype = ctypes.c_int
-        self.user32.PostMessageW.argtypes = [
-            wintypes.HWND,
-            wintypes.UINT,
-            wintypes.WPARAM,
-            wintypes.LPARAM,
-        ]
+        self.user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
         self.user32.PostMessageW.restype = wintypes.BOOL
 
     def target(self) -> int:

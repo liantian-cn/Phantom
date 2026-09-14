@@ -16,12 +16,7 @@ import numpy as np
 from phantom.core.capture.contracts import Bounds, CaptureStatus, RGBImage
 
 MARKER: RGBImage = np.array(
-    [
-        [[15, 25, 20], [15, 25, 20], [25, 15, 20], [25, 15, 20]],
-        [[15, 25, 20], [15, 25, 20], [25, 15, 20], [25, 15, 20]],
-        [[25, 15, 20], [25, 15, 20], [15, 25, 20], [15, 25, 20]],
-        [[25, 15, 20], [25, 15, 20], [15, 25, 20], [15, 25, 20]],
-    ],
+    [[[15, 25, 20], [15, 25, 20], [25, 15, 20], [25, 15, 20]], [[15, 25, 20], [15, 25, 20], [25, 15, 20], [25, 15, 20]], [[25, 15, 20], [25, 15, 20], [15, 25, 20], [15, 25, 20]], [[25, 15, 20], [25, 15, 20], [15, 25, 20], [15, 25, 20]]],
     dtype=np.uint8,
 )
 CALIBRATION: tuple[tuple[str, int, bool, tuple[int, int, int]], ...] = (
@@ -76,13 +71,7 @@ def markers_valid(image: RGBImage) -> bool:
     if not is_rgb(image):
         return False
     height, width = image.shape[:2]
-    return (
-        height == 20
-        and width >= 8
-        and width % 4 == 0
-        and np.array_equal(image[:4, :4], MARKER)
-        and np.array_equal(image[-4:, -4:], MARKER)
-    )
+    return height == 20 and width >= 8 and width % 4 == 0 and np.array_equal(image[:4, :4], MARKER) and np.array_equal(image[-4:, -4:], MARKER)
 
 
 def validate_colors(image: RGBImage) -> CaptureStatus:

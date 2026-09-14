@@ -1,15 +1,6 @@
 import pytest
 
-from phantom.core.validation import (
-    Boolean,
-    Fields,
-    Items,
-    PositiveInteger,
-    PositiveNumber,
-    String,
-    Table,
-    Validator,
-)
+from phantom.core.validation import Boolean, Fields, Items, PositiveInteger, PositiveNumber, String, Table, Validator
 
 
 @pytest.mark.parametrize("value", [True, False, 0, -1, 1.5, "1", None])

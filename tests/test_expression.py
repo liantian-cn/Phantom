@@ -7,13 +7,7 @@ from phantom.core.condition.contracts import Output, Value
 from phantom.core.expression import evaluate, parse_expression
 from phantom.core.rotation import RotationError, load_rotation
 
-OUTPUTS = {
-    "数量": Output("cell", value_type=int),
-    "比例": Output("cell", value_type=float),
-    "启用": Output("cell", value_type=bool),
-    "名称": Output("cell", value_type=str),
-    "列表": Output("cell", value_type=int, value_shape="list"),
-}
+OUTPUTS = {"数量": Output("cell", value_type=int), "比例": Output("cell", value_type=float), "启用": Output("cell", value_type=bool), "名称": Output("cell", value_type=str), "列表": Output("cell", value_type=int, value_shape="list")}
 VALUES: dict[str, Value] = {"数量": 2, "比例": 2.0, "启用": True, "名称": "火", "列表": [1, 2]}
 
 

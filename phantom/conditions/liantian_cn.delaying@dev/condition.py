@@ -28,14 +28,7 @@ class Plugin(Condition):
         Fields(frozenset()).validate(args, "plugin_args")
         super().__init__(Output("none", output_count=0, value_type=bool))
 
-    def decode_value(
-        self,
-        cells: list[Cell],
-        value_bars: list[ValueBar],
-        icon_tiles: list[IconTile],
-        *,
-        decoder: PixelDecoder,
-    ) -> bool:
+    def decode_value(self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> bool:
         cell = decoder.getCell(STATE_X, 1)
         if not cell.is_black and not cell.is_white:
             raise ValueError("需要纯黑或纯白 Cell")

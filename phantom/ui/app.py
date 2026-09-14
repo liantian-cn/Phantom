@@ -94,18 +94,10 @@ class PhantomApp(App[None]):
     ]
     TAB_IDS: ClassVar[tuple[str, ...]] = ("overview", "general", "logs", "macros", "conditions")
 
-    def __init__(
-        self,
-        config: AppConfig,
-        capture: CaptureWorker | None = None,
-        game_detector: Callable[[], GameStatus] = detect_game,
-        keyboard: Keyboard | None = None,
-    ) -> None:
+    def __init__(self, config: AppConfig, capture: CaptureWorker | None = None, game_detector: Callable[[], GameStatus] = detect_game, keyboard: Keyboard | None = None) -> None:
         super().__init__()
         self.config: AppConfig = config
-        self.keyboard: Keyboard = (
-            keyboard if keyboard is not None else KeyboardRegistry().create(config.keyboard_plugin)
-        )
+        self.keyboard: Keyboard = keyboard if keyboard is not None else KeyboardRegistry().create(config.keyboard_plugin)
         self.runtime: RotationRuntime | None = None
         self.decision: Decision | None = None
         self._decision_log: str = ""
@@ -119,11 +111,7 @@ class PhantomApp(App[None]):
         self.generating: bool = False
         self._generation_done: Event = Event()
         self._generation_done.set()
-        self.capture: CaptureWorker = (
-            capture
-            if capture is not None
-            else CaptureRegistry().create(config.capture_plugin, fps=config.fps)
-        )
+        self.capture: CaptureWorker = capture if capture is not None else CaptureRegistry().create(config.capture_plugin, fps=config.fps)
         self.game_status: GameStatus = GameStatus(description="正在检测游戏")
         self.collecting: bool = False
         self.stopping: bool = False
@@ -157,21 +145,10 @@ class PhantomApp(App[None]):
                             yield Button("关闭", id="stop", disabled=True)
                             yield Button("生成插件", id="generate", disabled=True)
                             yield Static("", id="generation_hint", classes="muted", markup=False)
-                            yield Static(
-                                "Tab / Shift+Tab  切换页面\n"
-                                "↑ / ↓  选择按钮\nEnter / Space  执行\nCtrl+Q  退出",
-                                id="keyboard_help",
-                            )
+                            yield Static("Tab / Shift+Tab  切换页面\n↑ / ↓  选择按钮\nEnter / Space  执行\nCtrl+Q  退出", id="keyboard_help")
                         with VerticalScroll(id="work_status"):
                             yield Label("当前工作状态", classes="section_title")
-                            for name, title in (
-                                ("program_state", "程序"),
-                                ("game_state", "游戏"),
-                                ("capture_state", "采集"),
-                                ("board_size", "画布尺寸"),
-                                ("capture_fps", "配置 FPS"),
-                                ("current_error", "当前问题"),
-                            ):
+                            for name, title in (("program_state", "程序"), ("game_state", "游戏"), ("capture_state", "采集"), ("board_size", "画布尺寸"), ("capture_fps", "配置 FPS"), ("current_error", "当前问题")):
                                 yield Label(title, classes="state_label")
                                 yield Static("—", id=name, classes="state_value", markup=False)
                 with TabPane("通用条件", id="general"):
@@ -184,9 +161,7 @@ class PhantomApp(App[None]):
                 with TabPane("循环条件", id="conditions"):
                     yield Static("", id="rotation_title", markup=False)
                     yield Static("决策：—", id="decision", markup=False)
-                    yield DataTable[str](
-                        id="condition_table", cursor_type="row", zebra_stripes=True
-                    )
+                    yield DataTable[str](id="condition_table", cursor_type="row", zebra_stripes=True)
         with Container(id="footer"):
             yield Static("", id="status_line")
 
@@ -194,12 +169,7 @@ class PhantomApp(App[None]):
         for button in self.query(Button):
             button.active_effect_duration = 0
         table = self.query_one("#general_table", DataTable)
-        for title, key, width in (
-            ("项目", "name", 22),
-            ("RGB", "rgb", 22),
-            ("亮度值", "mean", 16),
-            ("显示值", "display", 26),
-        ):
+        for title, key, width in (("项目", "name", 22), ("RGB", "rgb", 22), ("亮度值", "mean", 16), ("显示值", "display", 26)):
             table.add_column(title, key=key, width=width)
         for index, name in enumerate(GENERAL_FIELDS):
             table.add_row(name, "—", "—", "", key=str(index))
@@ -223,14 +193,8 @@ class PhantomApp(App[None]):
     def _resize_content(self, size: Size | None = None) -> None:
         viewport = self.size if size is None else size
         was_small = self._small
-        self._small = (
-            viewport.width < self.config.min_width or viewport.height < self.config.min_height
-        )
-        self.query_one("#size_notice", Static).update(
-            f"终端尺寸不足：当前 {viewport.width}×{viewport.height}\n"
-            f"请调整至至少 {self.config.min_width}×{self.config.min_height}\n"
-            "Ctrl+Q 退出"
-        )
+        self._small = viewport.width < self.config.min_width or viewport.height < self.config.min_height
+        self.query_one("#size_notice", Static).update(f"终端尺寸不足：当前 {viewport.width}×{viewport.height}\n请调整至至少 {self.config.min_width}×{self.config.min_height}\nCtrl+Q 退出")
         self.query_one("#size_notice").display = self._small
         self.query_one("#pages").display = not self._small
         if not self._small and (was_small or self.focused is None):
@@ -238,11 +202,7 @@ class PhantomApp(App[None]):
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         if action in ("move_button", "press_button"):
-            return (
-                self._mounted_ui
-                and not self._small
-                and self.query_one("#pages", TabbedContent).active == "overview"
-            )
+            return self._mounted_ui and not self._small and self.query_one("#pages", TabbedContent).active == "overview"
         if action == "switch_tab":
             return self._mounted_ui and not self._small
         return True
@@ -286,22 +246,14 @@ class PhantomApp(App[None]):
 
     @on(Button.Pressed, "#start")
     def start_collection(self) -> None:
-        if (
-            self.collecting
-            or self.stopping
-            or self.closing
-            or self.generating
-            or not self.game_status.running
-        ):
+        if self.collecting or self.stopping or self.closing or self.generating or not self.game_status.running:
             return
         self.runtime = None
         self.collecting = True
         try:
             self.capture.start()
             if self.rotation is not None:
-                self.runtime = RotationRuntime(
-                    self.capture, self.keyboard, self.rotation, self.config.fps
-                )
+                self.runtime = RotationRuntime(self.capture, self.keyboard, self.rotation, self.config.fps)
                 self.runtime.start()
         except Exception as error:
             self._request_stop(f"启动失败：{error}")
@@ -317,37 +269,20 @@ class PhantomApp(App[None]):
         self._request_stop()
 
     def _decision_text(self, decision: Decision) -> str:
-        action = (
-            f"宏：{decision.macro.name} · 键位：{decision.macro.key}"
-            if decision.macro is not None
-            else "Idle · 无动作"
-        )
-        return (
-            f"第 {decision.rule_index} 条 · {decision.rule.condition or '兜底'}"
-            f" · {decision.rule.annotate} · {action}"
-        )
+        action = f"宏：{decision.macro.name} · 键位：{decision.macro.key}" if decision.macro is not None else "Idle · 无动作"
+        return f"第 {decision.rule_index} 条 · {decision.rule.condition or '兜底'} · {decision.rule.annotate} · {action}"
 
     def _show_decision(self, decision: Decision | None) -> None:
         self.decision = decision
-        self.query_one("#decision", Static).update(
-            "决策：" + (self._decision_text(decision) if decision else "—")
-        )
-        message = (
-            f"已派发宏：{decision.macro.name}"
-            if decision and decision.macro
-            else "Idle：无动作"
-            if decision
-            else ""
-        )
+        self.query_one("#decision", Static).update("决策：" + (self._decision_text(decision) if decision else "—"))
+        message = f"已派发宏：{decision.macro.name}" if decision and decision.macro else "Idle：无动作" if decision else ""
         if message and message != self._decision_log:
             self.business_log.log(message)
         self._decision_log = message
 
     def _populate_conditions(self) -> None:
         self._show_decision(None)
-        self.query_one("#rotation_title", Static).update(
-            f"当前 rotation：{self.rotation.profile.title}" if self.rotation else "未加载 rotation"
-        )
+        self.query_one("#rotation_title", Static).update(f"当前 rotation：{self.rotation.profile.title}" if self.rotation else "未加载 rotation")
         table = self.query_one("#condition_table", DataTable)
         table.clear()
         if self.rotation is not None:
@@ -363,14 +298,7 @@ class PhantomApp(App[None]):
 
     @on(Button.Pressed, "#generate")
     def generate_addon(self) -> None:
-        if (
-            self.collecting
-            or self.stopping
-            or self.closing
-            or self.generating
-            or self.config.rotation_path is None
-            or self.config.wow_executable is None
-        ):
+        if self.collecting or self.stopping or self.closing or self.generating or self.config.rotation_path is None or self.config.wow_executable is None:
             return
         self.generating = True
         self._generation_done.clear()
@@ -383,9 +311,7 @@ class PhantomApp(App[None]):
         error = ""
         try:
             assert self.config.rotation_path is not None and self.config.wow_executable is not None
-            result = generate(
-                self.config.rotation_path, self.config.wow_executable, self.config.addon_name
-            )
+            result = generate(self.config.rotation_path, self.config.wow_executable, self.config.addon_name)
         except Exception as exception:
             error = f"生成插件失败：{exception}"
         finally:
@@ -454,10 +380,7 @@ class PhantomApp(App[None]):
             return
         self.game_status = message.status
         state = "已启动" if message.status.running else "未启动"
-        self.business_log.log(
-            f"游戏{state}"
-            + (f"：{message.status.description}" if message.status.description else "")
-        )
+        self.business_log.log(f"游戏{state}" + (f"：{message.status.description}" if message.status.description else ""))
         if not message.status.running:
             self._request_stop()
         self._refresh_status()
@@ -507,9 +430,7 @@ class PhantomApp(App[None]):
                         self._show_decision(decision)
                         for index, value in enumerate(decision.values):
                             table.update_cell(str(index), "value", str(value))
-                self._set_capture_state(
-                    "条件不可用" if condition_error else "采集正常", condition_error
-                )
+                self._set_capture_state("条件不可用" if condition_error else "采集正常", condition_error)
         self._refresh_status()
 
     def _set_capture_state(self, state: str, error: str = "") -> None:
@@ -539,50 +460,29 @@ class PhantomApp(App[None]):
         program = "已启动" if self.collecting else "已暂停"
         game = "已启动" if self.game_status.running else "未启动"
         status = Text()
-        status.append(
-            f"程序：{program}", style=FLEXOKI["green" if self.collecting else "subtext_1"]
-        )
+        status.append(f"程序：{program}", style=FLEXOKI["green" if self.collecting else "subtext_1"])
         status.append(" · ", style=FLEXOKI["text"])
-        status.append(
-            f"游戏：{game}", style=FLEXOKI["green" if self.game_status.running else "subtext_1"]
-        )
+        status.append(f"游戏：{game}", style=FLEXOKI["green" if self.game_status.running else "subtext_1"])
         self.query_one("#status_line", Static).update(status)
         values = {
             "program_state": "正在停止" if self.stopping else program,
             "game_state": game,
             "capture_state": self.capture_state,
-            "board_size": (
-                f"{self.general_data.width} × {self.general_data.height} px"
-                if self.general_data is not None
-                else "—"
-            ),
+            "board_size": (f"{self.general_data.width} × {self.general_data.height} px" if self.general_data is not None else "—"),
             "capture_fps": f"{self.config.fps:g}",
-            "current_error": self.rotation_error
-            or self.capture_error
-            or self.game_status.description
-            or "无",
+            "current_error": self.rotation_error or self.capture_error or self.game_status.description or "无",
         }
         for identifier, value in values.items():
             self.query_one(f"#{identifier}", Static).update(value)
-        self.query_one("#start", Button).disabled = (
-            self.collecting
-            or self.stopping
-            or self.closing
-            or self.generating
-            or not self.game_status.running
-        )
+        self.query_one("#start", Button).disabled = self.collecting or self.stopping or self.closing or self.generating or not self.game_status.running
         self.query_one("#stop", Button).disabled = not self.collecting or self.closing
         missing = ""
         if self.config.rotation_path is None:
             missing = "请配置 rotation.path"
         elif self.config.wow_executable is None:
             missing = "请配置 wow.executable"
-        self.query_one("#generate", Button).disabled = bool(missing) or (
-            self.collecting or self.stopping or self.closing or self.generating
-        )
-        self.query_one("#generation_hint", Static).update(
-            "正在生成插件…" if self.generating else missing or f"插件：{self.config.addon_name}"
-        )
+        self.query_one("#generate", Button).disabled = bool(missing) or (self.collecting or self.stopping or self.closing or self.generating)
+        self.query_one("#generation_hint", Static).update("正在生成插件…" if self.generating else missing or f"插件：{self.config.addon_name}")
 
     def close_resources(self) -> None:
         if self.runtime is not None:

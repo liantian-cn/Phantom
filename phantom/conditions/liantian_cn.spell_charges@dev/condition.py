@@ -23,12 +23,7 @@ import math
 from phantom.core.condition.base import Condition
 from phantom.core.condition.contracts import Output
 from phantom.core.pixels import Cell, IconTile, PixelDecoder, ValueBar
-from phantom.core.validation import (
-    Fields,
-    Items,
-    PositiveInteger,
-    Validator,
-)
+from phantom.core.validation import Fields, Items, PositiveInteger, Validator
 
 
 class SpellIDs(Validator[tuple[int, ...]]):
@@ -52,14 +47,7 @@ class Plugin(Condition):
         """只序列化已验证的插件参数；布局坐标由核心另行注入。"""
         return {"spell_ids": ", ".join(str(spell) for spell in self.spells)}
 
-    def decode_value(
-        self,
-        cells: list[Cell],
-        value_bars: list[ValueBar],
-        icon_tiles: list[IconTile],
-        *,
-        decoder: PixelDecoder,
-    ) -> int:
+    def decode_value(self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> int:
         # 使用非负四舍五入，避免银行家舍入改变充能层数。
         return math.floor(value_bars[0].ratio * self.max_charges + 0.5)
 

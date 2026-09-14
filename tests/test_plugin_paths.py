@@ -62,9 +62,7 @@ def create(root: Path, identifier: str, kind: str) -> object:
 @pytest.mark.parametrize("kind", ["condition", "capture"])
 @pytest.mark.parametrize("identifier", ["liantian_cn.sample@dev", "author.sample@1", "Any name"])
 @pytest.mark.parametrize("metadata", [None, "this is invalid TOML ["])
-def test_safe_names_load_without_reading_metadata(
-    tmp_path: Path, kind: str, identifier: str, metadata: str | None
-) -> None:
+def test_safe_names_load_without_reading_metadata(tmp_path: Path, kind: str, identifier: str, metadata: str | None) -> None:
     directory = install(tmp_path, identifier, kind)
     if metadata is not None:
         (directory / "plugin.toml").write_text(metadata, encoding="utf-8")
@@ -72,20 +70,7 @@ def test_safe_names_load_without_reading_metadata(
 
 
 @pytest.mark.parametrize("kind", ["condition", "capture"])
-@pytest.mark.parametrize(
-    "identifier",
-    [
-        "",
-        ".",
-        "..",
-        "../outside",
-        "nested/../sample",
-        "nested\\sample",
-        "C:sample",
-        "sample.",
-        "sample ",
-    ],
-)
+@pytest.mark.parametrize("identifier", ["", ".", "..", "../outside", "nested/../sample", "nested\\sample", "C:sample", "sample.", "sample "])
 def test_reject_path_aliases(tmp_path: Path, kind: str, identifier: str) -> None:
     install(tmp_path, "sample", kind)
     with pytest.raises(ValueError, match="安全目录名"):
@@ -101,9 +86,7 @@ def test_reject_absolute_path_even_to_an_installed_plugin(tmp_path: Path, kind: 
 
 @pytest.mark.parametrize("kind", ["condition", "capture"])
 @pytest.mark.parametrize("identifier", ["sample@1.0", "author.sample@beta", "author.sample@1.0"])
-def test_missing_exact_identifier_does_not_alias_or_fall_back(
-    tmp_path: Path, kind: str, identifier: str
-) -> None:
+def test_missing_exact_identifier_does_not_alias_or_fall_back(tmp_path: Path, kind: str, identifier: str) -> None:
     install(tmp_path, "author.sample@dev", kind)
     with pytest.raises(ValueError, match="缺少精确版本"):
         create(tmp_path, identifier, kind)
@@ -116,19 +99,8 @@ def symlink_or_skip(link: Path, target: Path) -> None:
         pytest.skip(f"symlinks unavailable: {error}")
 
 
-@pytest.mark.parametrize(
-    "kind,member",
-    [
-        ("condition", ""),
-        ("capture", ""),
-        ("condition", "condition.py"),
-        ("condition", "template.lua"),
-        ("capture", "capture.py"),
-    ],
-)
-def test_resolved_escape_is_rejected_without_link_privileges(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str, member: str
-) -> None:
+@pytest.mark.parametrize("kind,member", [("condition", ""), ("capture", ""), ("condition", "condition.py"), ("condition", "template.lua"), ("capture", "capture.py")])
+def test_resolved_escape_is_rejected_without_link_privileges(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str, member: str) -> None:
     """隔离测试 resolve 后的越界判断；真实链接由另外的文件系统测试覆盖。"""
     root = tmp_path / "plugins"
     directory = install(root, "sample", kind)
@@ -157,10 +129,7 @@ def test_reject_plugin_directory_escape(tmp_path: Path, kind: str) -> None:
         create(root, "sample", kind)
 
 
-@pytest.mark.parametrize(
-    "kind,filename",
-    [("condition", "condition.py"), ("condition", "template.lua"), ("capture", "capture.py")],
-)
+@pytest.mark.parametrize("kind,filename", [("condition", "condition.py"), ("condition", "template.lua"), ("capture", "capture.py")])
 def test_reject_source_or_template_escape(tmp_path: Path, kind: str, filename: str) -> None:
     outside = install(tmp_path, "outside", kind)
     root = tmp_path / "plugins"

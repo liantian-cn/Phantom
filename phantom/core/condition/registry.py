@@ -22,20 +22,12 @@ from phantom.core.condition.base import Condition
 
 class Registry:
     def __init__(self, root: Path | None = None) -> None:
-        self.root: Path = (
-            root if root is not None else Path(__file__).resolve().parents[2] / "conditions"
-        ).resolve()
+        self.root: Path = (root if root is not None else Path(__file__).resolve().parents[2] / "conditions").resolve()
         self._classes: dict[str, type[Condition]] = {}
 
     def create(self, identifier: str, args: dict[str, object]) -> Condition:
         try:
-            if (
-                not identifier
-                or identifier in {".", ".."}
-                or any(character in identifier for character in "/\\:")
-                or identifier.endswith((".", " "))
-                or Path(identifier).is_absolute()
-            ):
+            if not identifier or identifier in {".", ".."} or any(character in identifier for character in "/\\:") or identifier.endswith((".", " ")) or Path(identifier).is_absolute():
                 raise ValueError("插件标识必须是单个安全目录名")
             directory = self.root / identifier
             if directory.resolve().parent != self.root:

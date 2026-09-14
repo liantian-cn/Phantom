@@ -30,9 +30,7 @@ class RuntimeSnapshot:
 
 
 class RotationRuntime:
-    def __init__(
-        self, capture: CaptureWorker, keyboard: Keyboard, rotation: Rotation, fps: float
-    ) -> None:
+    def __init__(self, capture: CaptureWorker, keyboard: Keyboard, rotation: Rotation, fps: float) -> None:
         self.capture: CaptureWorker = capture
         self.keyboard: Keyboard = keyboard
         self.rotation: Rotation = rotation
@@ -63,16 +61,7 @@ class RotationRuntime:
         with self._lock:
             result = self._latest
             capture = result.capture
-            return RuntimeSnapshot(
-                CaptureResult(
-                    None if capture.image is None else capture.image.copy(),
-                    capture.status,
-                    capture.sequence,
-                ),
-                result.decision,
-                result.error,
-                result.fatal,
-            )
+            return RuntimeSnapshot(CaptureResult(None if capture.image is None else capture.image.copy(), capture.status, capture.sequence), result.decision, result.error, result.fatal)
 
     def _publish(self, result: RuntimeSnapshot) -> None:
         with self._lock:
@@ -118,8 +107,4 @@ class RotationRuntime:
                 self.keyboard.close()
             except Exception as error:
                 previous = self.get_latest_result()
-                self._publish(
-                    RuntimeSnapshot(
-                        result, error=previous.error + f" 关闭键盘失败：{error}", fatal=True
-                    )
-                )
+                self._publish(RuntimeSnapshot(result, error=previous.error + f" 关闭键盘失败：{error}", fatal=True))

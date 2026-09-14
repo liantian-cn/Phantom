@@ -28,28 +28,17 @@ class CapturePluginError(ValueError):
 
 class Registry:
     def __init__(self, root: Path | None = None) -> None:
-        self.root: Path = (
-            root if root is not None else Path(__file__).resolve().parents[2] / "captures"
-        ).resolve()
+        self.root: Path = (root if root is not None else Path(__file__).resolve().parents[2] / "captures").resolve()
         self._classes: dict[str, type[object]] = {}
 
     def create(self, identifier: str = "liantian_cn.gdi@dev", *, fps: float = 15) -> CaptureWorker:
         try:
-            if (
-                not identifier
-                or identifier in {".", ".."}
-                or any(character in identifier for character in "/\\:")
-                or identifier.endswith((".", " "))
-                or Path(identifier).is_absolute()
-            ):
+            if not identifier or identifier in {".", ".."} or any(character in identifier for character in "/\\:") or identifier.endswith((".", " ")) or Path(identifier).is_absolute():
                 raise ValueError("插件标识必须是单个安全目录名")
             fps = PositiveNumber().validate(fps, "capture.fps")
             directory = self.root / identifier
             source = directory / "capture.py"
-            if (
-                directory.resolve().parent != self.root
-                or source.resolve().parent != directory.resolve()
-            ):
+            if directory.resolve().parent != self.root or source.resolve().parent != directory.resolve():
                 raise ValueError("截图源码必须位于精确版本目录内")
             if not source.is_file():
                 raise ValueError("缺少精确版本的 capture.py")

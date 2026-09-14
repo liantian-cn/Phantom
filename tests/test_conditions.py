@@ -33,9 +33,7 @@ def cell(brightness: int) -> Cell:
         ("spell_overlay", {"spell_ids": [50842]}, 127, False),
     ],
 )
-def test_scalar_decode(
-    name: str, args: dict[str, object], brightness: int, expected: Value
-) -> None:
+def test_scalar_decode(name: str, args: dict[str, object], brightness: int, expected: Value) -> None:
     plugin = Registry().create("liantian_cn." + name + "@dev", args)
     allocate([plugin])
     result = plugin.value([cell(brightness)], [], [], decoder=empty_decoder())
@@ -44,31 +42,13 @@ def test_scalar_decode(
     assert plugin.value([], [], [], decoder=empty_decoder()) == plugin.fallback_value()
     damaged = np.full((4, 4, 3), 255, dtype=np.uint8)
     damaged[1, 1] = [255, 0, 0]
-    assert (
-        plugin.value([Cell(1, 2, damaged)], [], [], decoder=empty_decoder())
-        == plugin.fallback_value()
-    )
+    assert plugin.value([Cell(1, 2, damaged)], [], [], decoder=empty_decoder()) == plugin.fallback_value()
 
 
 @pytest.mark.parametrize("name", ["spell_cooldown", "spell_gcd"])
-@pytest.mark.parametrize(
-    ("brightness", "seconds"),
-    [
-        (255, 0),
-        (205, 2.5),
-        (155, 5),
-        (130, 17.5),
-        (105, 30),
-        (80, 92.5),
-        (55, 155),
-        (30, 255),
-        (0, 375),
-    ],
-)
+@pytest.mark.parametrize(("brightness", "seconds"), [(255, 0), (205, 2.5), (155, 5), (130, 17.5), (105, 30), (80, 92.5), (55, 155), (30, 255), (0, 375)])
 def test_cooldown_segments(name: str, brightness: int, seconds: float) -> None:
-    args: dict[str, object] = (
-        {"spell_ids": [195292], "ignore_gcd": True} if name == "spell_cooldown" else {}
-    )
+    args: dict[str, object] = {"spell_ids": [195292], "ignore_gcd": True} if name == "spell_cooldown" else {}
     plugin = Registry().create("liantian_cn." + name + "@dev", args)
     allocate([plugin])
     assert plugin.value([cell(brightness)], [], [], decoder=empty_decoder()) == seconds
@@ -87,9 +67,7 @@ def test_cooldown_segments(name: str, brightness: int, seconds: float) -> None:
     ],
 )
 @pytest.mark.parametrize("damage", ["uniform_color", "mixed_gray", "mixed_color"])
-def test_plugins_reject_invalid_cell_colors(
-    name: str, args: dict[str, object], damage: str
-) -> None:
+def test_plugins_reject_invalid_cell_colors(name: str, args: dict[str, object], damage: str) -> None:
     plugin = Registry().create(f"liantian_cn.{name}@dev", args)
     allocate([plugin])
     pixels = np.full((4, 4, 3), 255, dtype=np.uint8)
@@ -109,9 +87,7 @@ def test_plugins_reject_invalid_cell_colors(
 
 @pytest.mark.parametrize("name", ["spell_cooldown", "spell_gcd"])
 def test_cooldown_entire_brightness_range(name: str) -> None:
-    args: dict[str, object] = (
-        {"spell_ids": [195292], "ignore_gcd": True} if name == "spell_cooldown" else {}
-    )
+    args: dict[str, object] = {"spell_ids": [195292], "ignore_gcd": True} if name == "spell_cooldown" else {}
     plugin = Registry().create(f"liantian_cn.{name}@dev", args)
     allocate([plugin])
     decoder = empty_decoder()
@@ -129,17 +105,13 @@ def test_cooldown_entire_brightness_range(name: str) -> None:
 
 @pytest.mark.parametrize("white_columns", [0, 2, 4, 6, 8])
 def test_charges_half_up_and_red_separator(white_columns: int) -> None:
-    plugin = Registry().create(
-        "liantian_cn.spell_charges@dev", {"spell_ids": [50842], "max_charges": 2}
-    )
+    plugin = Registry().create("liantian_cn.spell_charges@dev", {"spell_ids": [50842], "max_charges": 2})
     allocate([plugin])
     pixels = np.zeros((4, 12, 3), dtype=np.uint8)
     pixels[:, :2] = [255, 0, 0]
     pixels[:, -2:] = [255, 0, 0]
     pixels[:, 2 : 2 + white_columns] = 255
-    assert plugin.value([], [ValueBar(1, 2, pixels)], [], decoder=empty_decoder()) == math.floor(
-        white_columns / 4 + 0.5
-    )
+    assert plugin.value([], [ValueBar(1, 2, pixels)], [], decoder=empty_decoder()) == math.floor(white_columns / 4 + 0.5)
     pixels[:] = [255, 0, 0]
     assert plugin.value([], [ValueBar(1, 2, pixels)], [], decoder=empty_decoder()) == 0
 
@@ -162,14 +134,7 @@ def test_plugin_arguments(name: str, args: dict[str, object]) -> None:
 
 
 class Multi(Condition):
-    def decode_value(
-        self,
-        cells: list[Cell],
-        value_bars: list[ValueBar],
-        icon_tiles: list[IconTile],
-        *,
-        decoder: PixelDecoder,
-    ) -> Value:
+    def decode_value(self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> Value:
         return [icon.hash or "empty" for icon in icon_tiles]
 
     def fallback_value(self) -> Value:
@@ -199,34 +164,17 @@ def test_multi_output_layout_freeze_and_snapshots() -> None:
 
 
 class WrongType(Multi):
-    def decode_value(
-        self,
-        cells: list[Cell],
-        value_bars: list[ValueBar],
-        icon_tiles: list[IconTile],
-        *,
-        decoder: PixelDecoder,
-    ) -> Value:
+    def decode_value(self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> Value:
         return True
 
 
 class Exploding(Multi):
-    def decode_value(
-        self,
-        cells: list[Cell],
-        value_bars: list[ValueBar],
-        icon_tiles: list[IconTile],
-        *,
-        decoder: PixelDecoder,
-    ) -> Value:
+    def decode_value(self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> Value:
         raise RuntimeError("unreadable")
 
 
 def test_wrong_type_and_exception_fallback() -> None:
-    for plugin in (
-        WrongType(Output("cell", value_type=str, value_shape="list")),
-        Exploding(Output("cell", value_type=str, value_shape="list")),
-    ):
+    for plugin in (WrongType(Output("cell", value_type=str, value_shape="list")), Exploding(Output("cell", value_type=str, value_shape="list"))):
         allocate([plugin])
         assert plugin.value([cell(0)], [], [], decoder=empty_decoder()) == []
 

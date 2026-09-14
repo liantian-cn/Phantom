@@ -73,14 +73,9 @@ class GDIBackend:
         self._declare_signatures()
         try:
             # 仅修改截图线程，避免提前决定未来 Textual 主线程的 DPI 策略。
-            self._previous_dpi = checked_handle(
-                self._user32.SetThreadDpiAwarenessContext(ctypes.c_void_p(-4)),
-                "SetThreadDpiAwarenessContext",
-            )
+            self._previous_dpi = checked_handle(self._user32.SetThreadDpiAwarenessContext(ctypes.c_void_p(-4)), "SetThreadDpiAwarenessContext")
             self._screen_dc = checked_handle(self._user32.GetDC(None), "GetDC")
-            self._memory_dc = checked_handle(
-                self._gdi32.CreateCompatibleDC(self._screen_dc), "CreateCompatibleDC"
-            )
+            self._memory_dc = checked_handle(self._gdi32.CreateCompatibleDC(self._screen_dc), "CreateCompatibleDC")
         except Exception:
             self.close()
             raise
@@ -102,27 +97,9 @@ class GDIBackend:
         gdi32.CreateCompatibleBitmap.restype = wintypes.HBITMAP
         gdi32.SelectObject.argtypes = [wintypes.HDC, wintypes.HGDIOBJ]
         gdi32.SelectObject.restype = wintypes.HGDIOBJ
-        gdi32.BitBlt.argtypes = [
-            wintypes.HDC,
-            ctypes.c_int,
-            ctypes.c_int,
-            ctypes.c_int,
-            ctypes.c_int,
-            wintypes.HDC,
-            ctypes.c_int,
-            ctypes.c_int,
-            wintypes.DWORD,
-        ]
+        gdi32.BitBlt.argtypes = [wintypes.HDC, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.HDC, ctypes.c_int, ctypes.c_int, wintypes.DWORD]
         gdi32.BitBlt.restype = wintypes.BOOL
-        gdi32.GetDIBits.argtypes = [
-            wintypes.HDC,
-            wintypes.HBITMAP,
-            wintypes.UINT,
-            wintypes.UINT,
-            ctypes.c_void_p,
-            ctypes.POINTER(BITMAPINFO),
-            wintypes.UINT,
-        ]
+        gdi32.GetDIBits.argtypes = [wintypes.HDC, wintypes.HBITMAP, wintypes.UINT, wintypes.UINT, ctypes.c_void_p, ctypes.POINTER(BITMAPINFO), wintypes.UINT]
         gdi32.GetDIBits.restype = ctypes.c_int
         gdi32.DeleteObject.argtypes = [wintypes.HGDIOBJ]
         gdi32.DeleteObject.restype = wintypes.BOOL
@@ -152,27 +129,12 @@ class GDIBackend:
                 if not self._gdi32.DeleteObject(self._bitmap):
                     raise windows_error("DeleteObject")
                 self._bitmap = None
-            self._bitmap = checked_handle(
-                self._gdi32.CreateCompatibleBitmap(self._screen_dc, width, height),
-                "CreateCompatibleBitmap",
-            )
+            self._bitmap = checked_handle(self._gdi32.CreateCompatibleBitmap(self._screen_dc, width, height), "CreateCompatibleBitmap")
             self._size = (width, height)
 
-        previous = checked_handle(
-            self._gdi32.SelectObject(self._memory_dc, self._bitmap), "SelectObject"
-        )
+        previous = checked_handle(self._gdi32.SelectObject(self._memory_dc, self._bitmap), "SelectObject")
         try:
-            if not self._gdi32.BitBlt(
-                self._memory_dc,
-                0,
-                0,
-                width,
-                height,
-                self._screen_dc,
-                bounds.left,
-                bounds.top,
-                0x00CC0020,
-            ):
+            if not self._gdi32.BitBlt(self._memory_dc, 0, 0, width, height, self._screen_dc, bounds.left, bounds.top, 0x00CC0020):
                 raise windows_error("BitBlt")
         finally:
             # GetDIBits 明确要求目标位图不再选入任何 DC。
@@ -186,9 +148,7 @@ class GDIBackend:
         bitmap_info.bmiHeader.biBitCount = 32
         bitmap_info.bmiHeader.biCompression = 0  # BI_RGB
         buffer = (ctypes.c_ubyte * (width * height * 4))()
-        lines = self._gdi32.GetDIBits(
-            self._screen_dc, self._bitmap, 0, height, buffer, ctypes.byref(bitmap_info), 0
-        )
+        lines = self._gdi32.GetDIBits(self._screen_dc, self._bitmap, 0, height, buffer, ctypes.byref(bitmap_info), 0)
         if lines != height:
             raise OSError(f"GetDIBits 只读取 {lines}/{height} 行")
         # GDI 输出 BGRA；丢弃 alpha、反转颜色通道，再独立保存 RGB。
