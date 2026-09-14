@@ -43,6 +43,12 @@ def test_state_plugins_read_existing_pixels_and_fallback(name: str, x: int, fall
         assert plugin.value(*plugin.raw_value(decoder), decoder=decoder) is expected
     decoder.pix_array[:4, x * 4 : x * 4 + 4] = 255
     decoder.pix_array[1, x * 4 + 1] = (255, 0, 0)
+    with pytest.raises(ValueError):
+        plugin.decode_value([], [], [], decoder=decoder)
+    assert plugin.value([], [], [], decoder=decoder) is fallback
+    decoder.pix_array[:4, x * 4 : x * 4 + 4] = (255, 0, 0)
+    with pytest.raises(ValueError):
+        plugin.decode_value([], [], [], decoder=decoder)
     assert plugin.value([], [], [], decoder=decoder) is fallback
     tiny = PixelDecoder(np.zeros((20, 12, 3), dtype=np.uint8))
     assert plugin.value([], [], [], decoder=tiny) is fallback

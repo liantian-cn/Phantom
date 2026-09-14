@@ -15,9 +15,9 @@
 
 - 版本目录放插件实现、配套模板与供 Agent 阅读的 `plugin.toml`。公共条件设施位于 `phantom/core/condition/`，截图设施位于 `phantom/core/capture/`，键盘设施位于 `phantom/core/keyboard/`。
 - 插件依赖核心的公开契约；核心不依赖具体技能、职业或专精规则，不按某个插件名称写分支。
-- 不导入另一个插件版本目录。通用数学与基础输入检查通过组合复用；业务字段、算法参数、业务范围和兜底留在本插件版本。
+- 不导入另一个插件版本目录。基础输入检查通过组合复用；业务字段、算法参数、业务范围和兜底留在本插件版本。
 - 不在 UI 中加载具体后端文件或引用其具体实现类；使用核心注册器。
-- 通用参数校验使用 `phantom.core.validation.Validator[T]`，通用解码使用 `phantom.core.condition.decoders.Decoder[Input, Output]`。选择适用的实现组合，不把所有职责塞进 Condition 基类。
+- 通用参数校验使用 `phantom.core.validation.Validator[T]`。条件插件在 `decode_value()` 中直接读取 `phantom.core.pixels` 的 `Cell`、`ValueBar`、`IconTile` 属性并完成必要校验和业务转换，不额外建立解码器包装层；`Condition` 基类负责生命周期与异常兜底边界。
 
 ## 版本与变更
 

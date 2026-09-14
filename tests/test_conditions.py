@@ -74,6 +74,59 @@ def test_cooldown_segments(name: str, brightness: int, seconds: float) -> None:
     assert plugin.value([cell(brightness)], [], [], decoder=empty_decoder()) == seconds
 
 
+@pytest.mark.parametrize(
+    "name,args",
+    [
+        ("player_health_pct", {}),
+        ("player_primary_power", {"max_power": 120}),
+        ("spec_dk_rune", {}),
+        ("spell_cooldown", {"spell_ids": [195292], "ignore_gcd": True}),
+        ("spell_gcd", {}),
+        ("spell_usable", {"spell_ids": [49998]}),
+        ("spell_overlay", {"spell_ids": [50842]}),
+    ],
+)
+@pytest.mark.parametrize("damage", ["uniform_color", "mixed_gray", "mixed_color"])
+def test_plugins_reject_invalid_cell_colors(
+    name: str, args: dict[str, object], damage: str
+) -> None:
+    plugin = Registry().create(f"liantian_cn.{name}@dev", args)
+    allocate([plugin])
+    pixels = np.full((4, 4, 3), 255, dtype=np.uint8)
+    if damage == "uniform_color":
+        pixels[:] = (255, 0, 0)
+    elif damage == "mixed_gray":
+        pixels[1, 1] = 0
+    else:
+        pixels[1, 1] = (255, 0, 0)
+    region = Cell(1, 2, pixels)
+    decoder = empty_decoder()
+    # 检查实际拒绝输入，避免 False 等兜底掩盖校验被删除。
+    with pytest.raises(ValueError):
+        plugin.decode_value([region], [], [], decoder=decoder)
+    assert plugin.value([region], [], [], decoder=decoder) == plugin.fallback_value()
+
+
+@pytest.mark.parametrize("name", ["spell_cooldown", "spell_gcd"])
+def test_cooldown_entire_brightness_range(name: str) -> None:
+    args: dict[str, object] = (
+        {"spell_ids": [195292], "ignore_gcd": True} if name == "spell_cooldown" else {}
+    )
+    plugin = Registry().create(f"liantian_cn.{name}@dev", args)
+    allocate([plugin])
+    decoder = empty_decoder()
+    for brightness in range(256):
+        if brightness >= 155:
+            expected = (255 - brightness) / 20
+        elif brightness >= 105:
+            expected = 5 + (155 - brightness) / 2
+        elif brightness >= 55:
+            expected = 30 + (105 - brightness) * 2.5
+        else:
+            expected = 155 + (55 - brightness) * 4
+        assert plugin.decode_value([cell(brightness)], [], [], decoder=decoder) == expected
+
+
 @pytest.mark.parametrize("white_columns", [0, 2, 4, 6, 8])
 def test_charges_half_up_and_red_separator(white_columns: int) -> None:
     plugin = Registry().create(

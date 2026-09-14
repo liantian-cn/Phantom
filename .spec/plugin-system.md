@@ -112,7 +112,7 @@ GDI worker 搜索整个虚拟桌面，包含负坐标显示器，按物理像素
 ## 第 7–10 步条件实现
 
 `phantom/core/condition/` 分别以 contracts.py、base.py、layout.py、template.py 和 registry.py 提供输出契约、生命周期、布局、渲染和精确加载。
-通用 Validator 位于 core/validation.py，Decoder 位于 core/condition/decoders.py；核心不含技能参数或冷却业务节点。
+通用 Validator 位于 core/validation.py；条件插件在 decode_value 中直接读取 core/pixels 的区域对象并完成业务校验与转换，具体作者要求见插件开发手册。核心不含技能参数或冷却业务节点。
 每个版本导出 Plugin 类；Registry 只加载精确目录，按标识缓存类，实例不共享。
 非法标识、版本缺失、模块或参数错误均附带插件名称；无版本回退和热加载。
 output_count 与 value_shape 独立，ValueBar 的 widths 为每条内容宽度，支持单实例多区域。

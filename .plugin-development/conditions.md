@@ -3,7 +3,7 @@
 ## Python 实现流程
 
 每个版本的 `condition.py` 导出 `Condition` 子类 `Plugin`，构造参数为 `args: dict[str, object]`。
-依次验证参数、创建业务解码器、声明 `Output`；布局、模板路径和异常兜底调用由核心负责。
+依次验证参数、保存业务参数、声明 `Output`；布局、模板路径和异常兜底调用由核心负责。
 
 | 内容 | 使用方式 |
 | --- | --- |
@@ -11,13 +11,13 @@
 | 输出与类型 | `phantom.core.condition.contracts.Output`、`Value`、`Region` |
 | 参数字段 | `Fields(required, optional).validate(args, "plugin_args")`，字段集合用 `frozenset` |
 | 基础输入 | `PositiveInteger`、`PositiveNumber`、`Boolean`、`String`、`Table`、`Items` |
-| 通用解码 | `Gray`、`BlackWhite`、`CellRatio`、`BarRatio`、`PiecewiseLinear` |
+| 像素读取 | `Cell.mean`、`Cell.ratio`、`Cell.percent`、`Cell.is_white`、`ValueBar.ratio`、`IconTile.hash` 等区域属性 |
 
 `Validator.validate` 返回强类型合法值，失败抛出包含字段上下文的 `ValueError`。
-`Decoder.decode` 返回解码结果，失败交由 Condition 的既有异常边界调用插件兜底。
-例如 `SpellIDs` 在本插件内组合 `Items(PositiveInteger(), nonempty=True)`，保留技能候选顺序；冷却解码器在本版本内组合 `Gray` 和带本地节点的 `PiecewiseLinear`。
+例如 `SpellIDs` 在本插件内组合 `Items(PositiveInteger(), nonempty=True)`，保留技能候选顺序。业务解码直接写在 `decode_value()` 中，失败交由 Condition 的既有异常边界调用插件兜底。
+当前灰度条件先检查 `Cell.is_pure` 及内部像素的 RGB 分量相等，再读取亮度或比例；布尔条件先检查严格全黑或全白，再读取 `Cell.is_white`。冷却条件直接使用本版本固定节点进行分段插值，业务范围、舍入与兜底保留在插件内。
 
-`decode_value(cells, value_bars, icon_tiles, *, decoder: PixelDecoder)` 将所需区域交给实例的解码对象；未使用的列表为空。`value` 也要求传入同一个 decoder，签名不兼容旧 `@dev` 接口。
+`decode_value(cells, value_bars, icon_tiles, *, decoder: PixelDecoder)` 直接读取所需区域对象；未使用的列表为空。`value` 也要求传入同一个 decoder，签名不兼容旧 `@dev` 接口。
 插件可调用 `decoder.getCell(x, y)`、`decoder.getValueBar(x, width)`、`decoder.getIconTile(x)` 读取任意有效区域；坐标与宽度沿用像素协议。不得修改帧数据或缓存 decoder 供后续帧使用。
 每个插件独立实现 `fallback_value()`，解释为何选择该值。兜底须符合输出声明。框架分配区域越界在调用层失败；插件额外读取异常与业务解码异常使用插件兜底。
 

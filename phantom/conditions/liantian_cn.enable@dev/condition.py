@@ -11,12 +11,12 @@ Description:
 Key Variables:
     STATE_X: 保留的第一行状态 Cell 横坐标。
 Change Log:
+    2026-09-14: Changed 直接读取像素属性并在插件内完成校验和业务转换，移除解码器封装。
     2026-09-14: Added 按确认计划将插件启用读取改为可命名的 Python 条件插件。
 """
 
 from phantom.core.condition.base import Condition
 from phantom.core.condition.contracts import Output
-from phantom.core.condition.decoders import BlackWhite
 from phantom.core.pixels import Cell, IconTile, PixelDecoder, ValueBar
 from phantom.core.validation import Fields
 
@@ -26,7 +26,6 @@ STATE_X: int = 3
 class Plugin(Condition):
     def __init__(self, args: dict[str, object]) -> None:
         Fields(frozenset()).validate(args, "plugin_args")
-        self.decoder: BlackWhite = BlackWhite()
         super().__init__(Output("none", output_count=0, value_type=bool))
 
     def decode_value(
@@ -37,7 +36,10 @@ class Plugin(Condition):
         *,
         decoder: PixelDecoder,
     ) -> bool:
-        return self.decoder.decode(decoder.getCell(STATE_X, 1))
+        cell = decoder.getCell(STATE_X, 1)
+        if not cell.is_black and not cell.is_white:
+            raise ValueError("需要纯黑或纯白 Cell")
+        return cell.is_white
 
     def fallback_value(self) -> bool:
         """按已确认业务语义兜底，并允许 rotation 继续求值。"""
