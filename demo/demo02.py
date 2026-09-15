@@ -36,7 +36,7 @@ def main() -> None:
     print("演示内容：同帧解码条件并按优先级单次求值，只报告宏和键位，不发送按键。", flush=True)
     try:
         rotation = load_rotation(args.rotation)
-        worker = Registry().create("liantian_cn.gdi@dev", fps=15)
+        worker = Registry().create("gdi@dev", fps=15)
         print("3 秒后开始截图，采集 5 秒后用最后结果执行一次试运行。", flush=True)
         try:
             sleep(3)

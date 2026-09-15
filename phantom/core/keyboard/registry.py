@@ -28,7 +28,7 @@ class Registry:
         self.root: Path = (root if root is not None else Path(__file__).resolve().parents[2] / "keyboards").resolve()
         self._classes: dict[str, type[object]] = {}
 
-    def create(self, identifier: str = "liantian_cn.post_message@dev") -> Keyboard:
+    def create(self, identifier: str = "post_message@dev") -> Keyboard:
         try:
             if not identifier or identifier in {".", ".."} or any(character in identifier for character in "/\\:") or identifier.endswith((".", " ")) or Path(identifier).is_absolute():
                 raise ValueError("插件标识必须是单个安全目录名")

@@ -31,7 +31,7 @@ class Registry:
         self.root: Path = (root if root is not None else Path(__file__).resolve().parents[2] / "captures").resolve()
         self._classes: dict[str, type[object]] = {}
 
-    def create(self, identifier: str = "liantian_cn.gdi@dev", *, fps: float = 15) -> CaptureWorker:
+    def create(self, identifier: str = "gdi@dev", *, fps: float = 15) -> CaptureWorker:
         try:
             if not identifier or identifier in {".", ".."} or any(character in identifier for character in "/\\:") or identifier.endswith((".", " ")) or Path(identifier).is_absolute():
                 raise ValueError("插件标识必须是单个安全目录名")

@@ -21,7 +21,7 @@
 
 ## 完整示例
 
-此处 `example_author.health_pct@dev` 是说明 `unit_token` 参数的假设插件，不是内置插件；当前可运行示例见 `rotations/blood-dk.toml`。
+此处 `health_pct@dev` 是说明 `unit_token` 参数的假设插件，不是内置插件；当前可运行示例见 `rotations/blood-dk.toml`。
 
 ```toml
 schema_version = 1
@@ -35,26 +35,26 @@ unit_spec = 1
 
 [[conditions]]
 title = "玩家血量"
-plugin = "example_author.health_pct@dev"
+plugin = "health_pct@dev"
 [conditions.plugin_args]
 unit_token = "player"
 
 [[conditions]]
 title = "圣光术冷却时间"
-plugin = "liantian_cn.spell_cooldown@dev"
+plugin = "spell_cooldown@dev"
 [conditions.plugin_args]
 spell_ids = [82326, 82325]
 ignore_gcd = true
 
 [[conditions]]
 title = "目标血量"
-plugin = "example_author.health_pct@dev"
+plugin = "health_pct@dev"
 [conditions.plugin_args]
 unit_token = "target"
 
 [[conditions]]
 title = "审判冷却时间"
-plugin = "liantian_cn.spell_cooldown@dev"
+plugin = "spell_cooldown@dev"
 [conditions.plugin_args]
 spell_ids = [12345]
 ignore_gcd = true

@@ -15,7 +15,7 @@ description: 创建、修改或审查 Phantom 条件、截图、键盘插件及�
 
 ## 完成一个插件改动
 
-1. 核对该版本 `plugin.toml` 和实现。选择或理解内置条件时按需查 [内置条件目录](references/built-in-conditions.md)，不为每次插件改动加载全部目录。
+1. 按公共规则使用不含作者前缀的 `包名@版本号` 目录，核对该版本 `plugin.toml` 的 `name`、`author`、`version` 和实现。选择或理解内置条件时按需查 [内置条件目录](references/built-in-conditions.md)，不为每次插件改动加载全部目录。
 2. 读取共享 [开发规则](../phantom-code-dev/references/development-rules.md)；有 Lua 修改才追加 [Lua 格式](../phantom-code-dev/references/lua-development.md)，涉及像素才追加 [像素协议](../phantom-code-dev/references/pixel-protocol.md)。不必加载整个代码 skill。
 3. 涉及 WoW 调用、事件、秘密值或受保护对象时使用 [phantom-wow-api](../phantom-wow-api/SKILL.md)，按专题核验后实现。
 4. 业务参数、算法与兜底留在本版本，复用核心公开设施；同步作者自述及受影响的配置、规范。

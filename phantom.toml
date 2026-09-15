@@ -1,5 +1,5 @@
 [capture]
-plugin = "liantian_cn.gdi@dev"
+plugin = "gdi@dev"
 fps = 15
 
 [ui]
@@ -17,4 +17,4 @@ executable = 'E:\World of Warcraft\_retail_\Wow.exe'
 name = "Phantom"
 
 [keyboard]
-plugin = "liantian_cn.post_message@dev"
+plugin = "post_message@dev"

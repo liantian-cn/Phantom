@@ -31,7 +31,7 @@ def main() -> None:
     print("演示内容：使用 GDI 截取游戏像素基板，保存最后一帧 RGB 数组和截图状态。", flush=True)
     from phantom.core.capture.registry import Registry
 
-    worker = Registry().create("liantian_cn.gdi@dev", fps=15)
+    worker = Registry().create("gdi@dev", fps=15)
     print("3 秒后开始截图，运行 5 秒后停止。", flush=True)
     try:
         sleep(3)

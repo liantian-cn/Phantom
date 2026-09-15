@@ -5,7 +5,7 @@
 版本目录内 `capture.py` 必须导出 `Plugin` 类；可用 `Plugin = GDIWorker` 这样的别名公开具体类。
 构造接受 `fps=15`，不得在构造或模块导入时启动线程、占用桌面采集资源；加载器会在进入 UI 前检查签名、未启动状态和初始结果。
 
-当前 `liantian_cn.gdi@dev` 使用 `ctypes.WinDLL` 声明 Windows 函数签名，通过核心截图注册器接入；独立后端和 demo 已存在。
+当前 `gdi@dev` 使用 `ctypes.WinDLL` 声明 Windows 函数签名，通过核心截图注册器接入；独立后端和 demo 已存在。
 
 返回实例遵循 [截图 worker 契约](captures.md#截图-worker-契约)，包括只读 `is_running`、`start()`、`stop()`、`set_fps(fps=15)` 和 `get_latest_result()`。
 方法名相同不等于业务契约满足，仍需生命周期和图像测试。
@@ -17,7 +17,7 @@
 
 ## 配置接入
 
-应用通过 `capture.plugin` 选择精确版本，省略时默认 `liantian_cn.gdi@dev`；加载入口为 `phantom.core.capture.registry.Registry.create(identifier, fps=...)`。
+应用通过 `capture.plugin` 选择精确版本，省略时默认 `gdi@dev`；加载入口为 `phantom.core.capture.registry.Registry.create(identifier, fps=...)`。
 现有配置只读，修改后重启程序生效。不存在的版本或损坏插件明确失败，不换用 GDI。
 独立 demo 显式指定 GDI 并使用同一注册器，不读取应用配置。
 
@@ -54,6 +54,6 @@ GDI worker 搜索整个虚拟桌面，包含负坐标显示器，按物理像素
 ## 截图加载与配置
 
 `phantom/core/capture/` 提供 contracts、worker、imaging 与 registry；`phantom/captures/` 只保存版本插件。
-`Registry.create(identifier="liantian_cn.gdi@dev", fps=15)` 返回 CaptureWorker，每次构造独立实例。标识精确匹配、源码限定在版本目录。
+`Registry.create(identifier="gdi@dev", fps=15)` 返回 CaptureWorker，每次构造独立实例。标识精确匹配、源码限定在版本目录。
 配置字段见 [TUI 应用配置](../../phantom-code-dev/references/tui.md#应用配置)。非法选择、导入失败或不满足调用接口抛出带标识的 CapturePluginError，入口在进入 UI 前报告并非零退出。
 缺省配置采用 GDI；显式配置错误不回退。不提供热切换或热加载。

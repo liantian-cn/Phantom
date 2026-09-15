@@ -15,9 +15,9 @@
 
 | 字段 | 默认值 | 约束 |
 | --- | --- | --- |
-| `capture.plugin` | `"liantian_cn.gdi@dev"` | 精确版本标识，启动加载；显式错误不回退 |
+| `capture.plugin` | `"gdi@dev"` | 精确版本标识，启动加载；显式错误不回退 |
 | `capture.fps` | `15` | 有限正数，用作截图与界面读取最新快照的频率上限 |
-| `keyboard.plugin` | `"liantian_cn.post_message@dev"` | 精确加载键盘后端；选择错误不回退 |
+| `keyboard.plugin` | `"post_message@dev"` | 精确加载键盘后端；选择错误不回退 |
 | `ui.min_width` | `120` | 正整数，界面最小宽度（列） |
 | `ui.min_height` | `46` | 正整数，界面最小高度（行） |
 | `ui.log_max_lines` | `1000` | 正整数，业务日志保留的最大物理行数 |

@@ -4,7 +4,7 @@
 
 ## 基础条件
 
-| 插件（统一为 liantian_cn.名称@dev） | 参数 | 输出与解码 | 兜底 |
+| 插件（统一为 名称@dev） | 参数 | 输出与解码 | 兜底 |
 | --- | --- | --- | --- |
 | player_primary_power | 有限正数 max_power | Cell ratio × max_power，float | 0.0 |
 | spec_dk_rune | 无 | Cell mean 四舍五入，0–6 int | 0 |
@@ -29,15 +29,15 @@ spell_gcd 固定 GetSpellCooldownDuration(61304,false)，不查询法术书，�
 
 | 插件 | 读取坐标 | 类型 | 非黑白值或解码异常兜底 |
 | --- | --- | --- | --- |
-| `liantian_cn.enable@dev` | Cell(3, 1) | bool | True |
-| `liantian_cn.in_burst@dev` | Cell(4, 1) | bool | False |
-| `liantian_cn.delaying@dev` | Cell(5, 1) | bool | False |
+| `enable@dev` | Cell(3, 1) | bool | True |
+| `in_burst@dev` | Cell(4, 1) | bool | False |
+| `delaying@dev` | Cell(5, 1) | bool | False |
 
 兜底后继续求值；enable 与 delay 的上述兜底允许配置规则继续执行动作，这是已确认的业务语义。
 
 ## 玩家条件插件（2026-09-15）
 
-以下 23 个插件统一使用 `liantian_cn.<名称>@dev`。每个实例输出一个 scalar：除施法图标使用第四行一个 IconTile 外，其余均占第二行一个 Cell 区域。
+以下 23 个插件统一使用 `<名称>@dev`。每个实例输出一个 scalar：除施法图标使用第四行一个 IconTile 外，其余均占第二行一个 Cell 区域。
 AuraContainer 和吸收 StatusBar 是该区域的显示实现，不另分配 ValueBar，不改变核心像素协议。
 
 | 名称 | 必填参数 | Python 返回与业务含义 |

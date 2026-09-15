@@ -37,7 +37,7 @@ def install(root: Path, identifier: str, source: str = PLUGIN_SOURCE) -> None:
 
 
 def test_exact_capture_selection_and_independent_instances(tmp_path: Path) -> None:
-    install(tmp_path, "liantian_cn.gdi@dev")
+    install(tmp_path, "gdi@dev")
     install(tmp_path, "alternate@2.0", PLUGIN_SOURCE.replace("int(self.fps)", "99"))
     registry = Registry(tmp_path)
     first = registry.create(fps=7)
@@ -66,9 +66,9 @@ def test_same_identifier_in_different_roots(tmp_path: Path) -> None:
     assert (first_image == 15).all() and (second_image == 88).all()
 
 
-@pytest.mark.parametrize("identifier", ["GDI@1.0", "gdi", "../liantian_cn.gdi@dev", "gdi@1.1", "gdi@1"])
+@pytest.mark.parametrize("identifier", ["GDI@1.0", "gdi", "../gdi@dev", "gdi@1.1", "gdi@1"])
 def test_invalid_or_missing_capture_never_falls_back(tmp_path: Path, identifier: str) -> None:
-    install(tmp_path, "liantian_cn.gdi@dev")
+    install(tmp_path, "gdi@dev")
     with pytest.raises(CapturePluginError):
         Registry(tmp_path).create(identifier)
 

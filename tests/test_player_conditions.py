@@ -43,7 +43,7 @@ CASES: dict[str, dict[str, object]] = {
 
 
 def create(name: str, args: dict[str, object] | None = None) -> Condition:
-    return Registry().create(f"liantian_cn.{name}@dev", CASES[name] if args is None else args)
+    return Registry().create(f"{name}@dev", CASES[name] if args is None else args)
 
 
 def harness(plugins: list[Condition], *, initialize: bool = True) -> tuple[Any, Any, Any]:
@@ -484,7 +484,7 @@ def test_dispel_maps_preserve_empty_and_false_entries(types: dict[str, bool]) ->
 
 
 def test_all_plugins_generate_together_with_independent_layouts() -> None:
-    entries = tuple(ConditionEntry(name, f"liantian_cn.{name}@dev", create(name)) for name in CASES)
+    entries = tuple(ConditionEntry(name, f"{name}@dev", create(name)) for name in CASES)
     width = allocate([entry.instance for entry in entries])
     rotation = replace(load_rotation(ROOT / "rotations/blood-dk.toml"), conditions=entries, macros=(), board_width=width)
     lua: Any = LuaRuntime(unpack_returned_tuples=True)

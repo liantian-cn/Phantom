@@ -38,7 +38,7 @@ def main() -> None:
     # 与现有 demo 一样直接加载指定 GDI 版本，通用插件发现留待后续阶段。
     from phantom.core.capture.registry import Registry
 
-    worker = Registry().create("liantian_cn.gdi@dev", fps=15)
+    worker = Registry().create("gdi@dev", fps=15)
     print("3 秒后开始截图，采集 5 秒后输出最后结果。", flush=True)
     try:
         sleep(3)

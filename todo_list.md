@@ -221,7 +221,7 @@
 
 **前置依赖：** 第 3、7、10、12 步。
 
-**已实现：** `core/keyboard` 校验 WoW 格式并冻结平台中立按键组合；`keyboards/liantian_cn.post_message@dev` 接收明确按键，在插件内查找唯一标题精确为“魔兽世界”的窗口。按用户 keyboard.py 参考依次按下、等待 10 ms、逆序释放，检查发送错误并尝试释放已按下的键。
+**已实现：** `core/keyboard` 校验 WoW 格式并冻结平台中立按键组合；`keyboards/post_message@dev` 接收明确按键，在插件内查找唯一标题精确为“魔兽世界”的窗口。按用户 keyboard.py 参考依次按下、等待 10 ms、逆序释放，检查发送错误并尝试释放已按下的键。
 生成器按用户 Macro.lua 标准示例，为 `bind_key=true` 输出安全按钮与覆盖绑定；`false` 不生成绑定。宏文本只进入 Lua 字符串，不传给键盘插件。
 
 **完成标准：** 键位映射测试、Windows 消息及真实游戏普通/组合键验证；生成绑定符合配置，一次执行请求产生预期游戏动作。
@@ -252,7 +252,7 @@
 
 **前置依赖：** 公共核心与精确加载已提前实施；联合验收依赖第 15 步。
 
-**已实现：** 保留 `core/capture`、`captures/liantian_cn.gdi@dev` 与默认 `capture.plugin`。`CaptureResult.sequence` 标识发布的新帧，快照复制保留值，公共 worker 跨重启递增；图像尺寸、RGB 与解码契约保持不变。不增加第二种真实截图后端或运行期热切换。
+**已实现：** 保留 `core/capture`、`captures/gdi@dev` 与默认 `capture.plugin`。`CaptureResult.sequence` 标识发布的新帧，快照复制保留值，公共 worker 跨重启递增；图像尺寸、RGB 与解码契约保持不变。不增加第二种真实截图后端或运行期热切换。
 
 **完成标准：** 截图/解码契约一致，缺失版本明确拒绝，持续闭环回归通过。
 
@@ -266,7 +266,7 @@
 
 **前置依赖：** 本次与第 14–16 步共同实施。
 
-**已实现：** `actions` 预定分类改为 `keyboards`；公共 `send(KeyCombination)` / `close()` 契约和精确加载已接入。`keyboard.plugin` 默认 `liantian_cn.post_message@dev`，无版本回退；目标和设备编码由插件负责，不要求未来驱动或串口具有窗口目标。
+**已实现：** `actions` 预定分类改为 `keyboards`；公共 `send(KeyCombination)` / `close()` 契约和精确加载已接入。`keyboard.plugin` 默认 `post_message@dev`，无版本回退；目标和设备编码由插件负责，不要求未来驱动或串口具有窗口目标。
 
 **完成标准：** 精确选择、实例隔离、错误拒绝及键位语义一致，截图与键盘插件共同参与闭环；真实游戏结果验证完成。
 

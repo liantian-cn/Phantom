@@ -90,7 +90,7 @@ rotations/
   blood-dk.toml
 ```
 
-`phantom/lua/runtime/` 保存生成器使用的共享 Lua 运行时源码。这些源码会进入生成后的 WoW 插件，为条件插件生成的实例 Lua 提供公共运行能力；条件专属模板仍保存在对应的 `phantom/conditions/<author>.<name>@<version>/template.lua` 中。该目录不保存生成后的插件产物。
+`phantom/lua/runtime/` 保存生成器使用的共享 Lua 运行时源码。这些源码会进入生成后的 WoW 插件，为条件插件生成的实例 Lua 提供公共运行能力；条件专属模板仍保存在对应的 `phantom/conditions/<name>@<version>/template.lua` 中。该目录不保存生成后的插件产物。
 
 `phantom/lua/general/` 保存第一行通用字段的 Lua 实现，在 TOC 中于 runtime 文件之后加载。通用 Cell 仍使用 runtime 提供的普通 `Cell`，通过 `UIInitFuncs` 延迟创建以沿用共享尺寸换算和背景初始化；不另设 GeneralCell 类型。首个实现为 `01_player_class.lua`，文件头 `index: 1` 表示通用文件顺序元数据。
 
@@ -100,7 +100,7 @@ rotations/
 截图与像素解析仍由 `demo/demo.py` 和 `demo/demo01.py` 独立验证，demo 不经过 TUI，也不读取应用配置。
 
 共享图像算法与线程调度位于 `phantom/core/capture/`，`phantom/captures/` 只存放版本插件。后端只负责截图，线程负责全屏定位、局部截图、校验和交付最新结果。
-UI 通过截图核心注册器按 capture.plugin 创建后端，默认 liantian_cn.gdi@dev；不直接导入版本实现。
+UI 通过截图核心注册器按 capture.plugin 创建后端，默认 gdi@dev；不直接导入版本实现。
 截图使用独立后台线程，不使用子进程。主线程通过快照接口取得最新图像与状态，不排队保留历史帧。
 持续运行采用新帧驱动：后台读取最新截图，单帧至多解码、求值和发送一次，不补跑积压帧；采集及读取上限沿用 capture.fps（默认 15）。截图耗时和发送耗时可能降低实际频率。
 

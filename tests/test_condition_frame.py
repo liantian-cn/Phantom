@@ -31,7 +31,7 @@ def frame() -> PixelDecoder:
 
 @pytest.mark.parametrize("name,x,fallback", [("enable", 3, True), ("in_burst", 4, False), ("delaying", 5, False)])
 def test_state_plugins_read_existing_pixels_and_fallback(name: str, x: int, fallback: bool) -> None:
-    plugin = Registry().create(f"liantian_cn.{name}@dev", {})
+    plugin = Registry().create(f"{name}@dev", {})
     assert allocate([plugin]) == 28
     assert plugin.layout() == {"output_type": "none", "regions": []}
     assert plugin.generate_lua("instance") == ""
@@ -51,7 +51,7 @@ def test_state_plugins_read_existing_pixels_and_fallback(name: str, x: int, fall
     tiny = PixelDecoder(np.zeros((20, 12, 3), dtype=np.uint8))
     assert plugin.value([], [], [], decoder=tiny) is fallback
     with pytest.raises(ValueError):
-        Registry().create(f"liantian_cn.{name}@dev", {"x": x})
+        Registry().create(f"{name}@dev", {"x": x})
 
 
 class Combined(Condition):
@@ -156,8 +156,8 @@ def test_none_output_validation_and_mixed_layout() -> None:
         Output("none", 0, widths=(1,))
     with pytest.raises(ValueError):
         Output("cell", 0)
-    reader = Registry().create("liantian_cn.enable@dev", {})
-    cell = Registry().create("liantian_cn.spell_gcd@dev", {})
+    reader = Registry().create("enable@dev", {})
+    cell = Registry().create("spell_gcd@dev", {})
     assert allocate([reader, cell]) == 28
     assert cell.regions == (Region(1, 2),)
     assert reader.regions == ()
@@ -172,7 +172,7 @@ def test_zero_regions_still_validate_fallback_before_freezing() -> None:
 def test_existing_template_errors_are_not_treated_as_optional(tmp_path: Path) -> None:
     directory = tmp_path / "test@dev"
     directory.mkdir()
-    (directory / "condition.py").write_bytes(Path("phantom/conditions/liantian_cn.enable@dev/condition.py").read_bytes())
+    (directory / "condition.py").write_bytes(Path("phantom/conditions/enable@dev/condition.py").read_bytes())
     template = directory / "template.lua"
     template.mkdir()
     with pytest.raises(ValueError, match="template.lua"):
@@ -202,7 +202,7 @@ def test_old_implicit_names_rejected_without_rewriting(tmp_path: Path, name: str
 def test_renamed_duplicate_and_omitted_states(tmp_path: Path) -> None:
     rotation = example(tmp_path)
     source = rotation.path.read_text(encoding="utf-8").replace("插件启用", "允许执行").replace("正在延迟", "等待中")
-    source = source.replace("[[macros]]", '[[conditions]]\ntitle = "另一开关"\nplugin = "liantian_cn.enable@dev"\n\n[[conditions]]\ntitle = "爆发开启"\nplugin = "liantian_cn.in_burst@dev"\n\n[[macros]]', 1)
+    source = source.replace("[[macros]]", '[[conditions]]\ntitle = "另一开关"\nplugin = "enable@dev"\n\n[[conditions]]\ntitle = "爆发开启"\nplugin = "in_burst@dev"\n\n[[macros]]', 1)
     rotation.path.write_text(source, encoding="utf-8")
     rotation = load_rotation(rotation.path)
     assert rotation.board_width == 36
