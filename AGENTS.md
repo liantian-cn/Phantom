@@ -1,26 +1,10 @@
-# Phantom Agent 指引
+# Phantom
 
-## 必读入口
+- 仅在 `develop` 修改；`main` 由用户冻结。外部参考源码只读，更新须用户明确要求。
+- 权威：用户指令与冻结计划 > 项目规范 > 技术参考 > 外部示例；待定事项不授权实施。
+- 按任务读取以下 skill，再按需读取 references；不通读全部资料。
 
-任何任务先阅读 [`.spec/README.md`](.spec/README.md)，再按其中的任务路由读取最小相关规范。创建或修改插件时再阅读 [`.plugin-development/README.md`](.plugin-development/README.md)。涉及 WoW 技术事实时，从 [`.context/README.md`](.context/README.md) 进入对应英文专题并核验指定源码。
-
-## 权威顺序
-
-1. 用户当前明确指令与已冻结任务计划。
-2. `.spec/` 系统规范与 `.plugin-development/` 插件开发规范。
-3. `.context/` 技术背景与核验记录。
-4. `/wow-ui-source`、`/PhantomProject`、`/Shigure`、`/midnight` 外部参考源码。
-
-规范中的“待定事项”不是事实或规则，Agent 不得自行补全并实施。
-
-## 全局路由规则
-
-- 只在 `develop` 分支修改 Phantom；用户负责向 `main` 冻结版本。
-- `.spec/` 和本文件使用中文；`.context/` 保持英文；技术标识符保持英文。
-- 外部参考源码不属于本仓库。未经用户明确要求，不得修改、提交、切换分支、fetch、pull 或 reset。
-- 架构、配置、像素、系统契约、开发与测试规则维护在相应 `.spec` 专题；插件作者要求维护在 `.plugin-development/`，本文件只提供路由。
-
-
-## Windows 参考源码路径
-
-Windows 下 `/wow-ui-source` 对应 `E:\Documents\GitHub\wow-ui-source`。该目录仅作只读参考；不得修改、提交或更新分支。引用技术事实时记录该目录实际版本与 revision，历史快照记录不改写。
+- [核心代码、TUI、像素](.agents/skills/phantom-code-dev/SKILL.md)
+- [条件、截图、键盘插件](.agents/skills/phantom-plugin-dev/SKILL.md)
+- [循环配置与优先级](.agents/skills/phantom-rotation-dev/SKILL.md)
+- [WoW API 与源码核验](.agents/skills/phantom-wow-api/SKILL.md)
