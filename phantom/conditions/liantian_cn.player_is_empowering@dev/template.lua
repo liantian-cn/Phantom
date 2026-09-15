@@ -7,6 +7,7 @@ plugin: liantian_cn.player_is_empowering@dev
     普通施法、普通通道及空闲为假，蓄力通道为真；不判断秘密名称或纹理。
     参数校验和配对解码见 condition.py；本实例使用冻结坐标，不继承旧项目分类色。
 修改记录：
+2026-09-15：事件统一延至下一帧刷新。
 2026-09-15：按已确认计划新增玩家条件插件。
 ]]
 
@@ -14,6 +15,7 @@ plugin: liantian_cn.player_is_empowering@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
 local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
 local insert = table.insert -- 注册 UI 初始化回调
 local UnitCastingInfo = UnitCastingInfo -- 使用普通施法的非秘密哨兵及图标
@@ -79,6 +81,8 @@ eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_EMPOWER_START", UNIT_TOKEN)
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_EMPOWER_STOP", UNIT_TOKEN)
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTIBLE", UNIT_TOKEN)
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE", UNIT_TOKEN)
-eventFrame:SetScript("OnEvent", update)
+eventFrame:SetScript("OnEvent", function()
+    After(0, function() update() end)
+end)
 
 insert(UIInitFuncs, initialize)

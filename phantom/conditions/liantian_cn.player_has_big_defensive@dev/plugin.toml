@@ -10,3 +10,5 @@ description = "无参数，拒绝多余字段。"
 type = "bool"
 description = "BigDefensive/Normal 排序，单固定 slot 静态白色覆盖，至少一个匹配即显示白色；不读取 aura 数据或可见性。"
 fallback = false
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；无定时轮询。

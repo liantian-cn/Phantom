@@ -136,12 +136,15 @@ def test_generated_lua_roundtrip_gcd_and_events(tmp_path: Path) -> None:
     assert rotation.values(PixelDecoder(pixels)) == [40.0, 3, 1, True, 2.5, 0.0, 40.0, True, False, False]
     state.runes = 5
     state.event(state, "RUNE_POWER_UPDATE")
+    state.flushTimers(state)
     assert state.cells[2].brightness == 5
     state.power = 1
     state.event(state, "UNIT_DISPLAYPOWER")
+    state.flushTimers(state)
     assert state.cells[1].brightness == 255
     state.charges = 2
     state.event(state, "SPELL_UPDATE_CHARGES")
+    state.flushTimers(state)
     assert state.bars[1].value == 2
     state.remaining[61304] = None
     state.update(state)
@@ -151,6 +154,7 @@ def test_generated_lua_roundtrip_gcd_and_events(tmp_path: Path) -> None:
     assert state.cells[4].brightness == 255
     state.known[195292] = False
     state.event(state, "SPELLS_CHANGED")
+    state.flushTimers(state)
     state.update(state)
     assert state.cells[5].brightness == 0
 

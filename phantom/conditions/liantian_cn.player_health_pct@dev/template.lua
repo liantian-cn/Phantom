@@ -10,6 +10,7 @@ plugin: liantian_cn.player_health_pct@dev
     独立事件框架仅监听玩家的当前生命值和最大生命值变化，结果直接交给 Cell 渲染。
 
 修改记录：
+2026-09-15：事件统一延至下一帧刷新。
 2026-09-12：生成器条件模板 @1.0，参数校验与解码见同目录 condition.py。
 2026-09-11：按解码开发前的 Lua 示例需求新增玩家血量 Cell。
 ]]
@@ -19,6 +20,7 @@ plugin: liantian_cn.player_health_pct@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
 
 local CreateFrame = CreateFrame                       -- 创建独立的玩家生命值事件框架
 local UnitHealthPercent = UnitHealthPercent           -- 获取玩家生命值比例的曲线求值结果
@@ -66,7 +68,7 @@ healthCurve:AddPoint(RATIO_MAX, COLOR.WHITE)
 local healthCell                        -- 等待 UI 初始化创建的玩家血量 Cell
 local eventFrame = CreateFrame("Frame") -- 本例独立的玩家生命值事件框架
 
-local function RefreshHealthCell()
+local function update()
     if not healthCell then -- 初始化前的事件不访问尚未创建的 Cell
         return
     end
@@ -77,11 +79,13 @@ end
 
 local function InitializeHealthCell()
     healthCell = Cell:New({ x = POSITION_X, y = POSITION_Y })
-    RefreshHealthCell() -- 构造后立即显示当前生命值比例
+    update() -- 构造后立即显示当前生命值比例
 end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")        -- 首次进入世界时刷新当前状态
 eventFrame:RegisterUnitEvent("UNIT_HEALTH", UNIT_TOKEN)    -- 只接收玩家当前生命值变化
 eventFrame:RegisterUnitEvent("UNIT_MAXHEALTH", UNIT_TOKEN) -- 只接收玩家最大生命值变化
-eventFrame:SetScript("OnEvent", RefreshHealthCell)       -- 两类事件均重新查询当前比例
+eventFrame:SetScript("OnEvent", function()
+    After(0, function() update() end)
+end)
 insert(UIInitFuncs, InitializeHealthCell)                -- 沿用共享布局、计数和缩放

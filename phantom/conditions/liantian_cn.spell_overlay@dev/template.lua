@@ -10,6 +10,7 @@ plugin: liantian_cn.spell_overlay@dev
     高亮布尔值直接交给颜色 API，true 显示白色；false 或无匹配技能时显示黑色。
 
 修改记录：
+2026-09-15：事件统一延至下一帧刷新。
 2026-09-12：生成器条件模板 @1.0，参数校验与解码见同目录 condition.py。
 2026-09-11：按解码开发前的 Lua 示例需求新增技能高亮 Cell。
 ]]
@@ -19,6 +20,7 @@ plugin: liantian_cn.spell_overlay@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
 
 local CreateFrame = CreateFrame                                       -- 创建独立事件框架
 local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook             -- 查询候选技能是否在玩家法术书中
@@ -82,7 +84,7 @@ local function SelectSpell()
     end
 end
 
-local function RefreshOverlayCell()
+local function update()
     if not overlayCell then -- 初始化前的事件不访问尚未创建的 Cell
         return
     end
@@ -100,7 +102,7 @@ end
 local function InitializeOverlayCell()
     overlayCell = Cell:New({ x = POSITION_X, y = POSITION_Y })
     SelectSpell()        -- 初始化时读取当前法术书
-    RefreshOverlayCell() -- 立即补齐已有高亮状态
+    update() -- 立即补齐已有高亮状态
 end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")              -- 首次进入世界时刷新当前状态
@@ -108,9 +110,11 @@ eventFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW") -- 高亮出现�
 eventFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE") -- 高亮消失时重新查询
 eventFrame:RegisterEvent("SPELLS_CHANGED")                     -- 法术书变化时重新选择并刷新
 eventFrame:SetScript("OnEvent", function(_, event)
-    if event == "SPELLS_CHANGED" then                          -- 只比较事件名称，不检查事件负载
-        SelectSpell()
-    end
-    RefreshOverlayCell()
+    After(0, function()
+        if event == "SPELLS_CHANGED" then                          -- 只比较事件名称，不检查事件负载
+            SelectSpell()
+        end
+        update()
+    end)
 end)
 insert(UIInitFuncs, InitializeOverlayCell) -- 沿用共享布局、计数和缩放

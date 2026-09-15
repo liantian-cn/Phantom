@@ -12,3 +12,5 @@ description = "用于检测近战范围的技能 ID，正整数。"
 type = "int"
 description = "扫描 nameplate1–40；秘密或 nil 距离结果不计数。灰度 count/40，Python 四舍五入至 0–40。"
 fallback = 0
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；UPDATE_INTERVAL = 1 秒兜底。

@@ -10,6 +10,7 @@ plugin: liantian_cn.spell_usable@dev
     将 isUsable 直接映射为白色或黑色；全部候选不匹配时显示黑色。
 
 修改记录：
+2026-09-15：事件统一延至下一帧刷新；统一 0.1 秒轮询写法并使用 UPDATE_INTERVAL。
 2026-09-12：生成器条件模板 @1.0，参数校验与解码见同目录 condition.py。
 2026-09-11：按解码开发前的 Lua 示例需求新增技能可用 Cell。
 ]]
@@ -19,13 +20,14 @@ plugin: liantian_cn.spell_usable@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
+local random = math.random -- 为本实例轮询生成随机错峰
 
 local CreateFrame = CreateFrame                                       -- 创建独立事件与轮询框架
 local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook             -- 查询候选技能是否在玩家法术书中
 local IsSpellUsable = C_Spell.IsSpellUsable                           -- 查询选中技能是否可用
 local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean -- 将潜在秘密布尔值转为颜色
 local ipairs = ipairs                                                 -- 按给定顺序选择候选技能
-local random = math.random                                            -- 生成独立的首次刷新延迟
 local insert = table.insert                                           -- 注册 UI 初始化函数
 
 --[[
@@ -66,8 +68,8 @@ local COLOR = addonTable.COLOR             -- 共享黑白颜色
 local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后创建 Cell
 
 --[[  logical code  ]]
+local UPDATE_INTERVAL = 0.1 -- 刷新间隔，严格超过后每帧最多刷新一次
 
-local REFRESH_INTERVAL = 0.1 -- 刷新间隔，严格超过后每帧最多刷新一次
 -- 条件实例参数与位置由 Python 生成器填入。
 local SPELL_IDS = { {{spell_ids}} }      -- 按优先顺序排列的候选技能 ID
 local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
@@ -76,7 +78,6 @@ local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 local usableCell                        -- 等待 UI 初始化创建的可用状态 Cell
 local selectedSpellID                   -- 当前选中的首个法术书技能 ID
 local eventFrame = CreateFrame("Frame") -- 本例独立的事件与轮询框架
-local fastTimeElapsed = -random()       -- 随机负初值推迟首次刷新，不修改全局随机种子
 
 local function SelectSpell()
     selectedSpellID = nil                   -- 清除旧选择，允许全部候选移出法术书
@@ -88,7 +89,7 @@ local function SelectSpell()
     end
 end
 
-local function RefreshUsableCell()
+local function update()
     if not usableCell then -- 初始化前的轮询不访问尚未创建的 Cell
         return
     end
@@ -110,12 +111,18 @@ end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- 首次进入世界时刷新当前状态
 eventFrame:RegisterEvent("SPELLS_CHANGED")        -- 法术书变化时重新选择候选技能
-eventFrame:SetScript("OnEvent", SelectSpell)      -- 只更新选择，颜色由下一次轮询刷新
-eventFrame:HookScript("OnUpdate", function(_, elapsed)
-    fastTimeElapsed = fastTimeElapsed + elapsed   -- 累加本帧时间
-    if fastTimeElapsed > REFRESH_INTERVAL then                 -- 每帧最多刷新一次，严格超过间隔才执行
-        fastTimeElapsed = fastTimeElapsed - REFRESH_INTERVAL   -- 保留剩余累计时间
-        RefreshUsableCell()
+eventFrame:SetScript("OnEvent", function()
+    After(0, function()
+        SelectSpell()
+        update()
+    end)
+end)
+local fastTimeElapsed = -random() -- 每个实例独立随机错峰
+eventFrame:SetScript("OnUpdate", function(_, elapsed)
+    fastTimeElapsed = fastTimeElapsed + elapsed
+    if fastTimeElapsed > UPDATE_INTERVAL then
+        fastTimeElapsed = fastTimeElapsed - UPDATE_INTERVAL
+        update()
     end
 end)
 insert(UIInitFuncs, InitializeUsableCell) -- 沿用共享布局、计数和缩放

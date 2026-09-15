@@ -7,6 +7,7 @@ plugin: liantian_cn.player_damage_absorb@dev
     白色 StatusBar 覆盖黑底；整数吸收量不超过 N 为黑色，至少 N+1 为白色，Lua 不比较或计算吸收值。
     参数校验和配对解码见 condition.py；本实例使用冻结坐标，不继承旧项目分类色。
 修改记录：
+2026-09-15：事件统一延至下一帧刷新。
 2026-09-15：按已确认计划新增玩家条件插件。
 ]]
 
@@ -14,6 +15,7 @@ plugin: liantian_cn.player_damage_absorb@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
 local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
 local insert = table.insert -- 注册 UI 初始化回调
 local UnitGetTotalAbsorbs = UnitGetTotalAbsorbs -- 获取秘密伤害吸收量
@@ -64,5 +66,7 @@ end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- 进入世界时同步本实例状态
 eventFrame:RegisterUnitEvent("UNIT_ABSORB_AMOUNT_CHANGED", UNIT_TOKEN)
-eventFrame:SetScript("OnEvent", update)
+eventFrame:SetScript("OnEvent", function()
+    After(0, function() update() end)
+end)
 insert(UIInitFuncs, initialize)

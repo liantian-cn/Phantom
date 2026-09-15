@@ -10,3 +10,5 @@ description = "无参数，拒绝多余字段。"
 type = "str"
 description = "秘密纹理直接送给 IconTile:SetIcon；沿用玩家施法角标；空槽返回空字符串，其他为内部 6×6 RGB hash。"
 fallback = ""
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；无定时轮询。

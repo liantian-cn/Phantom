@@ -11,3 +11,5 @@ type = "float"
 description = "CreateColorCurve 黑色 0、白色 1；直接渲染颜色。Python 返回 0–100，空闲为 0.0。"
 fallback = 0.0
 unit = "%"
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；UPDATE_INTERVAL = 0.1 秒持续轮询。

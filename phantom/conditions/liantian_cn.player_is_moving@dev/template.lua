@@ -4,9 +4,10 @@ uuid: {{uuid}}
 plugin: liantian_cn.player_is_moving@dev
 摘要：玩家是否正在移动。
 描述：
-    移动事件延至下一帧再查询；两秒轮询补齐状态。
+    移动事件延至下一帧再查询；1 秒兜底轮询补齐状态。
     参数校验和配对解码见 condition.py；本实例使用冻结坐标，不继承旧项目分类色。
 修改记录：
+2026-09-15：事件统一延至下一帧刷新；兜底轮询统一为 1 秒并使用 UPDATE_INTERVAL。
 2026-09-15：按已确认计划新增玩家条件插件。
 ]]
 
@@ -14,15 +15,15 @@ plugin: liantian_cn.player_is_moving@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
+local random = math.random -- 为本实例轮询生成随机错峰
 local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
 local insert = table.insert -- 注册 UI 初始化回调
 local IsPlayerMoving = IsPlayerMoving -- 查询玩家移动状态
-local After = C_Timer.After -- 移动事件后延至下一帧查询
-local random = math.random -- 为本实例轮询生成随机错峰
 
 --[[
 用途与签名：result = IsPlayerMoving()；返回玩家移动布尔值。C_Timer.After(0, callback) 在后续帧执行回调，无业务返回值。
-业务限制：移动事件延至下一帧再查询；两秒轮询补齐状态。
+业务限制：移动事件延至下一帧再查询；1 秒兜底轮询补齐状态。
 核验日期：2026-09-15；本地 E:/Documents/GitHub/wow-ui-source，12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 来源：本地源码 Interface/AddOns/ 下：
@@ -38,10 +39,10 @@ local Cell = addonTable.Cell -- 黑色底板及单元格显示接口
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
+local UPDATE_INTERVAL = 1 -- 事件之外的兜底刷新间隔
 local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
-local REFRESH_SECONDS = 2 -- 保留旧插件兜底间隔
 
 local cell
 local eventFrame = CreateFrame("Frame")
@@ -62,11 +63,11 @@ eventFrame:SetScript("OnEvent", function()
     After(0, function() update() end) -- 等移动状态在后续帧稳定后查询
 end)
 
-local fastTimeElapsed = -random() -- 每个实例独立错峰，不修改全局随机种子
+local fastTimeElapsed = -random() -- 每个实例独立随机错峰
 eventFrame:SetScript("OnUpdate", function(_, elapsed)
     fastTimeElapsed = fastTimeElapsed + elapsed
-    if fastTimeElapsed > REFRESH_SECONDS then
-        fastTimeElapsed = fastTimeElapsed - REFRESH_SECONDS -- 保留余量，每帧最多刷新一次
+    if fastTimeElapsed > UPDATE_INTERVAL then
+        fastTimeElapsed = fastTimeElapsed - UPDATE_INTERVAL
         update()
     end
 end)

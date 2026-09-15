@@ -19,3 +19,5 @@ type = "bool"
 unit = "无"
 fallback = false
 description = "技能可用性标量；无匹配候选、不可用或解码异常返回 False；非纯黑白也返回 False。"
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；UPDATE_INTERVAL = 0.1 秒持续轮询。

@@ -7,6 +7,7 @@ plugin: liantian_cn.player_heal_potion_ready@dev
     固定物品 258138；冷却为零且启用、可用、不缺资源。不另查背包数量。
     参数校验和配对解码见 condition.py；本实例使用冻结坐标，不继承旧项目分类色。
 修改记录：
+2026-09-15：事件统一延至下一帧刷新；兜底轮询统一为 1 秒并使用 UPDATE_INTERVAL。
 2026-09-15：按已确认计划新增玩家条件插件。
 ]]
 
@@ -14,11 +15,12 @@ plugin: liantian_cn.player_heal_potion_ready@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
+local random = math.random -- 为本实例轮询生成随机错峰
 local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
 local insert = table.insert -- 注册 UI 初始化回调
 local GetItemCooldown = C_Item.GetItemCooldown -- 查询物品冷却状态
 local IsUsableItem = C_Item.IsUsableItem -- 查询物品可用性及资源限制
-local random = math.random -- 为本实例轮询生成随机错峰
 
 --[[
 用途与签名：start, duration, enabled = C_Item.GetItemCooldown(itemID)；usable, noMana = C_Item.IsUsableItem(itemID)；返回冷却及可用状态。
@@ -38,10 +40,10 @@ local Cell = addonTable.Cell -- 黑色底板及单元格显示接口
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
+local UPDATE_INTERVAL = 1 -- 事件之外的兜底刷新间隔
 local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
-local REFRESH_SECONDS = 2 -- 保留旧插件兜底间隔
 local ITEM_ID = 258138
 
 local cell
@@ -67,13 +69,15 @@ eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- 进入世界时同步本实
 eventFrame:RegisterEvent("BAG_UPDATE")
 eventFrame:RegisterEvent("BAG_UPDATE_COOLDOWN")
 eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
-eventFrame:SetScript("OnEvent", update)
+eventFrame:SetScript("OnEvent", function()
+    After(0, function() update() end)
+end)
 
-local fastTimeElapsed = -random() -- 每个实例独立错峰，不修改全局随机种子
+local fastTimeElapsed = -random() -- 每个实例独立随机错峰
 eventFrame:SetScript("OnUpdate", function(_, elapsed)
     fastTimeElapsed = fastTimeElapsed + elapsed
-    if fastTimeElapsed > REFRESH_SECONDS then
-        fastTimeElapsed = fastTimeElapsed - REFRESH_SECONDS -- 保留余量，每帧最多刷新一次
+    if fastTimeElapsed > UPDATE_INTERVAL then
+        fastTimeElapsed = fastTimeElapsed - UPDATE_INTERVAL
         update()
     end
 end)

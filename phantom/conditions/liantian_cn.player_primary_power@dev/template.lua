@@ -10,6 +10,7 @@ plugin: liantian_cn.player_primary_power@dev
     独立事件框架仅监听玩家的首要能量数值和显示能量类型变化，结果直接交给 Cell 渲染。
 
 修改记录：
+2026-09-15：事件统一延至下一帧刷新。
 2026-09-12：生成器条件模板 @1.0，参数校验与解码见同目录 condition.py。
 ]]
 
@@ -18,6 +19,7 @@ plugin: liantian_cn.player_primary_power@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
 
 local CreateFrame = CreateFrame                       -- 创建独立的玩家首要能量事件框架
 local UnitPowerType = UnitPowerType -- 查询玩家当前主要能量类型
@@ -62,7 +64,7 @@ powerCurve:AddPoint(RATIO_MAX, COLOR.WHITE)
 local powerCell                        -- 等待 UI 初始化创建的玩家能量 Cell
 local eventFrame = CreateFrame("Frame") -- 本例独立的玩家首要能量事件框架
 
-local function RefreshPowerCell()
+local function update()
     if not powerCell then -- 初始化前的事件不访问尚未创建的 Cell
         return
     end
@@ -73,11 +75,13 @@ end
 
 local function InitializePowerCell()
     powerCell = Cell:New({ x = POSITION_X, y = POSITION_Y })
-    RefreshPowerCell() -- 构造后立即显示当前首要能量比例
+    update() -- 构造后立即显示当前首要能量比例
 end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")        -- 首次进入世界时刷新当前状态
 eventFrame:RegisterUnitEvent("UNIT_POWER_UPDATE", UNIT_TOKEN)    -- 只接收玩家当前首要能量变化
 eventFrame:RegisterUnitEvent("UNIT_DISPLAYPOWER", UNIT_TOKEN) -- 只接收玩家显示能量类型变化
-eventFrame:SetScript("OnEvent", RefreshPowerCell)       -- 两类事件均重新查询当前比例
+eventFrame:SetScript("OnEvent", function()
+    After(0, function() update() end)
+end)
 insert(UIInitFuncs, InitializePowerCell)                -- 沿用共享布局、计数和缩放

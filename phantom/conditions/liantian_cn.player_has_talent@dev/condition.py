@@ -4,8 +4,8 @@ Summary:
 Description:
     参数：非空正整数技能 ID 列表，任一已知或在法术书中即为真。
     输出：cell，1 个区域，bool scalar；4×4 像素，采样内部 2×2。
-    API：known = C_SpellBook.IsSpellKnown(spellID)；inBook = C_SpellBook.IsSpellInSpellBook(spellID)；默认玩家法术书，返回布尔值，后者含覆盖技能。C_Timer.NewTimer(0.25, callback) 返回可取消 timer。
-    按技能 ID 判断，不解析天赋树；与 player_has_spell 行为完全相同，事件后延迟 0.25 秒合并刷新。
+    API：known = C_SpellBook.IsSpellKnown(spellID)；inBook = C_SpellBook.IsSpellInSpellBook(spellID)；默认玩家法术书，返回布尔值，后者含覆盖技能。C_Timer.After(0, callback) 延后刷新。
+    按技能 ID 判断，不解析天赋树；与 player_has_spell 行为完全相同，事件后延至下一帧刷新。
     核验：2026-09-15，E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
     解码：严格全黑/全白；不可用或异常兜底 False。

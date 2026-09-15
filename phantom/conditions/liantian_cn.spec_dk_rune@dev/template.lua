@@ -4,6 +4,7 @@ uuid: {{uuid}}
 摘要：在分配的 Cell 中以数量亮度显示死亡骑士可用符文。
 描述：遍历六个符文，统计普通 runeReady；忽略事件的秘密参数。
 修改记录：
+2026-09-15：事件统一延至下一帧刷新。
 2026-09-12：新增 spec_dk_rune@1.0 模板。
 ]]
 
@@ -11,6 +12,7 @@ uuid: {{uuid}}
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
 local CreateFrame = CreateFrame -- 创建独立事件框架
 local GetRuneCooldown = GetRuneCooldown -- 查询每个符文的就绪状态
 local insert = table.insert -- 注册延迟初始化
@@ -39,7 +41,7 @@ local BRIGHTNESS_MAX = 255 -- Cell 亮度编码基数
 local runeCell -- 本实例输出区域
 local eventFrame = CreateFrame("Frame") -- 本实例独立事件框架
 
-local function RefreshRunes()
+local function update()
     if not runeCell then
         return
     end
@@ -56,10 +58,12 @@ end
 
 local function InitializeRunes()
     runeCell = Cell:New({ x = POSITION_X, y = POSITION_Y })
-    RefreshRunes()
+    update()
 end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("RUNE_POWER_UPDATE")
-eventFrame:SetScript("OnEvent", RefreshRunes) -- 不接收秘密事件参数
+eventFrame:SetScript("OnEvent", function()
+    After(0, function() update() end)
+end)
 insert(UIInitFuncs, InitializeRunes)

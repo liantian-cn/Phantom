@@ -24,3 +24,5 @@ type = "int"
 unit = "层"
 fallback = 0
 description = "0 到 max_charges 的充能数量标量；一个 ValueBar，内容尺寸为 4*max_charges × 4 像素，含分隔为 4*(max_charges+1) × 4；解码异常返回 0。"
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；无定时轮询。

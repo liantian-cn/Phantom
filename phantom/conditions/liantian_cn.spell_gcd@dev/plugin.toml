@@ -17,3 +17,5 @@ type = "float"
 unit = "秒"
 fallback = 375.0
 description = "0–375 的公共冷却剩余秒数标量；无 duration、黑色饱和或解码异常返回 375.0。"
+
+# 刷新约定：UPDATE_INTERVAL = 0.1 秒持续轮询，无事件刷新。

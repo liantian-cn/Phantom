@@ -10,3 +10,5 @@ description = "无参数，拒绝多余字段。"
 type = "bool"
 description = "普通施法、普通通道及空闲为假，蓄力通道为真；不判断秘密名称或纹理。"
 fallback = false
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；无定时轮询。

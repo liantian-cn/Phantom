@@ -7,6 +7,7 @@ plugin: liantian_cn.player_melee_enemies_count@dev
     扫描 nameplate1–40；秘密或 nil 距离结果不计数。灰度 count/40，Python 四舍五入至 0–40。
     参数校验和配对解码见 condition.py；本实例使用冻结坐标，不继承旧项目分类色。
 修改记录：
+2026-09-15：事件统一延至下一帧刷新；兜底轮询统一为 1 秒并使用 UPDATE_INTERVAL。
 2026-09-15：按已确认计划新增玩家条件插件。
 ]]
 
@@ -14,13 +15,14 @@ plugin: liantian_cn.player_melee_enemies_count@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
+local random = math.random -- 为本实例轮询生成随机错峰
 local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
 local insert = table.insert -- 注册 UI 初始化回调
 local IsSpellInRange = C_Spell.IsSpellInRange -- 查询技能对单位的距离状态
 local issecretvalue = issecretvalue -- 在普通比较前辨别秘密值
 local UnitExists = UnitExists -- 查询候选单位存在性
 local UnitCanAttack = UnitCanAttack -- 判断候选单位是否可攻击
-local random = math.random -- 为本实例轮询生成随机错峰
 
 --[[
 用途与签名：inRange = C_Spell.IsSpellInRange(spellID, unitToken)；返回 bool 或 nil，可能秘密。UnitExists(unit)、UnitCanAttack("player", unit) 返回存在及可攻击布尔值。
@@ -42,10 +44,10 @@ local Cell = addonTable.Cell -- 黑色底板及单元格显示接口
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
+local UPDATE_INTERVAL = 1 -- 事件之外的兜底刷新间隔
 local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
-local REFRESH_SECONDS = 2 -- 保留旧插件兜底间隔
 local SPELL_ID = {{spell_id}} -- 用于判定近战范围的技能
 local NAMEPLATE_LIMIT = 40 -- 只统计这组姓名板
 
@@ -75,13 +77,15 @@ end
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- 进入世界时同步本实例状态
 eventFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 eventFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
-eventFrame:SetScript("OnEvent", update)
+eventFrame:SetScript("OnEvent", function()
+    After(0, function() update() end)
+end)
 
-local fastTimeElapsed = -random() -- 每个实例独立错峰，不修改全局随机种子
+local fastTimeElapsed = -random() -- 每个实例独立随机错峰
 eventFrame:SetScript("OnUpdate", function(_, elapsed)
     fastTimeElapsed = fastTimeElapsed + elapsed
-    if fastTimeElapsed > REFRESH_SECONDS then
-        fastTimeElapsed = fastTimeElapsed - REFRESH_SECONDS -- 保留余量，每帧最多刷新一次
+    if fastTimeElapsed > UPDATE_INTERVAL then
+        fastTimeElapsed = fastTimeElapsed - UPDATE_INTERVAL
         update()
     end
 end)

@@ -7,6 +7,7 @@ plugin: liantian_cn.player_has_dispellable_debuff@dev
     同时要求玩家可驱散与类型匹配；空表或全 false 匹配不到任何减益。不读取秘密 AuraData。
     参数校验和配对解码见 condition.py；本实例使用冻结坐标，不继承旧项目分类色。
 修改记录：
+2026-09-15：事件统一延至下一帧刷新。
 2026-09-15：按已确认计划新增玩家条件插件。
 ]]
 
@@ -14,6 +15,7 @@ plugin: liantian_cn.player_has_dispellable_debuff@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
 local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
 local insert = table.insert -- 注册 UI 初始化回调
 
@@ -78,5 +80,7 @@ local function initialize()
 end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- 进入世界时同步本实例状态
-eventFrame:SetScript("OnEvent", update)
+eventFrame:SetScript("OnEvent", function()
+    After(0, function() update() end)
+end)
 insert(UIInitFuncs, initialize)

@@ -12,3 +12,5 @@ description = "键限定 Magic/Poison/Disease/Curse/Stealth/Special/Enrage；未
 type = "bool"
 description = "同时要求玩家可驱散与类型匹配；空表或全 false 匹配不到任何减益。不读取秘密 AuraData。"
 fallback = false
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；无定时轮询。

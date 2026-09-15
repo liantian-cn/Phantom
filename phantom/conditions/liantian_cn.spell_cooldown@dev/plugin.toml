@@ -24,3 +24,5 @@ type = "float"
 unit = "秒"
 fallback = 375.0
 description = "0–375 的剩余秒数标量；无匹配技能、无 duration、黑色饱和或解码异常返回 375.0。"
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；UPDATE_INTERVAL = 0.1 秒持续轮询。

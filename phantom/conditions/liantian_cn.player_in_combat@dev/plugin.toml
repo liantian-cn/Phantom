@@ -10,3 +10,5 @@ description = "无参数，拒绝多余字段。"
 type = "bool"
 description = "布尔值直接交给 Cell:setCellBoolean，经 EvaluateColorFromBoolean 显示黑白。"
 fallback = false
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；UPDATE_INTERVAL = 1 秒兜底。

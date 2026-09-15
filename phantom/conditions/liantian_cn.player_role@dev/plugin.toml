@@ -10,3 +10,5 @@ description = "无参数，拒绝多余字段。"
 type = "str"
 description = "NONE/TANK/HEALER/DAMAGER 对应灰度字节 0/85/170/255；秘密职责显示 NONE。"
 fallback = "NONE"
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；UPDATE_INTERVAL = 1 秒兜底。

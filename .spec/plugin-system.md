@@ -191,15 +191,15 @@ AuraContainer 和吸收 StatusBar 是该区域的显示实现，不另分配 Val
 计数和进度的异常兜底分别为 0、0.0。施法目标编码 0=未知、1=player、2–5=party、6–45=raid，乘 5 后作为灰度字节；非法编码兜底空字符串。
 图标直接读取 IconTile.hash，把底层空槽 None 转成空字符串，解码异常同样为空字符串。
 
-所有插件独立注册 PLAYER_ENTERING_WORLD。旧插件已有的两秒轮询保留，施法进度使用 0.1 秒；每个实例以 `-random()` 错峰，严格超过间隔时扣除一个间隔，保留余量，每帧最多刷新一次。
-移动事件通过 `C_Timer.After(0, callback)` 在后续帧查询；技能/天赋沿用可取消的 0.25 秒延迟刷新。支持单位过滤的旧事件只注册 player。
+所有插件独立注册 PLAYER_ENTERING_WORLD。已有兜底轮询统一为 1 秒，持续轮询为 0.1 秒，间隔变量统一为 `UPDATE_INTERVAL`；每个实例以 `-random()` 错峰，严格超过间隔时扣除一个间隔，保留余量，每帧最多刷新一次。
+事件统一通过 `C_Timer.After(0, callback)` 延至下一帧刷新；技能/天赋不再合并延迟事件。支持单位过滤的旧事件只注册 player。
 AuraContainer 在世界事件调用公开的 UpdateAllAuras，平时由官方容器管理更新，不自行轮询或检查 AuraData/可见性。
 
 光环沿用固定 AuraSlot 白色覆盖黑底；指定增益由 includeSpellIDs 筛选，大防御使用 BigDefensive/Normal 排序。
 驱散过滤为 `HARMFUL|RAID_PLAYER_DISPELLABLE` 加 includeDispelTypes，同时要求当前玩家可驱散与类型匹配。
 吸收量直接传入白色 StatusBar，最小 N、最大 N+1，Lua 不比较秘密吸收量。
 
-施法目标完整保留旧项目按名称匹配、秘密目标暂留旧值、成功/停止/失败清空和每两秒清空行为，因此长施法也可能提前变为空字符串。
+施法目标完整保留旧项目按名称匹配、秘密目标暂留旧值、成功/停止/失败清空和每秒兜底清空行为，因此长施法也可能提前变为空字符串。
 三种物品就绪条件使用 enabled、零冷却、usable 且 not noMana，不增加背包数量检查。
 技能/天赋只判断 IsSpellKnown 或 IsSpellInSpellBook，不解析天赋树；后者可包含覆盖技能，不保证技能此刻可施放。
 

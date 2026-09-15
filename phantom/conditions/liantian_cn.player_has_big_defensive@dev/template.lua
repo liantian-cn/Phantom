@@ -7,6 +7,7 @@ plugin: liantian_cn.player_has_big_defensive@dev
     BigDefensive/Normal 排序，单固定 slot 静态白色覆盖，至少一个匹配即显示白色；不读取 aura 数据或可见性。
     参数校验和配对解码见 condition.py；本实例使用冻结坐标，不继承旧项目分类色。
 修改记录：
+2026-09-15：事件统一延至下一帧刷新。
 2026-09-15：按已确认计划新增玩家条件插件。
 ]]
 
@@ -14,6 +15,7 @@ plugin: liantian_cn.player_has_big_defensive@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
 local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
 local insert = table.insert -- 注册 UI 初始化回调
 local BigDefensive = AuraContainerSortMethod.BigDefensive -- 大型防御效果排序
@@ -80,5 +82,7 @@ local function initialize()
 end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- 进入世界时同步本实例状态
-eventFrame:SetScript("OnEvent", update)
+eventFrame:SetScript("OnEvent", function()
+    After(0, function() update() end)
+end)
 insert(UIInitFuncs, initialize)

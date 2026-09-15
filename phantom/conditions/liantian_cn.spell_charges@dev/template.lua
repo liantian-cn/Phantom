@@ -10,6 +10,7 @@ plugin: liantian_cn.spell_charges@dev
     充能变化时把 currentCharges 直接交给数值条；未选中技能或没有充能信息时显示 0。
 
 修改记录：
+2026-09-15：事件统一延至下一帧刷新。
 2026-09-12：生成器条件模板 @1.0，参数校验与解码见同目录 condition.py。
 2026-09-11：按解码开发前的 Lua 示例需求新增技能充能 ValueBar。
 ]]
@@ -19,6 +20,7 @@ plugin: liantian_cn.spell_charges@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
 
 local CreateFrame = CreateFrame                         -- 创建本例独立事件框架
 local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook -- 查询候选技能是否在玩家法术书中
@@ -84,7 +86,7 @@ local function SelectSpell()
     end
 end
 
-local function RefreshChargeBar()
+local function update()
     if not chargeBar then -- 初始化前的事件不访问尚未创建的数值条
         return
     end
@@ -106,7 +108,7 @@ local function InitializeChargeBar()
     chargeBar = ValueBar:New(POSITION_X, WIDTH, REVERSE)
     chargeBar:setMinMaxValues(MIN_CHARGES, WIDTH) -- 最大值与内容宽度一致，不采用运行期 maxCharges
     SelectSpell()
-    RefreshChargeBar()                 -- 立即替换构造器的默认半满状态
+    update()                 -- 立即替换构造器的默认半满状态
 end
 
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- 进入世界时重新选择技能并刷新
@@ -114,9 +116,11 @@ eventFrame:RegisterEvent("SPELL_UPDATE_CHARGES")  -- 充能数量或恢复状态
 eventFrame:RegisterEvent("SPELL_UPDATE_USES")     -- 技能可用次数变化
 eventFrame:RegisterEvent("SPELLS_CHANGED")        -- 法术书变化时重新选择候选技能
 eventFrame:SetScript("OnEvent", function(_, event)
-    if event == "PLAYER_ENTERING_WORLD" or event == "SPELLS_CHANGED" then
-        SelectSpell()
-    end
-    RefreshChargeBar()
+    After(0, function()
+        if event == "PLAYER_ENTERING_WORLD" or event == "SPELLS_CHANGED" then
+            SelectSpell()
+        end
+        update()
+    end)
 end)
 insert(UIInitFuncs, InitializeChargeBar) -- 沿用共享布局、计数和缩放

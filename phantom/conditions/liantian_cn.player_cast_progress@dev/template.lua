@@ -7,6 +7,7 @@ plugin: liantian_cn.player_cast_progress@dev
     CreateColorCurve 黑色 0、白色 1；直接渲染颜色。Python 返回 0–100，空闲为 0.0。
     参数校验和配对解码见 condition.py；本实例使用冻结坐标，不继承旧项目分类色。
 修改记录：
+2026-09-15：事件统一延至下一帧刷新；统一 0.1 秒轮询写法并使用 UPDATE_INTERVAL。
 2026-09-15：按已确认计划新增玩家条件插件。
 ]]
 
@@ -14,6 +15,8 @@ plugin: liantian_cn.player_cast_progress@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local After = C_Timer.After -- 事件后延至下一帧刷新
+local random = math.random -- 为本实例轮询生成随机错峰
 local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
 local insert = table.insert -- 注册 UI 初始化回调
 local UnitCastingInfo = UnitCastingInfo -- 使用普通施法的非秘密哨兵及图标
@@ -23,7 +26,6 @@ local UnitChannelDuration = UnitChannelDuration -- 获取通道持续时间对�
 local issecretvalue = issecretvalue -- 在普通比较前辨别秘密值
 local CreateColorCurve = C_CurveUtil.CreateColorCurve -- 创建黑白进度颜色曲线
 local Linear = Enum.LuaCurveType.Linear -- 按经过比例线性插值
-local random = math.random -- 为本实例轮询生成随机错峰
 
 --[[
 用途与签名：UnitCastingInfo("player") 第 11 项 delayTimeMs、UnitChannelInfo("player") 第 9 项 isEmpowered 是 NeverSecret 状态哨兵；UnitCastingDuration/UnitChannelDuration("player") 返回 duration 或无值。color = duration:EvaluateElapsedPercent(curve) 接受颜色曲线并返回可能秘密的颜色。
@@ -51,10 +53,10 @@ local COLOR = addonTable.COLOR -- 本项目共享黑白及施法颜色
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
+local UPDATE_INTERVAL = 0.1 -- 施法进度轮询间隔
 local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
-local REFRESH_SECONDS = 0.1 -- 施法进度轮询间隔
 local PROGRESS_MIN = 0
 local PROGRESS_MAX = 1
 
@@ -122,13 +124,15 @@ eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_EMPOWER_START", UNIT_TOKEN)
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_EMPOWER_STOP", UNIT_TOKEN)
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTIBLE", UNIT_TOKEN)
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE", UNIT_TOKEN)
-eventFrame:SetScript("OnEvent", update)
+eventFrame:SetScript("OnEvent", function()
+    After(0, function() update() end)
+end)
 
-local fastTimeElapsed = -random() -- 每个实例独立错峰，不修改全局随机种子
+local fastTimeElapsed = -random() -- 每个实例独立随机错峰
 eventFrame:SetScript("OnUpdate", function(_, elapsed)
     fastTimeElapsed = fastTimeElapsed + elapsed
-    if fastTimeElapsed > REFRESH_SECONDS then
-        fastTimeElapsed = fastTimeElapsed - REFRESH_SECONDS -- 保留余量，每帧最多刷新一次
+    if fastTimeElapsed > UPDATE_INTERVAL then
+        fastTimeElapsed = fastTimeElapsed - UPDATE_INTERVAL
         update()
     end
 end)

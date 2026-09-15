@@ -10,3 +10,5 @@ description = "无参数，拒绝多余字段。"
 type = "bool"
 description = "固定物品 258138；冷却为零且启用、可用、不缺资源。不另查背包数量。"
 fallback = false
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；UPDATE_INTERVAL = 1 秒兜底。

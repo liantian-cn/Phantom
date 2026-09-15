@@ -12,3 +12,5 @@ description = "非空正整数增益技能 ID 列表，任一存在即为真。"
 type = "bool"
 description = "参考 04_player_buff.lua，单 slot 匹配任一 ID，白色贴图覆盖黑底；不读取 aura 数据或显示状态。"
 fallback = false
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；无定时轮询。

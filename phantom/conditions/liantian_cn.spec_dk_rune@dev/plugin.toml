@@ -17,3 +17,5 @@ type = "int"
 unit = "个"
 fallback = 0
 description = "0–6 的可用符文数量标量；颜色污染、数量越界或解码异常返回 0。"
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；无定时轮询。

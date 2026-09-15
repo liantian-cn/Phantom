@@ -10,6 +10,7 @@ plugin: liantian_cn.spell_gcd@dev
     将剩余冷却交给颜色曲线，越接近就绪越亮；没有 duration 对象时显示黑色。
 
 修改记录：
+2026-09-15：统一 0.1 秒轮询写法并使用 UPDATE_INTERVAL。
 2026-09-12：生成器条件模板 @1.0，参数校验与解码见同目录 condition.py。
 2026-09-11：按解码开发前的 Lua 示例需求新增技能冷却 Cell。
 ]]
@@ -19,13 +20,13 @@ plugin: liantian_cn.spell_gcd@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
+local random = math.random -- 为本实例轮询生成随机错峰
 
 local CreateFrame = CreateFrame                                   -- 创建独立事件与轮询框架
 local CreateColor = CreateColor                                   -- 创建灰度曲线的颜色节点
 local CreateColorCurve = C_CurveUtil.CreateColorCurve             -- 创建剩余冷却颜色曲线
 local Linear = Enum.LuaCurveType.Linear                           -- 在相邻节点间线性插值
 local GetSpellCooldownDuration = C_Spell.GetSpellCooldownDuration -- 获取可直接用于颜色求值的冷却对象
-local random = math.random                                        -- 生成独立的首次刷新延迟
 local insert = table.insert                                       -- 注册 UI 初始化函数
 
 --[[
@@ -58,8 +59,8 @@ local COLOR = addonTable.COLOR             -- 共享黑色兜底颜色
 local UIInitFuncs = addonTable.UIInitFuncs -- 在共享尺寸和背景就绪后创建 Cell
 
 --[[  logical code  ]]
+local UPDATE_INTERVAL = 0.1 -- 刷新间隔，严格超过后每帧最多刷新一次
 
-local REFRESH_INTERVAL = 0.1 -- 刷新间隔，严格超过后每帧最多刷新一次
 local GCD_SPELL_ID = 61304 -- 固定公共冷却查询，不参与候选筛选
 -- 条件实例参数与位置由 Python 生成器填入。
 local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
@@ -82,9 +83,8 @@ remainingCurve:AddPoint(375.0, C4)
 
 local cooldownCell                      -- 等待 UI 初始化创建的冷却 Cell
 local eventFrame = CreateFrame("Frame") -- 本例独立的事件与轮询框架
-local fastTimeElapsed = -random()       -- 随机负初值推迟首次刷新，不修改全局随机种子
 
-local function RefreshCooldownCell()
+local function update()
     if not cooldownCell then -- 初始化前的轮询不访问尚未创建的 Cell
         return
     end
@@ -102,11 +102,12 @@ local function InitializeCooldownCell()
     cooldownCell = Cell:New({ x = POSITION_X, y = POSITION_Y }) -- 保持默认黑色，等待错峰首次刷新
 end
 
-eventFrame:HookScript("OnUpdate", function(_, elapsed)
-    fastTimeElapsed = fastTimeElapsed + elapsed   -- 累加本帧时间
-    if fastTimeElapsed > REFRESH_INTERVAL then                 -- 每帧最多刷新一次，严格超过间隔才执行
-        fastTimeElapsed = fastTimeElapsed - REFRESH_INTERVAL   -- 保留剩余累计时间
-        RefreshCooldownCell()
+local fastTimeElapsed = -random() -- 每个实例独立随机错峰
+eventFrame:SetScript("OnUpdate", function(_, elapsed)
+    fastTimeElapsed = fastTimeElapsed + elapsed
+    if fastTimeElapsed > UPDATE_INTERVAL then
+        fastTimeElapsed = fastTimeElapsed - UPDATE_INTERVAL
+        update()
     end
 end)
 insert(UIInitFuncs, InitializeCooldownCell) -- 沿用共享布局、计数和缩放

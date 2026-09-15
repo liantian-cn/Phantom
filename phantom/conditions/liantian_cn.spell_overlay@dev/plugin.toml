@@ -19,3 +19,5 @@ type = "bool"
 unit = "无"
 fallback = false
 description = "高亮状态标量；无匹配候选或无高亮为 False，解码异常也返回 False。"
+
+# 刷新约定：事件通过 C_Timer.After(0, ...) 延后；无定时轮询。

@@ -66,3 +66,9 @@ Lua 编码和 Python 解码属于同一版本契约。缩放、精度节点、�
 - 已知的插件版本变化，不编造历史。
 
 在参数到输出的映射、解码舍入/区间、模板序列化等关键步骤解释原因。冷却的黑色含义不能复制到血量、能量或布尔插件。
+
+## 刷新写法
+
+- 事件刷新缓存 `local After = C_Timer.After`，通过 `After(0, function() update() end)` 延至下一帧；依赖事件参数的逻辑保留参数和过滤。
+- 定时刷新缓存 `local random = math.random`，头部常量统一命名 `UPDATE_INTERVAL`：兜底为 1 秒，持续轮询为 0.1 秒。
+- 在 `eventFrame:SetScript("OnUpdate", ...)` 前以 `local fastTimeElapsed = -random()` 初始化；累计 `elapsed`，严格超过间隔时扣除一个间隔并调用 `update()`，保留余量且每帧最多刷新一次。

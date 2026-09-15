@@ -5,7 +5,7 @@ Description:
     参数：无参数；拒绝多余字段。
     输出：cell，1 个区域，bool scalar；4×4 像素，采样内部 2×2。
     API：result = IsPlayerMoving()；返回玩家移动布尔值。C_Timer.After(0, callback) 在后续帧执行回调，无业务返回值。
-    移动事件延至下一帧再查询；两秒轮询补齐状态。
+    移动事件延至下一帧再查询；1 秒兜底轮询补齐状态。
     核验：2026-09-15，E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
     解码：严格全黑/全白；不可用或异常兜底 False。
