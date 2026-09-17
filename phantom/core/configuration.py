@@ -22,11 +22,11 @@ from phantom.core.rotation import validate_addon_name
 from phantom.core.validation import PositiveInteger, PositiveNumber, String, Table
 
 DEFAULT_CONFIG = """[capture]
-plugin = "liantian_cn.gdi@dev"
+plugin = "gdi@dev"
 fps = 15
 
 [keyboard]
-plugin = "liantian_cn.post_message@dev"
+plugin = "post_message@dev"
 
 [ui]
 min_width = 120
@@ -52,8 +52,8 @@ class ConfigurationError(ValueError):
 class AppConfig:
     path: Path
     fps: float = 15
-    capture_plugin: str = "liantian_cn.gdi@dev"
-    keyboard_plugin: str = "liantian_cn.post_message@dev"
+    capture_plugin: str = "gdi@dev"
+    keyboard_plugin: str = "post_message@dev"
     min_width: int = 120
     min_height: int = 46
     log_max_lines: int = 1000
@@ -92,12 +92,12 @@ def load_config(working_directory: Path) -> AppConfig:
         assert isinstance(addon_name, str)
         validate_addon_name(addon_name)
         fps_number = PositiveNumber().validate(capture.get("fps", 15), "capture.fps")
-        capture_plugin = String().validate(capture.get("plugin", "liantian_cn.gdi@dev"), "capture.plugin")
+        capture_plugin = String().validate(capture.get("plugin", "gdi@dev"), "capture.plugin")
         return AppConfig(
             path=path,
             fps=fps_number,
             capture_plugin=capture_plugin,
-            keyboard_plugin=String().validate(keyboard.get("plugin", "liantian_cn.post_message@dev"), "keyboard.plugin"),
+            keyboard_plugin=String().validate(keyboard.get("plugin", "post_message@dev"), "keyboard.plugin"),
             min_width=PositiveInteger().validate(ui.get("min_width", 120), "ui.min_width"),
             min_height=PositiveInteger().validate(ui.get("min_height", 46), "ui.min_height"),
             log_max_lines=PositiveInteger().validate(ui.get("log_max_lines", 1000), "ui.log_max_lines"),

@@ -1,3 +1,8 @@
+local pendingTimers = {}
+C_Timer = {After = function(delay, callback)
+    assert(delay == 0)
+    table.insert(pendingTimers, callback)
+end}
 -- Offline API doubles: assert query behavior and exercise real generated Lua.
 local state = {
     class = "DEATHKNIGHT", spec = 1, power = 1/3, health = 0.4,
@@ -90,6 +95,11 @@ addon.ValueBar = {New = function(self, x, width, reverse)
     state.bars[x] = bar
     return bar
 end}
+function state:flushTimers()
+    local pending = pendingTimers
+    pendingTimers = {}
+    for _, callback in ipairs(pending) do callback() end
+end
 function state:initialize()
     for _, fn in ipairs(addon.UIInitFuncs) do fn() end
 end

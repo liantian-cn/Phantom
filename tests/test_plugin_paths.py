@@ -60,7 +60,7 @@ def create(root: Path, identifier: str, kind: str) -> object:
 
 
 @pytest.mark.parametrize("kind", ["condition", "capture"])
-@pytest.mark.parametrize("identifier", ["liantian_cn.sample@dev", "author.sample@1", "Any name"])
+@pytest.mark.parametrize("identifier", ["sample@dev", "author.sample@1", "Any name"])
 @pytest.mark.parametrize("metadata", [None, "this is invalid TOML ["])
 def test_safe_names_load_without_reading_metadata(tmp_path: Path, kind: str, identifier: str, metadata: str | None) -> None:
     directory = install(tmp_path, identifier, kind)

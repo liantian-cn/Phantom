@@ -341,7 +341,7 @@ def test_generation_without_game_and_error_recovery(tmp_path: Path) -> None:
             assert not app.query_one("#generate", Button).disabled
             table = app.query_one("#condition_table", DataTable)
             assert table.row_count == 10
-            assert table.get_cell("4", "plugin") == "liantian_cn.spell_gcd@dev"
+            assert table.get_cell("4", "plugin") == "spell_gcd@dev"
             app.generate_addon()
             assert app.generating
             assert app.query_one("#generate", Button).disabled

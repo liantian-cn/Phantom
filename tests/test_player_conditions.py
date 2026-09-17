@@ -43,7 +43,7 @@ CASES: dict[str, dict[str, object]] = {
 
 
 def create(name: str, args: dict[str, object] | None = None) -> Condition:
-    return Registry().create(f"liantian_cn.{name}@dev", CASES[name] if args is None else args)
+    return Registry().create(f"{name}@dev", CASES[name] if args is None else args)
 
 
 def harness(plugins: list[Condition], *, initialize: bool = True) -> tuple[Any, Any, Any]:
@@ -84,8 +84,10 @@ def test_every_plugin_initialization_world_event_and_decode_boundary(name: str) 
     # World events may arrive before the shared UI exists.
     emit(state, "PLAYER_ENTERING_WORLD")
     state.flushTimers(state)
+    state.flushTimers(state)
     state.initialize(state)
     emit(state, "PLAYER_ENTERING_WORLD")
+    state.flushTimers(state)
     state.flushTimers(state)
     frames = [frame for frame in state.frames.values() if frame.events["PLAYER_ENTERING_WORLD"]]
     assert len(frames) == 1
@@ -157,10 +159,12 @@ def test_roles_roundtrip(role: str, brightness: int) -> None:
     _, state, _ = harness([plugin])
     state.role = role
     emit(state, "PLAYER_ROLES_ASSIGNED")
+    state.flushTimers(state)
     assert state.brightness(state, 1) == brightness
     assert value(plugin, state) == role
     state.role = state.secret(state, "TANK")
     emit(state, "ROLE_CHANGED_INFORM")
+    state.flushTimers(state)
     assert value(plugin, state) == "NONE"
     assert decode(plugin, 1) == "NONE"
 
@@ -182,9 +186,12 @@ def test_boolean_event_business_paths(name: str, field: str, event: str) -> None
     _, state, _ = harness([plugin])
     state[field] = True
     emit(state, event, "player")
+    assert value(plugin, state) is False  # Event refresh waits until the next frame.
+    state.flushTimers(state)
     assert value(plugin, state) is True
     state[field] = False
     emit(state, "PLAYER_ENTERING_WORLD")
+    state.flushTimers(state)
     assert value(plugin, state) is False
 
 
@@ -194,6 +201,7 @@ def test_secret_boolean_reaches_real_cell_consumer() -> None:
     for expected in (True, False):
         state.selfTarget = state.secret(state, expected)
         emit(state, "PLAYER_TARGET_CHANGED")
+        state.flushTimers(state)
         assert value(plugin, state) is expected
 
 
@@ -220,7 +228,7 @@ def test_polling_stagger_remainder_and_single_update_per_frame() -> None:
     _, state, _ = harness(plugins)
     assert state.randomCalls == 2
     state.combat = True
-    state.tick(state, 2.015)
+    state.tick(state, 1.015)
     assert value(plugins[0], state, 1) is True
     assert value(plugins[1], state, 2) is False
     state.tick(state, 0.01)
@@ -237,10 +245,12 @@ def test_chat_focus_includes_non_chat_input_and_chat_callbacks() -> None:
     lua, state, _ = harness([plugin])
     state.focus = lua.table_from({"name": "SearchBox"})
     emit(state, "PLAYER_ENTERING_WORLD")
+    state.flushTimers(state)
     assert value(plugin, state) is True
     assert len(list(state.callbacks.keys())) == 4
     state.focus = None
     state.callbacks["ChatFrame.OnEditBoxFocusLost"].callback()
+    state.flushTimers(state)
     assert value(plugin, state) is False
 
 
@@ -253,6 +263,7 @@ def test_melee_all_counts_and_restricted_ranges() -> None:
             state.units[unit] = lua.table_from({"attackable": True})
             state.ranges[unit] = True
         emit(state, "NAME_PLATE_UNIT_ADDED")
+        state.flushTimers(state)
         assert value(plugin, state) == count
     assert state.lastRangeSpell == 49998
     state.ranges.nameplate1 = state.secret(state, True)
@@ -263,6 +274,7 @@ def test_melee_all_counts_and_restricted_ranges() -> None:
     state.units.nameplate41 = lua.table_from({"attackable": True})
     state.ranges.nameplate41 = True
     emit(state, "NAME_PLATE_UNIT_REMOVED")
+    state.flushTimers(state)
     assert value(plugin, state) == 35
 
 
@@ -274,14 +286,17 @@ def test_item_readiness(name: str, item_id: int) -> None:
     for duration, enabled, usable, no_mana, expected in [(0, True, True, False, True), (1, True, True, False, False), (0, False, True, False, False), (0, True, False, False, False), (0, True, True, True, False)]:
         state["items"][item_id] = lua.table_from({"duration": duration, "enabled": enabled, "usable": usable, "noMana": no_mana})
         emit(state, "BAG_UPDATE_COOLDOWN")
+        state.flushTimers(state)
         assert state.lastItem == item_id
         assert value(plugin, state) is expected
     if name == "player_trinket_ready":
         state.queries.item = 0
         state.event(state, "PLAYER_EQUIPMENT_CHANGED", 14)
+        state.flushTimers(state)
         assert state.queries.item == 0
         state.inventory[13] = None
         state.event(state, "PLAYER_EQUIPMENT_CHANGED", 13)
+        state.flushTimers(state)
         assert value(plugin, state) is False
 
 
@@ -292,6 +307,7 @@ def test_trinket_instances_use_distinct_slots() -> None:
     state["items"][111] = lua.table_from({"duration": 0, "enabled": True, "usable": True, "noMana": False})
     state["items"][222] = lua.table_from({"duration": 10, "enabled": True, "usable": True, "noMana": False})
     emit(state, "PLAYER_ENTERING_WORLD")
+    state.flushTimers(state)
     assert value(plugins[0], state, 1) is True
     assert value(plugins[1], state, 2) is False
 
@@ -306,16 +322,20 @@ def test_cast_progress_empower_and_icon_transitions(mode: str, empowered: bool) 
     for progress in (0, 0.25, 0.5, 0.75, 1):
         state.progress = progress
         emit(state, "UNIT_SPELLCAST_START", "target")
+        state.flushTimers(state)
         emit(state, "UNIT_SPELLCAST_CHANNEL_UPDATE", "player")
+        state.flushTimers(state)
         assert value(plugins[0], state, 1) == pytest.approx(progress * 100, abs=0.2)
         assert value(plugins[1], state, 2) is empowered
         assert state.icons[1].textures[2].texture == 123456
         assert not state.icons[1].textures[2].hidden
     state.noDuration = True
     emit(state, "UNIT_SPELLCAST_DELAYED", "player")
+    state.flushTimers(state)
     assert value(plugins[0], state, 1) == 0.0
     state.mode = None
     emit(state, "UNIT_SPELLCAST_STOP", "player")
+    state.flushTimers(state)
     assert value(plugins[0], state, 1) == 0.0
     assert value(plugins[1], state, 2) is False
     assert state.icons[1].textures[2].hidden
@@ -327,6 +347,7 @@ def test_progress_poll_updates_and_ignores_other_units() -> None:
     _, state, _ = harness([plugin])
     state.mode, state.progress = "casting", 0.5
     emit(state, "UNIT_SPELLCAST_START", "target")
+    state.flushTimers(state)
     assert value(plugin, state) == 0.0
     state.tick(state, 0.12)
     assert value(plugin, state) == pytest.approx(50, abs=0.2)
@@ -355,37 +376,44 @@ def test_cast_targets_all_tokens_secret_retention_and_clearing() -> None:
     for index, token in enumerate(tokens, 1):
         state.units[token] = lua.table_from({"name": f"Person{index}"})
         emit(state, "UNIT_SPELLCAST_SENT", "player", f"Person{index}")
+        state.flushTimers(state)
         assert value(plugin, state) == token
     emit(state, "UNIT_SPELLCAST_SENT", "player", state.secret(state, "hidden"))
+    state.flushTimers(state)
     assert value(plugin, state) == "raid40"
     state.tick(state, 3)
     assert value(plugin, state) == ""
     for event in ("STOP", "INTERRUPTED", "FAILED", "FAILED_QUIET", "SUCCEEDED"):
         emit(state, "UNIT_SPELLCAST_SENT", "player", "Person1")
+        state.flushTimers(state)
         assert value(plugin, state) == "player"
         emit(state, f"UNIT_SPELLCAST_{event}", "player")
+        state.flushTimers(state)
         assert value(plugin, state) == ""
     for target in (None, "Enemy", ""):
         emit(state, "UNIT_SPELLCAST_SENT", "player", target)
+        state.flushTimers(state)
         assert value(plugin, state) == ""
     state.units.player.name = state.secret(state, "Person1")
     emit(state, "UNIT_SPELLCAST_SENT", "player", "Person1")
+    state.flushTimers(state)
     assert value(plugin, state) == ""
     assert decode(plugin, 226) == ""
     assert decode(plugin, 255) == ""
 
 
 @pytest.mark.parametrize("name", ["player_has_spell", "player_has_talent"])
-def test_spell_candidates_and_cancelled_delayed_refresh(name: str) -> None:
+def test_spell_candidates_and_next_frame_refresh(name: str) -> None:
     plugin = create(name)
     _, state, _ = harness([plugin])
     state.known[200] = True
     emit(state, "SPELLS_CHANGED")
     emit(state, "SPELLS_CHANGED")
-    assert state.timers[1].cancelled and state.timers[2].cancelled
+    assert len(state.timers) == 3
+    assert all(timer.delay == 0 for timer in state.timers.values())
     assert not state.queries.known
     state.flushTimers(state)
-    assert state.queries.known == 2
+    assert state.queries.known == 6
     assert value(plugin, state) is True
     state.known[200] = False
     state.spellbook[100] = True
@@ -408,13 +436,16 @@ def test_absorb_opaque_values_boundaries_and_units(name: str, field: str, event:
     for amount in (max(0, threshold - 1), threshold, threshold + 1):
         state[field] = state.secret(state, amount)
         emit(state, event, "player")
+        state.flushTimers(state)
         same: Any = lua.eval("function(a,b) return rawequal(a,b) end")
         assert same(bar.rawValue, state[field])
         assert value(plugin, state) is (amount > threshold)
     state[field] = state.secret(state, 0)
     emit(state, event, "target")
+    state.flushTimers(state)
     assert value(plugin, state) is True
     emit(state, "PLAYER_ENTERING_WORLD")
+    state.flushTimers(state)
     assert value(plugin, state) is False
 
 
@@ -439,6 +470,7 @@ def test_managed_aura_slot_contract_and_world_refresh(name: str, filter_string: 
     else:
         assert dict(slot.options.candidateFilters.includeDispelTypes.items()) == {"Magic": True, "Poison": False}
     emit(state, "PLAYER_ENTERING_WORLD")
+    state.flushTimers(state)
     assert container.refreshes == 1
 
 
@@ -452,7 +484,7 @@ def test_dispel_maps_preserve_empty_and_false_entries(types: dict[str, bool]) ->
 
 
 def test_all_plugins_generate_together_with_independent_layouts() -> None:
-    entries = tuple(ConditionEntry(name, f"liantian_cn.{name}@dev", create(name)) for name in CASES)
+    entries = tuple(ConditionEntry(name, f"{name}@dev", create(name)) for name in CASES)
     width = allocate([entry.instance for entry in entries])
     rotation = replace(load_rotation(ROOT / "rotations/blood-dk.toml"), conditions=entries, macros=(), board_width=width)
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
@@ -467,3 +499,18 @@ def test_all_plugins_generate_together_with_independent_layouts() -> None:
     decoder = PixelDecoder(np.zeros((20, width, 3), dtype=np.uint8))
     for entry in entries:
         assert entry.instance.output.accepts(entry.instance.value(*entry.instance.raw_value(decoder), decoder=decoder))
+
+
+def test_cast_target_deferred_events_preserve_payload_order() -> None:
+    plugin = create("player_cast_target")
+    lua, state, _ = harness([plugin])
+    state.units.party1 = lua.table_from({"name": "First"})
+    state.units.party2 = lua.table_from({"name": "Second"})
+    emit(state, "UNIT_SPELLCAST_SENT", "player", "First")
+    emit(state, "UNIT_SPELLCAST_STOP", "player")
+    emit(state, "UNIT_SPELLCAST_SENT", "player", "Second")
+    assert value(plugin, state) == ""
+    state.flushTimers(state)
+    assert value(plugin, state) == "party2"
+    state.tick(state, 1.02)
+    assert value(plugin, state) == ""

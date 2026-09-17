@@ -124,7 +124,7 @@ def test_registry_and_configuration(tmp_path: Path) -> None:
         with pytest.raises(KeyboardPluginError):
             registry.create(identifier)
     config = load_config(tmp_path)
-    assert config.keyboard_plugin == "liantian_cn.post_message@dev"
+    assert config.keyboard_plugin == "post_message@dev"
     config.path.write_text('[keyboard]\nplugin="other@dev"', encoding="utf-8")
     assert load_config(tmp_path).keyboard_plugin == "other@dev"
     with pytest.raises(KeyboardPluginError):

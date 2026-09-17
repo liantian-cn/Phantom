@@ -14,14 +14,14 @@ def test_config_uses_launch_directory_and_preserves_existing_file(tmp_path: Path
     config = load_config(Path.cwd())
     assert config.path == launch / "phantom.toml"
     assert config.fps == 15
-    assert config.capture_plugin == "liantian_cn.gdi@dev"
+    assert config.capture_plugin == "gdi@dev"
     assert (config.min_width, config.min_height, config.log_max_lines) == (120, 46, 1000)
     assert not (program / "phantom.toml").exists()
     original = b"# keep comment\n[capture]\nfps = 7.5\n[ui]\nmin_width = 132\n"
     config.path.write_bytes(original)
     config = load_config(Path.cwd())
     assert (config.fps, config.min_width, config.min_height) == (7.5, 132, 46)
-    assert config.capture_plugin == "liantian_cn.gdi@dev"
+    assert config.capture_plugin == "gdi@dev"
     assert config.path.read_bytes() == original
     assert Path.cwd() == launch
 
