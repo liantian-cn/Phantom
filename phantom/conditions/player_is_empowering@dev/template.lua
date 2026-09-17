@@ -15,32 +15,31 @@ plugin: player_is_empowering@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
-local After = C_Timer.After -- 事件后延至下一帧刷新
-local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
-local insert = table.insert -- 注册 UI 初始化回调
+local After = C_Timer.After             -- 事件后延至下一帧刷新
+local CreateFrame = CreateFrame         -- 创建本实例事件或显示框架
+local insert = table.insert             -- 注册 UI 初始化回调
 local UnitCastingInfo = UnitCastingInfo -- 使用普通施法的非秘密哨兵及图标
 local UnitChannelInfo = UnitChannelInfo -- 使用通道的非秘密蓄力哨兵及图标
 
 --[[
 用途与签名：UnitCastingInfo("player") 第 11 项 delayTimeMs、UnitChannelInfo("player") 第 9 项 isEmpowered 是 NeverSecret；后者返回通道是否蓄力的布尔值，无通道时无值。
 业务限制：普通施法、普通通道及空闲为假，蓄力通道为真；不判断秘密名称或纹理。
-核验日期：2026-09-15；本地 E:/Documents/GitHub/wow-ui-source，12.1.0.69587。
+核验日期：2026-09-15；本地 @wow-ui-source，12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 来源：本地源码 Interface/AddOns/ 下：
     Blizzard_APIDocumentationGenerated/UnitDocumentation.lua
-旧项目参考：PhantomProject/src/0119_player_cast_info.lua；revision f6935113e686eb73785b8315c58368093012c959。
 Wiki 查询入口（本次未能获取在线说明；以下链接不作为已核验网页证据）：
     https://warcraft.wiki.gg/wiki/API_UnitCastingInfo
     https://warcraft.wiki.gg/wiki/API_UnitChannelInfo
 ]]
 
 --[[  variable reference  ]]
-local Cell = addonTable.Cell -- 黑色底板及单元格显示接口
+local Cell = addonTable.Cell               -- 黑色底板及单元格显示接口
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local POSITION_X = {{x1}} -- 本实例冻结的横向位置
-local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local POSITION_X = { { x1 } } -- 本实例冻结的横向位置
+local POSITION_Y = { { y1 } } -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
 
 local display

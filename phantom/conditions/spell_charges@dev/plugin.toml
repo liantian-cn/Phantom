@@ -1,5 +1,5 @@
 # AI Agent 自述；运行时不读取。参数与返回值以同目录实现为准。
-# 核验：2026-09-13，E:/Documents/GitHub/wow-ui-source，12.1.0.69587
+# 核验：2026-09-13，@wow-ui-source，12.1.0.69587
 # revision: a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58
 # 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/ 下 SpellBookDocumentation.lua, SpellDocumentation.lua, SpellSharedDocumentation.lua
 name = "spell_charges@dev"

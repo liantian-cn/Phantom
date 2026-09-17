@@ -6,7 +6,7 @@ Description:
     输出：cell，1 个区域，bool scalar；4×4 像素，采样内部 2×2。
     API：inVehicle = UnitInVehicle("player")；mounted = IsMounted()；返回布尔值。
     任一为真即显示白色，普通坐骑也算。
-    核验：2026-09-15，E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
+    核验：2026-09-15，@wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
     解码：严格全黑/全白；不可用或异常兜底 False。
 Key Variables:

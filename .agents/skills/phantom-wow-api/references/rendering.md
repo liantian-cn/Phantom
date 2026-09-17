@@ -48,7 +48,4 @@ Create and configure these secure objects at a permitted time. Recheck combat-lo
 
 ## Local references
 
-- `/midnight/Terminal/terminal/pixelcalc/cell.py`
-- `/midnight/Terminal/terminal/pixelcalc/matrix.py`
-- `/midnight/DejaVu/DejaVu_DeathKnight/Blood/Macro.lua`
-- `/wow-ui-source/Interface/AddOns/Blizzard_RestrictedAddOnEnvironment/`
+- `@wow-ui-source/Interface/AddOns/Blizzard_RestrictedAddOnEnvironment/`

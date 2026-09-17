@@ -5,7 +5,7 @@ Description:
     参数：spell_ids 为非空正整数列表；ignore_gcd 为布尔。
     输出：cell，1 个区域，float scalar；4×4 像素。
     API：GetSpellCooldownDuration；SpellDocumentation.lua。秘密 duration 经颜色曲线渲染；法术书选择首个匹配。
-    核验：2026-09-12，E:/Documents/GitHub/wow-ui-source，
+    核验：2026-09-12，@wow-ui-source，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58，12.1.0.69587。
     解码：亮度255/155/105/55/0对应0/5/30/155/375秒，分段线性反算。
     不可用或解码异常兜底 375.0；冷却黑色兼容饱和与不可用，无额外状态位。

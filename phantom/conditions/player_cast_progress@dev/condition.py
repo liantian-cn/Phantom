@@ -6,7 +6,7 @@ Description:
     输出：cell，1 个区域，float scalar；4×4 像素，采样内部 2×2。
     API：UnitCastingInfo("player") 第 11 项 delayTimeMs、UnitChannelInfo("player") 第 9 项 isEmpowered 是 NeverSecret 状态哨兵；UnitCastingDuration/UnitChannelDuration("player") 返回 duration 或无值。color = duration:EvaluateElapsedPercent(curve) 接受颜色曲线并返回可能秘密的颜色。
     CreateColorCurve 黑色 0、白色 1；直接渲染颜色。Python 返回 0–100，空闲为 0.0。
-    核验：2026-09-15，E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
+    核验：2026-09-15，@wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
     解码：CreateColorCurve 黑色 0、白色 1；直接渲染颜色。Python 返回 0–100，空闲为 0.0。；不可用或异常兜底 0.0。
 Key Variables:

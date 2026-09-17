@@ -6,7 +6,7 @@ Description:
     输出：cell，1 个区域，bool scalar；4×4 像素，采样内部 2×2。
     API：AuraContainer:AddAuraSlot(key, "HARMFUL|RAID_PLAYER_DISPELLABLE", options)；options.candidateFilters.includeDispelTypes 为类型布尔映射，容器管理显示；UpdateAllAuras() 请求刷新。
     同时要求玩家可驱散与类型匹配；空表或全 false 匹配不到任何减益。不读取秘密 AuraData。
-    核验：2026-09-15，E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
+    核验：2026-09-15，@wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
     解码：严格全黑/全白；不可用或异常兜底 False。
 Key Variables:

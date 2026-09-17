@@ -6,7 +6,7 @@ Description:
     输出：cell，1 个区域，bool scalar；4×4 像素，采样内部 2×2。
     API：AuraContainer:AddAuraSlot(key, "HELPFUL", options)；options.candidateFilters.includeSpellIDs 为技能 ID 布尔映射；玩家 HELPFUL 身份过滤允许。UpdateAllAuras() 请求刷新。
     参考 04_player_buff.lua，单 slot 匹配任一 ID，白色贴图覆盖黑底；不读取 aura 数据或显示状态。
-    核验：2026-09-15，E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
+    核验：2026-09-15，@wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
     解码：严格全黑/全白；不可用或异常兜底 False。
 Key Variables:

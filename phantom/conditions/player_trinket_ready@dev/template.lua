@@ -15,23 +15,22 @@ plugin: player_trinket_ready@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
-local After = C_Timer.After -- 事件后延至下一帧刷新
-local random = math.random -- 为本实例轮询生成随机错峰
-local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
-local insert = table.insert -- 注册 UI 初始化回调
+local After = C_Timer.After                    -- 事件后延至下一帧刷新
+local random = math.random                     -- 为本实例轮询生成随机错峰
+local CreateFrame = CreateFrame                -- 创建本实例事件或显示框架
+local insert = table.insert                    -- 注册 UI 初始化回调
 local GetItemCooldown = C_Item.GetItemCooldown -- 查询物品冷却状态
-local IsUsableItem = C_Item.IsUsableItem -- 查询物品可用性及资源限制
-local GetInventoryItemID = GetInventoryItemID -- 获取所选装备位置的物品
+local IsUsableItem = C_Item.IsUsableItem       -- 查询物品可用性及资源限制
+local GetInventoryItemID = GetInventoryItemID  -- 获取所选装备位置的物品
 
 --[[
 用途与签名：itemID = GetInventoryItemID("player", slotID)；返回物品 ID 或 nil。start, duration, enabled = C_Item.GetItemCooldown(itemID)；usable, noMana = C_Item.IsUsableItem(itemID)。
 业务限制：所选位置有物品、enabled 为真、duration 为零、usable 为真且 noMana 为假；不另查数量。
-核验日期：2026-09-15；本地 E:/Documents/GitHub/wow-ui-source，12.1.0.69587。
+核验日期：2026-09-15；本地 @wow-ui-source，12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 来源：本地源码 Interface/AddOns/ 下：
     Blizzard_APIDocumentationGenerated/ItemDocumentation.lua
     Blizzard_FrameXML/Mainline/EquipmentManager.lua
-旧项目参考：PhantomProject/src/0115_player_trinket_ready.lua；revision f6935113e686eb73785b8315c58368093012c959。
 Wiki 查询入口（本次未能获取在线说明；以下链接不作为已核验网页证据）：
     https://warcraft.wiki.gg/wiki/API_C_Item.GetItemCooldown
     https://warcraft.wiki.gg/wiki/API_C_Item.IsUsableItem
@@ -39,15 +38,15 @@ Wiki 查询入口（本次未能获取在线说明；以下链接不作为已核
 ]]
 
 --[[  variable reference  ]]
-local Cell = addonTable.Cell -- 黑色底板及单元格显示接口
+local Cell = addonTable.Cell               -- 黑色底板及单元格显示接口
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local UPDATE_INTERVAL = 1 -- 事件之外的兜底刷新间隔
-local POSITION_X = {{x1}} -- 本实例冻结的横向位置
-local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local UPDATE_INTERVAL = 1   -- 事件之外的兜底刷新间隔
+local POSITION_X = { { x1 } } -- 本实例冻结的横向位置
+local POSITION_Y = { { y1 } } -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
-local SLOT_ID = {{slot_id}} -- 仅查询该饰品位置
+local SLOT_ID = { { slot_id } } -- 仅查询该饰品位置
 
 local cell
 local eventFrame = CreateFrame("Frame")

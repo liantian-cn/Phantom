@@ -5,7 +5,7 @@ Description:
     参数：无参数。
     输出：cell，1 个区域，int scalar；4×4 像素。
     API：GetRuneCooldown；PlayerScriptDocumentation.lua。runeReady 无秘密返回标记；忽略秘密事件参数。
-    核验：2026-09-12，E:/Documents/GitHub/wow-ui-source，
+    核验：2026-09-12，@wow-ui-source，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58，12.1.0.69587。
     解码：mean 四舍五入为0–6整数。
     不可用或解码异常兜底 0。

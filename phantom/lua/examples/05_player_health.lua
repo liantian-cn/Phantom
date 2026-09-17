@@ -35,7 +35,7 @@ UnitHealthPercent：返回生命值比例，或将比例交给曲线生成显示
 限制标记：SecretReturns、SecretWhenCurveSecret；SecretArguments = "AllowedWhenUntainted"。
     本例直接传递颜色对象，不比较、计算或打印生命值比例及颜色分量。
 
-核验日期：2026-09-11；本地 /wow-ui-source 版本：12.1.0.69587。
+核验日期：2026-09-11；本地 @wow-ui-source 版本：12.1.0.69587。
 源码 revision：288f40d5cee5089223758d5810cb906ad34d4018。
 API 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua。
 Wiki 在线访问返回 403；接口说明依据本地源码，不声称已获取最新网页。

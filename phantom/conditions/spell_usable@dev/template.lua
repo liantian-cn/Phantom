@@ -54,7 +54,7 @@ C_CurveUtil.EvaluateColorFromBoolean：把潜在秘密布尔值转为颜色。
 返回值：带 ColorMixin 的 colorRGBA，直接传给 Cell:setCell。
 限制标记：SecretArguments = "AllowedWhenTainted"。
 
-核验日期：2026-09-12；本地 E:/Documents/GitHub/wow-ui-source 版本：12.1.0.69587。
+核验日期：2026-09-12；本地 @wow-ui-source 版本：12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 API 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/ 下的
     SpellBookDocumentation.lua、SpellDocumentation.lua、CurveUtilDocumentation.lua。

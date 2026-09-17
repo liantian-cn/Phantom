@@ -35,7 +35,7 @@ C_SpecializationInfo.GetSpecialization：返回玩家当前专精的顺序索引
     specializationIndex：number，当前专精索引，本文件直接作为灰度值。
 限制标记：SecretArguments = "AllowedWhenUntainted"。
 
-核验日期：2026-09-08；本地 /wow-ui-source 版本：12.1.0.69587。
+核验日期：2026-09-08；本地 @wow-ui-source 版本：12.1.0.69587。
 源码 revision：288f40d5cee5089223758d5810cb906ad34d4018。
 API 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/SpecializationInfoDocumentation.lua。
 ]]

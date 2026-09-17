@@ -61,7 +61,7 @@ C_CurveUtil.EvaluateColorFromBoolean：按可能为秘密值的 boolean 返回�
 限制标记：SecretArguments = "AllowedWhenTainted"。
     先用 issecretvalue 排除秘密值，只有普通 nil 才直接使用不可打断颜色。
 
-核验日期：2026-09-11；本地 /wow-ui-source 版本：12.1.0.69587。
+核验日期：2026-09-11；本地 @wow-ui-source 版本：12.1.0.69587。
 源码 revision：288f40d5cee5089223758d5810cb906ad34d4018。
 API 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/ 下的
     UnitDocumentation.lua、CurveUtilDocumentation.lua、SimpleTextureAPIDocumentation.lua。

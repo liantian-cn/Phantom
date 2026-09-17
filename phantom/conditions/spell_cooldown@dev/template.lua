@@ -56,7 +56,7 @@ DurationObject:EvaluateRemainingDuration：按剩余秒数对给定曲线求值�
     输入是剩余秒数，不是百分比；本例始终传入曲线，不在 Lua 中读取或比较冷却数值。
 限制标记：SecretWhenCurveSecret；SecretArguments = "AllowedWhenUntainted"。
 
-核验日期：2026-09-12；本地 E:/Documents/GitHub/wow-ui-source 版本：12.1.0.69587。
+核验日期：2026-09-12；本地 @wow-ui-source 版本：12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 API 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/ 下的
     SpellBookDocumentation.lua、SpellDocumentation.lua、LuaDurationObjectAPIDocumentation.lua。

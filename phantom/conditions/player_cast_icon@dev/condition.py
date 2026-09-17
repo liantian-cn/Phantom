@@ -6,7 +6,7 @@ Description:
     输出：icon_tile，1 个区域，str scalar；8×8 像素，采样内部 6×6。
     API：UnitCastingInfo/UnitChannelInfo("player") 第 3 项返回可能秘密的 textureID；用 NeverSecret 的 delayTimeMs/isEmpowered 判断状态。
     秘密纹理直接送给 IconTile:SetIcon；沿用玩家施法角标；空槽返回空字符串，其他为内部 6×6 RGB hash。
-    核验：2026-09-15，E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
+    核验：2026-09-15，@wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
     解码：秘密纹理直接送给 IconTile:SetIcon；沿用玩家施法角标；空槽返回空字符串，其他为内部 6×6 RGB hash。；不可用或异常兜底 ""。
 Key Variables:

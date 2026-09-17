@@ -50,7 +50,7 @@ ID  className (enUS)  classFilename  引入版本（用户提供）
 12  Demon Hunter      DEMONHUNTER   7.0.3
 13  Evoker            EVOKER        10.0.0
 
-核验日期：2026-09-08；本地 /wow-ui-source 版本：12.1.0.69587。
+核验日期：2026-09-08；本地 @wow-ui-source 版本：12.1.0.69587。
 源码 revision：288f40d5cee5089223758d5810cb906ad34d4018。
 API 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua。
 事件定义：同目录 SystemDocumentation.lua。

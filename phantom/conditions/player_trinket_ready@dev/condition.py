@@ -6,7 +6,7 @@ Description:
     输出：cell，1 个区域，bool scalar；4×4 像素，采样内部 2×2。
     API：itemID = GetInventoryItemID("player", slotID)；返回物品 ID 或 nil。start, duration, enabled = C_Item.GetItemCooldown(itemID)；usable, noMana = C_Item.IsUsableItem(itemID)。
     所选位置有物品、enabled 为真、duration 为零、usable 为真且 noMana 为假；不另查数量。
-    核验：2026-09-15，E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
+    核验：2026-09-15，@wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
     解码：严格全黑/全白；不可用或异常兜底 False。
 Key Variables:

@@ -36,7 +36,7 @@ UnitPowerType(unit) 返回 powerType、token 和显示颜色，本插件只取�
 来源：https://warcraft.wiki.gg/wiki/API_UnitPowerPercent
 来源：https://warcraft.wiki.gg/wiki/API_UnitPowerType
 2026-09-12 Wiki 页面访问失败；依据本地 UnitDocumentation.lua 核验签名。
-E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
+@wow-ui-source，12.1.0.69587，
 revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 ]]
 

@@ -15,34 +15,33 @@ plugin: player_heal_absorb@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
-local After = C_Timer.After -- 事件后延至下一帧刷新
-local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
-local insert = table.insert -- 注册 UI 初始化回调
+local After = C_Timer.After                             -- 事件后延至下一帧刷新
+local CreateFrame = CreateFrame                         -- 创建本实例事件或显示框架
+local insert = table.insert                             -- 注册 UI 初始化回调
 local UnitGetTotalHealAbsorbs = UnitGetTotalHealAbsorbs -- 获取秘密治疗吸收量
 
 --[[
 用途与签名：value = UnitGetTotalHealAbsorbs("player")；返回秘密数值，直接送入 StatusBar:SetValue(value)。SetMinMaxValues(N, N+1) 固定阈值显示范围。
 业务限制：白色 StatusBar 覆盖黑底；整数吸收量不超过 N 为黑色，至少 N+1 为白色，Lua 不比较或计算吸收值。
-核验日期：2026-09-15；本地 E:/Documents/GitHub/wow-ui-source，12.1.0.69587。
+核验日期：2026-09-15；本地 @wow-ui-source，12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 来源：本地源码 Interface/AddOns/ 下：
     Blizzard_APIDocumentationGenerated/UnitDocumentation.lua
-旧项目参考：PhantomProject/src/0126_player_heal_absorb.lua；revision f6935113e686eb73785b8315c58368093012c959。
 Wiki 查询入口（本次未能获取在线说明；以下链接不作为已核验网页证据）：
     https://warcraft.wiki.gg/wiki/API_UnitGetTotalHealAbsorbs
 ]]
 
 --[[  variable reference  ]]
-local Cell = addonTable.Cell -- 黑色底板及单元格显示接口
-local COLOR = addonTable.COLOR -- 本项目共享黑白及施法颜色
-local FrameLevel = addonTable.FrameLevel -- 共享底板和光环显示层级
+local Cell = addonTable.Cell               -- 黑色底板及单元格显示接口
+local COLOR = addonTable.COLOR             -- 本项目共享黑白及施法颜色
+local FrameLevel = addonTable.FrameLevel   -- 共享底板和光环显示层级
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local POSITION_X = {{x1}} -- 本实例冻结的横向位置
-local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
-local UNIT_TOKEN = "player" -- 本版本固定玩家单位
-local THRESHOLD = {{threshold}} -- N 与 N+1 都可精确表示
+local POSITION_X = { { x1 } }   -- 本实例冻结的横向位置
+local POSITION_Y = { { y1 } }   -- 本实例冻结的 Cell 行
+local UNIT_TOKEN = "player"     -- 本版本固定玩家单位
+local THRESHOLD = { { threshold } } -- N 与 N+1 都可精确表示
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 
 local absorbBar

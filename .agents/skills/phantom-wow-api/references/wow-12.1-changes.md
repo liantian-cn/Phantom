@@ -2,7 +2,7 @@
 
 ## Scope and verification
 
-This page tracks only 12.1 changes that can affect Phantom's Lua-to-screen data path. It was reviewed on 2026-09-05 against `/wow-ui-source` upstream revision `a89e9d0c` (12.1.0 Build 69587) and the archived 12.1 weekly and consolidated change notes.
+This page tracks only 12.1 changes that can affect Phantom's Lua-to-screen data path. It was reviewed on 2026-09-05 against `@wow-ui-source` upstream revision `a89e9d0c` (12.1.0 Build 69587) and the archived 12.1 weekly and consolidated change notes.
 
 It is not a complete API diff. Revalidate every item when the local source revision changes.
 
@@ -17,10 +17,10 @@ It is not a complete API diff. Revalidate every item when the local source revis
 
 Relevant local evidence:
 
-- `/wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretPredicatesDocumentation.lua`
-- `/wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua`
-- `/wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretAspectConstantsDocumentation.lua`
-- `/wow-ui-source/Interface/AddOns/Blizzard_RestrictedAddOnEnvironment/`
+- `@wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretPredicatesDocumentation.lua`
+- `@wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua`
+- `@wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretAspectConstantsDocumentation.lua`
+- `@wow-ui-source/Interface/AddOns/Blizzard_RestrictedAddOnEnvironment/`
 
 ## Aura model
 
@@ -34,9 +34,9 @@ The 12.1 AuraContainer model is managed and display-oriented:
 
 The current implementation is the authority for method names:
 
-- `/wow-ui-source/Interface/AddOns/Blizzard_AuraContainer/`
-- `/wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/AuraContainerSharedDocumentation.lua`
-- `/wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/AuraContainerUtilDocumentation.lua`
+- `@wow-ui-source/Interface/AddOns/Blizzard_AuraContainer/`
+- `@wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/AuraContainerSharedDocumentation.lua`
+- `@wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/AuraContainerUtilDocumentation.lua`
 
 ## Unit identity changes
 

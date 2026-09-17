@@ -15,34 +15,33 @@ plugin: player_in_group@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
-local After = C_Timer.After -- 事件后延至下一帧刷新
-local random = math.random -- 为本实例轮询生成随机错峰
+local After = C_Timer.After     -- 事件后延至下一帧刷新
+local random = math.random      -- 为本实例轮询生成随机错峰
 local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
-local insert = table.insert -- 注册 UI 初始化回调
-local IsInGroup = IsInGroup -- 查询组队状态
-local IsInRaid = IsInRaid -- 查询团队状态
+local insert = table.insert     -- 注册 UI 初始化回调
+local IsInGroup = IsInGroup     -- 查询组队状态
+local IsInRaid = IsInRaid       -- 查询团队状态
 
 --[[
 用途与签名：grouped = IsInGroup()；raiding = IsInRaid()；返回组队布尔值。
 业务限制：队伍或团队任一成立即为真。
-核验日期：2026-09-15；本地 E:/Documents/GitHub/wow-ui-source，12.1.0.69587。
+核验日期：2026-09-15；本地 @wow-ui-source，12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 来源：本地源码 Interface/AddOns/ 下：
     Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua
-旧项目参考：PhantomProject/src/0114_player_in_group.lua；revision f6935113e686eb73785b8315c58368093012c959。
 Wiki 查询入口（本次未能获取在线说明；以下链接不作为已核验网页证据）：
     https://warcraft.wiki.gg/wiki/API_IsInGroup
     https://warcraft.wiki.gg/wiki/API_IsInRaid
 ]]
 
 --[[  variable reference  ]]
-local Cell = addonTable.Cell -- 黑色底板及单元格显示接口
+local Cell = addonTable.Cell               -- 黑色底板及单元格显示接口
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local UPDATE_INTERVAL = 1 -- 事件之外的兜底刷新间隔
-local POSITION_X = {{x1}} -- 本实例冻结的横向位置
-local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local UPDATE_INTERVAL = 1   -- 事件之外的兜底刷新间隔
+local POSITION_X = { { x1 } } -- 本实例冻结的横向位置
+local POSITION_Y = { { y1 } } -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
 
 local cell

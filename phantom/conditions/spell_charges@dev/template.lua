@@ -50,7 +50,7 @@ C_Spell.GetSpellCharges：返回可累积充能技能的充能信息，未找到
 限制标记：MayReturnNothing；SecretWhenCooldownsRestricted；SecretArguments = "AllowedWhenTainted"。
     只判断返回表是否存在，不比较或计算 currentCharges。
 
-核验日期：2026-09-12；本地 E:/Documents/GitHub/wow-ui-source 版本：12.1.0.69587。
+核验日期：2026-09-12；本地 @wow-ui-source 版本：12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 API 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/ 下的
     SpellBookDocumentation.lua、SpellDocumentation.lua、SpellSharedDocumentation.lua、

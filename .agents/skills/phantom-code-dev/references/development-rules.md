@@ -6,8 +6,8 @@
 
 - 只在 `develop` 分支修改 Phantom。用户负责把特定版本冻结到 `main`。
 - 根 `README.md` 预留给最终用户说明；详细规范写入所属 skill 的 references；同一规则只维护一份，跨 skill 按需引用。
-- 不得把 `/wow-ui-source`、`/PhantomProject`、`/Shigure` 或 `/midnight` 纳入 Phantom 仓库。
-- 四个外部源码目录作为只读参考。除非用户明确要求更新，不得修改、提交、切换分支、fetch、pull 或 reset。
+- 不得把 `@wow-ui-source`、`@PhantomProject`、`@Shigure` 纳入 Phantom 仓库。
+- 外部源码目录作为只读参考。除非用户明确要求更新，不得修改、提交、切换分支、fetch、pull 或 reset。
 
 ## 代码表达
 

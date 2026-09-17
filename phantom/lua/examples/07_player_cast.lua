@@ -50,7 +50,7 @@ UnitChannelInfo：返回指定单位当前引导或蓄力施法的信息。
 共同限制：SecretWhenUnitSpellCastRestricted；SecretArguments = "AllowedWhenUntainted"。
     图标纹理和可打断标记可能为秘密值；仅使用明确的 NeverSecret 哨兵判断施法是否存在。
 
-核验日期：2026-09-11；本地 /wow-ui-source 版本：12.1.0.69587。
+核验日期：2026-09-11；本地 @wow-ui-source 版本：12.1.0.69587。
 源码 revision：288f40d5cee5089223758d5810cb906ad34d4018。
 API 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/ 下的
     UnitDocumentation.lua、CurveUtilDocumentation.lua、SimpleTextureAPIDocumentation.lua。

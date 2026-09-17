@@ -35,7 +35,7 @@ https://warcraft.wiki.gg/wiki/API_GetTime
 handler(message, editBox) 接收参数文本和聊天输入框；本文件只读取 message，无返回值。
 命令共用全局名称空间，系统命令优先；同前缀插件可能冲突。
 https://warcraft.wiki.gg/wiki/Creating_a_slash_command
-2026-09-09 核验：/wow-ui-source revision 288f40d5cee5089223758d5810cb906ad34d4018，
+2026-09-09 核验：@wow-ui-source revision 288f40d5cee5089223758d5810cb906ad34d4018，
 SystemTimeDocumentation.lua 与 Blizzard_ChatFrameBase/Shared/SlashCommandsRegistry.lua。
 ]]
 local GetTime = GetTime -- 获取当前计时值，用于计算爆发及延迟截止时间

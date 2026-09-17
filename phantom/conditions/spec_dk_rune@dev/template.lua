@@ -23,7 +23,7 @@ PlayerScriptDocumentation.lua 未标记秘密返回；官方 RuneFrame.lua 同�
 RUNE_POWER_UPDATE 的 runeIndex、added 负载均可能秘密，本插件不接收或使用负载。
 来源：https://warcraft.wiki.gg/wiki/API_GetRuneCooldown
 2026-09-12 Wiki 页面访问失败；上述信息依据本地源码，不声称在线核验成功。
-E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
+@wow-ui-source，12.1.0.69587，
 revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；
 PlayerScriptDocumentation.lua、UnitDocumentation.lua、Blizzard_UnitFrame/Mainline/RuneFrame.lua。
 ]]

@@ -4,7 +4,7 @@
 
 Use the managed AuraContainer model for aura display in 12.1. The container tracks aura state, selects frames, updates display bindings, and performs layout. Addon code declares filters and static presentation; it must not reconstruct a secret aura list for combat decisions.
 
-Current implementation evidence is under `/wow-ui-source/Interface/AddOns/Blizzard_AuraContainer/`.
+Current implementation evidence is under `@wow-ui-source/Interface/AddOns/Blizzard_AuraContainer/`.
 
 ## Groups and slots
 

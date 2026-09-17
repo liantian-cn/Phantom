@@ -15,32 +15,31 @@ plugin: player_is_player_target@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
-local After = C_Timer.After -- 事件后延至下一帧刷新
-local random = math.random -- 为本实例轮询生成随机错峰
+local After = C_Timer.After     -- 事件后延至下一帧刷新
+local random = math.random      -- 为本实例轮询生成随机错峰
 local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
-local insert = table.insert -- 注册 UI 初始化回调
-local UnitIsUnit = UnitIsUnit -- 判断两个单位是否相同
+local insert = table.insert     -- 注册 UI 初始化回调
+local UnitIsUnit = UnitIsUnit   -- 判断两个单位是否相同
 
 --[[
 用途与签名：result = UnitIsUnit("player", "target")；返回可能秘密的单位相等布尔值。
 业务限制：秘密布尔直接交给 Cell:setCellBoolean，不在 Lua 中分支。
-核验日期：2026-09-15；本地 E:/Documents/GitHub/wow-ui-source，12.1.0.69587。
+核验日期：2026-09-15；本地 @wow-ui-source，12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 来源：本地源码 Interface/AddOns/ 下：
     Blizzard_APIDocumentationGenerated/UnitDocumentation.lua
-旧项目参考：PhantomProject/src/0108_player_is_player_target.lua；revision f6935113e686eb73785b8315c58368093012c959。
 Wiki 查询入口（本次未能获取在线说明；以下链接不作为已核验网页证据）：
     https://warcraft.wiki.gg/wiki/API_UnitIsUnit
 ]]
 
 --[[  variable reference  ]]
-local Cell = addonTable.Cell -- 黑色底板及单元格显示接口
+local Cell = addonTable.Cell               -- 黑色底板及单元格显示接口
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local UPDATE_INTERVAL = 1 -- 事件之外的兜底刷新间隔
-local POSITION_X = {{x1}} -- 本实例冻结的横向位置
-local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local UPDATE_INTERVAL = 1   -- 事件之外的兜底刷新间隔
+local POSITION_X = { { x1 } } -- 本实例冻结的横向位置
+local POSITION_Y = { { y1 } } -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
 
 local cell

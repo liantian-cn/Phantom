@@ -8,22 +8,21 @@ The material was consolidated on 2026-09-05 and checked against these local refe
 
 | Reference | Branch | Revision | Primary area |
 | --- | --- | --- | --- |
-| `/wow-ui-source` | `ptr` | upstream `a89e9d0c` (Build 69587); local archival commit `288f40d5` | Current FrameXML and generated API documentation |
-| `/PhantomProject` | `develop` | `f6935113` | Earlier experimental Lua and Secret Value patterns |
-| `/Shigure` | `main` | `b73d242f` | Alternative addon structure and Lua patterns |
-| `/midnight` | `12.0` | `12c7fba9` | Windows capture, matrix decoding, rotations, and secure-button macros |
+| `@wow-ui-source` | `ptr` | upstream `a89e9d0c` (Build 69587); local archival commit `288f40d5` | FrameXML and generated API documentation for the recorded build |
+| `@PhantomProject` | `develop` | `f6935113` | Optional, low-priority historical Lua examples |
+| `@Shigure` | `main` | `b73d242f` | Optional, low-priority external Lua examples |
 
-These repositories are read-only references. Do not modify, fetch, pull, reset, switch branches, or commit in them unless the user explicitly requests an update.
+These repositories are read-only references. Do not modify, fetch, pull, reset, switch branches, or commit in them unless the user explicitly requests an update. The two Lua example repositories have limited value and are not design bases, implementation constraints or API evidence; consulting them is optional.
 
 The 42 pre-consolidation Markdown files are preserved outside the project at `/workspaces/phantom-5796e240-context-original-20260905.tar.gz` with SHA-256 `cd9137d4c6922c37e7fdf1b528c9113944b42c7bd8905567fe384bb57f7eeb54`.
 
-## Windows reference location
+## 2026-09-12 reference verification
 
-On Windows, `/wow-ui-source` maps to `E:\Documents\GitHub\wow-ui-source` (read-only). Checked 2026-09-12: version 12.1.0.69587, revision `a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58`. Historical archival revisions above are preserved as historical evidence.
+The read-only `@wow-ui-source` reference was checked on 2026-09-12: version 12.1.0.69587, revision `a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58`. Historical archival revisions above are preserved as historical evidence; this does not establish current checkout availability.
 
 ## 2026-09-14 macro-binding verification
 
-The configured Windows checkout `E:\Documents\GitHub\wow-ui-source` is absent on this machine.
+At the time of this verification, the configured local checkout for `@wow-ui-source` was unavailable on that machine.
 The same recorded revision `a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58` was inspected online at
 [SecureTemplates.lua](https://raw.githubusercontent.com/Gethe/wow-ui-source/a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58/Interface/AddOns/Blizzard_FrameXML/SecureTemplates.lua).
 Its macro action reads `macrotext` when no macro-slot attribute is supplied and calls `C_Macro.RunMacroText`.
@@ -34,7 +33,7 @@ as the standard example for Phantom's generated bindings. Existing historical sn
 
 ## Blood DK condition verification — 2026-09-12
 
-Reference: E:/Documents/GitHub/wow-ui-source, 12.1.0.69587,
+Reference: @wow-ui-source, 12.1.0.69587,
 revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58.
 PlayerScriptDocumentation.lua defines GetRuneCooldown with optional absence and no secret-return annotation;
 Blizzard_UnitFrame/Mainline/RuneFrame.lua branches on runeReady. UnitDocumentation.lua marks
@@ -48,4 +47,4 @@ failed during this task, so API signatures are documented from the local source,
 
 ## Initial development-rule snapshot
 
-The original development rules also recorded `/wow-ui-source` at upstream `a89e9d0c` with an additional local archival commit that must not be discarded, `/PhantomProject` at `f6935113e686`, `/Shigure` at `b73d242f`, and `/midnight` at `12c7fba9`. Short revisions locate historical snapshots; new evidence needs the actual full revision or source file.
+The original development rules also recorded `@wow-ui-source` at upstream `a89e9d0c` with an additional local archival commit that must not be discarded, `@PhantomProject` at `f6935113e686`, and `@Shigure` at `b73d242f`. Short revisions locate historical snapshots; new evidence needs the actual full revision or source file.

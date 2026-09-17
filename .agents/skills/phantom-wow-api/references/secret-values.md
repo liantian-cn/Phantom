@@ -43,7 +43,7 @@ A plugin may not translate “secret” into an empty Cell. Empty output means o
 
 ## NeverSecret is narrow
 
-`Enum.SecrecyLevel.NeverSecret` is an explicit exemption attached to particular values such as selected spells. It is not a property that an addon can assign. Check `/wow-ui-source/Interface/AddOns/Blizzard_AuraContainer/Blizzard_AuraContainerUtil.lua` and current generated documentation before relying on it.
+`Enum.SecrecyLevel.NeverSecret` is an explicit exemption attached to particular values such as selected spells. It is not a property that an addon can assign. Check `@wow-ui-source/Interface/AddOns/Blizzard_AuraContainer/Blizzard_AuraContainerUtil.lua` and current generated documentation before relying on it.
 
 ## Verification checklist
 

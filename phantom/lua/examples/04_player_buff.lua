@@ -37,7 +37,7 @@ CustomAuraContainerTemplate：由引擎和官方容器管理光环筛选及按�
     本地源码允许对玩家的 HELPFUL 光环使用身份候选过滤；不把此结论推广到其他单位或减益。
     不读取 AuraData、按钮可见性或访问限制来推断增益，不自行挂接刷新脚本。
 
-核验日期：2026-09-11；本地 /wow-ui-source 版本：12.1.0.69587。
+核验日期：2026-09-11；本地 @wow-ui-source 版本：12.1.0.69587。
 源码 revision：288f40d5cee5089223758d5810cb906ad34d4018。
 本例契约依据 Interface/AddOns/Blizzard_AuraContainer/ 下的
     Blizzard_CustomAuraContainer.lua、Blizzard_AuraContainerShared.lua、

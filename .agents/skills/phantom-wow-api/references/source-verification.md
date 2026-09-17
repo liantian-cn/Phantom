@@ -1,20 +1,21 @@
 # Source Verification
 
-Use this reference when adding or reviewing a WoW API, event or access claim. Technical notes are evidence; project contracts in the development skills remain normative. Do not promote an unresolved claim or historical example into a requirement.
+Use this reference when adding or reviewing a WoW API, event or access claim. User instructions and frozen plans take precedence over project contracts, which take precedence over technical references. Target-build official source is authoritative for API and behavior verification within that scope. Do not promote an unresolved claim or historical example into a requirement.
 
 ## Evidence order
 
-1. Read the actual target-build `/wow-ui-source` generated API definitions and FrameXML.
+1. Read the actual target-build `@wow-ui-source` generated API definitions and FrameXML.
 2. Check Blizzard's accompanying API and version-change records.
-3. Use `/PhantomProject`, `/Shigure` and `/midnight` only for verified implementation experience, not proof of current API behavior.
-4. Use other sources as leads; validate against the target-version source. If local evidence is inaccessible, use explicitly pinned official source online and state the limitation.
+3. Use other sources as leads; validate against the target-version source. If local evidence is inaccessible, use explicitly pinned official source online and state the limitation.
+
+`@PhantomProject` and `@Shigure` are optional, low-priority historical/external Lua examples with limited value. They are not design bases, implementation constraints or API evidence; consulting or reusing them is not required.
 
 Record verification date, actual version/build, full revision and relevant source paths. Never label an old local snapshot as current-version proof. If sources disagree or behavior cannot be established, mark it unverified and do not implement a guessed contract.
 
 ## Local checkout
 
-On Windows `/wow-ui-source` maps to `E:\Documents\GitHub\wow-ui-source`. Check existence and inspect its actual version and revision before citing it. Do not assume it exists because a historical record used it.
-The four external source repositories are read-only evidence outside Phantom, not dependencies or writable task worktrees. Do not import them into this repository; updates, edits, fetch/pull, branch changes, resets and commits need an explicit user request.
+Resolve `@wow-ui-source` through the session's configured reference. Check availability and inspect its actual version and revision before citing it. Do not assume it is available because a historical record used it. Reference subpaths use `/`, for example `@wow-ui-source/Interface/AddOns/`.
+The external source repositories are read-only references outside Phantom, not dependencies or writable task worktrees. Do not import them into this repository; updates, edits, fetch/pull, branch changes, resets and commits need an explicit user request.
 
 ## API comments
 
@@ -28,4 +29,4 @@ Treat combat, unit, aura, spell, cooldown, cast, target, threat and nameplate va
 
 ## Historical evidence
 
-Read [source snapshots](history/source-snapshots.md) only to trace an earlier verification. Those dates, revisions and machine paths are historical and were not reverified by the documentation migration.
+Read [source snapshots](history/source-snapshots.md) only to trace an earlier verification. Those dates, revisions and availability observations are historical and were not reverified by the documentation migration.

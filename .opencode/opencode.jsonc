@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "references": {
+    "wow-ui-source": {
+      "repository": "Gethe/wow-ui-source",
+      "branch": "ptr",
+      "description": "暴雪官方 UI/Lua 源码镜像；用于目标版本 API 与行为的权威核验，须确认 build/revision，服从用户指令、冻结计划和项目规范。",
+    },
+    "PhantomProject": {
+      "repository": "liantian-cn/PhantomProject",
+      "branch": "develop",
+      "description": "可选、低优先级的历史 Lua 示例，价值有限；不作为设计依据、实现约束或 API 证据，无需强制借鉴。",
+    },
+    "Shigure": {
+      "repository": "waynebian01/Shigure",
+      "branch": "main",
+      "description": "可选、低优先级的外部 Lua 示例，价值有限；不作为设计依据、实现约束或 API 证据，无需强制借鉴。",
+    },
+    "WowAssistedCombatReveal": {
+      "repository": "liantian-cn/WowAssistedCombatReveal",
+      "branch": "main",
+      "description": "可选、低优先级的官方战斗逻辑解析。",
+    },
+  },
+}

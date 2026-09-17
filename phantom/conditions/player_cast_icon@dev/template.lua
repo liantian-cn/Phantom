@@ -15,32 +15,31 @@ plugin: player_cast_icon@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
-local After = C_Timer.After -- 事件后延至下一帧刷新
-local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
-local insert = table.insert -- 注册 UI 初始化回调
+local After = C_Timer.After             -- 事件后延至下一帧刷新
+local CreateFrame = CreateFrame         -- 创建本实例事件或显示框架
+local insert = table.insert             -- 注册 UI 初始化回调
 local UnitCastingInfo = UnitCastingInfo -- 使用普通施法的非秘密哨兵及图标
 local UnitChannelInfo = UnitChannelInfo -- 使用通道的非秘密蓄力哨兵及图标
 
 --[[
 用途与签名：UnitCastingInfo/UnitChannelInfo("player") 第 3 项返回可能秘密的 textureID；用 NeverSecret 的 delayTimeMs/isEmpowered 判断状态。
 业务限制：秘密纹理直接送给 IconTile:SetIcon；沿用玩家施法角标；空槽返回空字符串，其他为内部 6×6 RGB hash。
-核验日期：2026-09-15；本地 E:/Documents/GitHub/wow-ui-source，12.1.0.69587。
+核验日期：2026-09-15；本地 @wow-ui-source，12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 来源：本地源码 Interface/AddOns/ 下：
     Blizzard_APIDocumentationGenerated/UnitDocumentation.lua
-旧项目参考：PhantomProject/src/0119_player_cast_info.lua；revision f6935113e686eb73785b8315c58368093012c959。
 Wiki 查询入口（本次未能获取在线说明；以下链接不作为已核验网页证据）：
     https://warcraft.wiki.gg/wiki/API_UnitCastingInfo
     https://warcraft.wiki.gg/wiki/API_UnitChannelInfo
 ]]
 
 --[[  variable reference  ]]
-local IconTile = addonTable.IconTile -- 第四行图标区域
-local COLOR = addonTable.COLOR -- 本项目共享黑白及施法颜色
+local IconTile = addonTable.IconTile       -- 第四行图标区域
+local COLOR = addonTable.COLOR             -- 本项目共享黑白及施法颜色
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local POSITION_X = {{x1}} -- 本实例冻结的横向位置
+local POSITION_X = { { x1 } } -- 本实例冻结的横向位置
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
 
 local display

@@ -6,7 +6,7 @@ Description:
     输出：cell，1 个区域，str scalar；4×4 像素，采样内部 2×2。
     API：UNIT_SPELLCAST_SENT(unit, targetName, castGUID, spellID) 提供可能秘密的目标名；UnitName(unit) 返回可能秘密的单位名。UnitExists(unit) 检查候选单位。
     匹配 player、party1–4、raid1–40；秘密目标暂留旧值，成功/停止/失败与每秒兜底清空，长施法可能提前清空。编码 0 未知、1 玩家、2–5 队员、6–45 团员，各乘 5。
-    核验：2026-09-15，E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
+    核验：2026-09-15，@wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
     解码：匹配 player、party1–4、raid1–40；秘密目标暂留旧值，成功/停止/失败与每秒兜底清空，长施法可能提前清空。编码 0 未知、1 玩家、2–5 队员、6–45 团员，各乘 5。；不可用或异常兜底 ""。
 Key Variables:

@@ -15,34 +15,33 @@ plugin: player_is_chatting@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
-local After = C_Timer.After -- 事件后延至下一帧刷新
-local random = math.random -- 为本实例轮询生成随机错峰
-local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
-local insert = table.insert -- 注册 UI 初始化回调
+local After = C_Timer.After                             -- 事件后延至下一帧刷新
+local random = math.random                              -- 为本实例轮询生成随机错峰
+local CreateFrame = CreateFrame                         -- 创建本实例事件或显示框架
+local insert = table.insert                             -- 注册 UI 初始化回调
 local GetCurrentKeyBoardFocus = GetCurrentKeyBoardFocus -- 获取键盘输入焦点
-local EventRegistry = EventRegistry -- 监听聊天框焦点通知
+local EventRegistry = EventRegistry                     -- 监听聊天框焦点通知
 
 --[[
 用途与签名：frame = GetCurrentKeyBoardFocus()；返回输入焦点框体或 nil。EventRegistry:RegisterCallback(event, callback, owner) 注册聊天焦点通知。
 业务限制：任意输入框获得焦点即为真，包含搜索框；保留聊天通知和1 秒兜底轮询。
-核验日期：2026-09-15；本地 E:/Documents/GitHub/wow-ui-source，12.1.0.69587。
+核验日期：2026-09-15；本地 @wow-ui-source，12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 来源：本地源码 Interface/AddOns/ 下：
     Blizzard_Game/Mainline/EventImplementation.lua
     Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua
-旧项目参考：PhantomProject/src/0113_player_is_chatting.lua；revision f6935113e686eb73785b8315c58368093012c959。
 Wiki 查询入口（本次未能获取在线说明；以下链接不作为已核验网页证据）：
     https://warcraft.wiki.gg/wiki/API_GetCurrentKeyBoardFocus
 ]]
 
 --[[  variable reference  ]]
-local Cell = addonTable.Cell -- 黑色底板及单元格显示接口
+local Cell = addonTable.Cell               -- 黑色底板及单元格显示接口
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local UPDATE_INTERVAL = 1 -- 事件之外的兜底刷新间隔
-local POSITION_X = {{x1}} -- 本实例冻结的横向位置
-local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
+local UPDATE_INTERVAL = 1   -- 事件之外的兜底刷新间隔
+local POSITION_X = { { x1 } } -- 本实例冻结的横向位置
+local POSITION_Y = { { y1 } } -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
 
 local cell
@@ -64,17 +63,17 @@ end)
 
 if EventRegistry then
     EventRegistry:RegisterCallback("ChatFrame.OnEditBoxFocusGained", function()
-        After(0, function() update() end)
-    end, eventFrame)
+                                       After(0, function() update() end)
+                                   end, eventFrame)
     EventRegistry:RegisterCallback("ChatFrame.OnEditBoxFocusLost", function()
-        After(0, function() update() end)
-    end, eventFrame)
+                                       After(0, function() update() end)
+                                   end, eventFrame)
     EventRegistry:RegisterCallback("ChatFrame.OnEditBoxShow", function()
-        After(0, function() update() end)
-    end, eventFrame)
+                                       After(0, function() update() end)
+                                   end, eventFrame)
     EventRegistry:RegisterCallback("ChatFrame.OnEditBoxHide", function()
-        After(0, function() update() end)
-    end, eventFrame)
+                                       After(0, function() update() end)
+                                   end, eventFrame)
 end
 
 local fastTimeElapsed = -random() -- 每个实例独立随机错峰

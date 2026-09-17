@@ -6,7 +6,7 @@ Description:
     输出：cell，1 个区域，bool scalar；4×4 像素，采样内部 2×2。
     API：value = UnitGetTotalHealAbsorbs("player")；返回秘密数值，直接送入 StatusBar:SetValue(value)。SetMinMaxValues(N, N+1) 固定阈值显示范围。
     白色 StatusBar 覆盖黑底；整数吸收量不超过 N 为黑色，至少 N+1 为白色，Lua 不比较或计算吸收值。
-    核验：2026-09-15，E:/Documents/GitHub/wow-ui-source，12.1.0.69587，
+    核验：2026-09-15，@wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
     解码：严格全黑/全白；不可用或异常兜底 False。
 Key Variables:

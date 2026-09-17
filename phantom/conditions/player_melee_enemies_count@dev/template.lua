@@ -15,24 +15,23 @@ plugin: player_melee_enemies_count@dev
 local addonName, addonTable = ...
 
 --[[  api cache  ]]
-local After = C_Timer.After -- 事件后延至下一帧刷新
-local random = math.random -- 为本实例轮询生成随机错峰
-local CreateFrame = CreateFrame -- 创建本实例事件或显示框架
-local insert = table.insert -- 注册 UI 初始化回调
+local After = C_Timer.After                   -- 事件后延至下一帧刷新
+local random = math.random                    -- 为本实例轮询生成随机错峰
+local CreateFrame = CreateFrame               -- 创建本实例事件或显示框架
+local insert = table.insert                   -- 注册 UI 初始化回调
 local IsSpellInRange = C_Spell.IsSpellInRange -- 查询技能对单位的距离状态
-local issecretvalue = issecretvalue -- 在普通比较前辨别秘密值
-local UnitExists = UnitExists -- 查询候选单位存在性
-local UnitCanAttack = UnitCanAttack -- 判断候选单位是否可攻击
+local issecretvalue = issecretvalue           -- 在普通比较前辨别秘密值
+local UnitExists = UnitExists                 -- 查询候选单位存在性
+local UnitCanAttack = UnitCanAttack           -- 判断候选单位是否可攻击
 
 --[[
 用途与签名：inRange = C_Spell.IsSpellInRange(spellID, unitToken)；返回 bool 或 nil，可能秘密。UnitExists(unit)、UnitCanAttack("player", unit) 返回存在及可攻击布尔值。
 业务限制：扫描 nameplate1–40；秘密或 nil 距离结果不计数。灰度 count/40，Python 四舍五入至 0–40。
-核验日期：2026-09-15；本地 E:/Documents/GitHub/wow-ui-source，12.1.0.69587。
+核验日期：2026-09-15；本地 @wow-ui-source，12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
 来源：本地源码 Interface/AddOns/ 下：
     Blizzard_APIDocumentationGenerated/SpellDocumentation.lua
     Blizzard_APIDocumentationGenerated/UnitDocumentation.lua
-旧项目参考：PhantomProject/src/0111_player_melee_enemies_count.lua；revision f6935113e686eb73785b8315c58368093012c959。
 Wiki 查询入口（本次未能获取在线说明；以下链接不作为已核验网页证据）：
     https://warcraft.wiki.gg/wiki/API_C_Spell.IsSpellInRange
     https://warcraft.wiki.gg/wiki/API_UnitExists
@@ -40,16 +39,16 @@ Wiki 查询入口（本次未能获取在线说明；以下链接不作为已核
 ]]
 
 --[[  variable reference  ]]
-local Cell = addonTable.Cell -- 黑色底板及单元格显示接口
+local Cell = addonTable.Cell               -- 黑色底板及单元格显示接口
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local UPDATE_INTERVAL = 1 -- 事件之外的兜底刷新间隔
-local POSITION_X = {{x1}} -- 本实例冻结的横向位置
-local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
-local UNIT_TOKEN = "player" -- 本版本固定玩家单位
-local SPELL_ID = {{spell_id}} -- 用于判定近战范围的技能
-local NAMEPLATE_LIMIT = 40 -- 只统计这组姓名板
+local UPDATE_INTERVAL = 1     -- 事件之外的兜底刷新间隔
+local POSITION_X = { { x1 } } -- 本实例冻结的横向位置
+local POSITION_Y = { { y1 } } -- 本实例冻结的 Cell 行
+local UNIT_TOKEN = "player"   -- 本版本固定玩家单位
+local SPELL_ID = { { spell_id } } -- 用于判定近战范围的技能
+local NAMEPLATE_LIMIT = 40    -- 只统计这组姓名板
 
 local cell
 local eventFrame = CreateFrame("Frame")

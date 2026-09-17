@@ -5,7 +5,7 @@ Description:
     参数：max_power 为有限正数。
     输出：cell，1 个区域，float scalar；4×4 像素。
     API：UnitPowerPercent、UnitPowerType；UnitDocumentation.lua。秘密能量经颜色曲线直接渲染。
-    核验：2026-09-12，E:/Documents/GitHub/wow-ui-source，
+    核验：2026-09-12，@wow-ui-source，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58，12.1.0.69587。
     解码：ratio*max_power。
     不可用或解码异常兜底 0.0。
