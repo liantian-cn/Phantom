@@ -4,22 +4,22 @@
     "wow-ui-source": {
       "repository": "Gethe/wow-ui-source",
       "branch": "ptr",
-      "description": "暴雪官方 UI/Lua 源码镜像；用于目标版本 API 与行为的权威核验，须确认 build/revision，服从用户指令、冻结计划和项目规范。",
+      "description": "A mirror of Blizzard's official UI/Lua source for authoritative verification of APIs and behavior in the target version. Please confirm the build/revision and follow user instructions, frozen plans, and project standards.",
     },
     "PhantomProject": {
       "repository": "liantian-cn/PhantomProject",
       "branch": "develop",
-      "description": "可选、低优先级的历史 Lua 示例，价值有限；不作为设计依据、实现约束或 API 证据，无需强制借鉴。",
+      "description": "Optional, lower-priority historical Lua examples with limited relevance to this project. Please treat them as supplementary context rather than a basis for design, implementation constraints, or API evidence. There is no need to consult or adopt them.",
     },
     "Shigure": {
       "repository": "waynebian01/Shigure",
       "branch": "main",
-      "description": "可选、低优先级的外部 Lua 示例，价值有限；不作为设计依据、实现约束或 API 证据，无需强制借鉴。",
+      "description": "Optional, lower-priority external Lua examples with limited relevance to this project. Please treat them as supplementary context rather than a basis for design, implementation constraints, or API evidence. There is no need to consult or adopt them.",
     },
     "WowAssistedCombatReveal": {
       "repository": "liantian-cn/WowAssistedCombatReveal",
       "branch": "main",
-      "description": "可选、低优先级的官方战斗逻辑解析。",
+      "description": "An optional, lower-priority reference offering analysis of the official combat logic.",
     },
   },
 }
