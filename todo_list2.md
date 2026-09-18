@@ -1,14 +1,17 @@
-# WowAssistedCombatReveal条件迁移计划
+
+
+WowAssistedCombatReveal条件迁移计划
 
 WowAssistedCombatReveal 
 
+## 任务工作
 
 1. 新字段定义
 现有的插件如果满足官方一件辅助的条件字符"ASSISTED_COMBAT_RULE_*"
 则在插件的toml配置文件中增加一个字段，用于指定该条件的类型。这个字段是list类型。
 这是为便于后续搜索。
 
-2. 添加、维护插件
+2. 添加、维护大量插件
 
 按下述内容，添加维护插件。
 
@@ -341,27 +344,27 @@ end
 
 
 
-| 资源                                 | 12.1 插件读取状态             | 分类/备注                            |
-| ---------------------------------- | ----------------------- | -------------------------------- |
-| **法力 Mana**                        | 🔒 **可成为 Secret Value** | Primary Resource                 |
-| **怒气 Rage**                        | 🔒 **可成为 Secret Value** | Primary Resource                 |
-| **集中值 Focus**                      | 🔒 **可成为 Secret Value** | Primary Resource                 |
-| **能量 Energy**                      | 🔒 **可成为 Secret Value** | Primary Resource；盗贼/猫德/武僧等       |
-| **符文能量 Runic Power**               | 🔒 **可成为 Secret Value** | DK Primary Resource              |
-| **星界能量 Astral/Lunar Power**        | 🔒 **可成为 Secret Value** | 未列入 secondary 豁免名单               |
-| **漩涡值 Maelstrom**                  | 🔒 **可成为 Secret Value** | 未列入 UnitPower secondary 豁免名单     |
-| **狂乱 Insanity**                    | 🔒 **可成为 Secret Value** | 暗牧主要战斗资源                         |
-| **恶魔之怒 Fury**                      | 🔒 **可成为 Secret Value** | DH 等主要资源                         |
-| **痛苦值 Pain**                       | 🔒 **可成为 Secret Value** | 主要资源                             |
-| **连击点 Combo Points**               | ✅ **Non-secret**        | 暴雪明确豁免                           |
-| **符文 Runes**                       | ✅ **Non-secret**        | 注意：**符文 ≠ 符文能量**                 |
-| **灵魂碎片 Soul Shards**               | ✅ **Non-secret**        | 暴雪明确豁免                           |
-| **神圣能量 Holy Power**                | ✅ **Non-secret**        | 暴雪明确豁免                           |
-| **真气 Chi**                         | ✅ **Non-secret**        | 暴雪明确豁免                           |
-| **奥术充能 Arcane Charges**            | ✅ **Non-secret**        | 暴雪明确豁免                           |
-| **精华 Essence**                     | ✅ **Non-secret**        | 唤魔师，暴雪明确豁免                       |
-| **醉拳 Stagger**                     | ✅ **玩家自身为 Non-secret**  | `UnitStagger()` 后来也被解除 Secret 限制 |
-| **最大资源值 `UnitPowerMax("player")`** | ✅ **通常不是 Secret**       | 暴雪后来特意放开了玩家自己的最大资源值              |
+| 资源                                    | 12.1 插件读取状态           | 分类/备注                                |
+| --------------------------------------- | --------------------------- | ---------------------------------------- |
+| **法力 Mana**                           | 🔒 **可成为 Secret Value**   | Primary Resource                         |
+| **怒气 Rage**                           | 🔒 **可成为 Secret Value**   | Primary Resource                         |
+| **集中值 Focus**                        | 🔒 **可成为 Secret Value**   | Primary Resource                         |
+| **能量 Energy**                         | 🔒 **可成为 Secret Value**   | Primary Resource；盗贼/猫德/武僧等       |
+| **符文能量 Runic Power**                | 🔒 **可成为 Secret Value**   | DK Primary Resource                      |
+| **星界能量 Astral/Lunar Power**         | 🔒 **可成为 Secret Value**   | 未列入 secondary 豁免名单                |
+| **漩涡值 Maelstrom**                    | 🔒 **可成为 Secret Value**   | 未列入 UnitPower secondary 豁免名单      |
+| **狂乱 Insanity**                       | 🔒 **可成为 Secret Value**   | 暗牧主要战斗资源                         |
+| **恶魔之怒 Fury**                       | 🔒 **可成为 Secret Value**   | DH 等主要资源                            |
+| **痛苦值 Pain**                         | 🔒 **可成为 Secret Value**   | 主要资源                                 |
+| **连击点 Combo Points**                 | ✅ **Non-secret**            | 暴雪明确豁免                             |
+| **符文 Runes**                          | ✅ **Non-secret**            | 注意：**符文 ≠ 符文能量**                |
+| **灵魂碎片 Soul Shards**                | ✅ **Non-secret**            | 暴雪明确豁免                             |
+| **神圣能量 Holy Power**                 | ✅ **Non-secret**            | 暴雪明确豁免                             |
+| **真气 Chi**                            | ✅ **Non-secret**            | 暴雪明确豁免                             |
+| **奥术充能 Arcane Charges**             | ✅ **Non-secret**            | 暴雪明确豁免                             |
+| **精华 Essence**                        | ✅ **Non-secret**            | 唤魔师，暴雪明确豁免                     |
+| **醉拳 Stagger**                        | ✅ **玩家自身为 Non-secret** | `UnitStagger()` 后来也被解除 Secret 限制 |
+| **最大资源值 `UnitPowerMax("player")`** | ✅ **通常不是 Secret**       | 暴雪后来特意放开了玩家自己的最大资源值   |
 
 
 
