@@ -53,8 +53,8 @@ local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本�
 
 --[[  logical code  ]]
 local UPDATE_INTERVAL = 0.1 -- 施法进度轮询间隔
-local POSITION_X = { { x1 } } -- 本实例冻结的横向位置
-local POSITION_Y = { { y1 } } -- 本实例冻结的 Cell 行
+local POSITION_X = {{x1}} -- 本实例冻结的横向位置
+local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
 local PROGRESS_MIN = 0
 local PROGRESS_MAX = 1

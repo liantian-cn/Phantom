@@ -177,7 +177,7 @@ def test_lua_guard_registers_no_conditions(tmp_path: Path, unit_class: str, spec
 @pytest.mark.parametrize(
     ("identifier", "args"),
     [
-        ("spec_dk_rune", {}),
+        ("spec_power_rune", {}),
         ("player_primary_power", {"max_power": 120}),
         ("player_health_pct", {}),
         ("spell_overlay", {"spell_ids": [50842]}),

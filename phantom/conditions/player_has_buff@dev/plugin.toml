@@ -1,4 +1,5 @@
 name = "player_has_buff@dev"
+assisted_combat_rule_types = ["ASSISTED_COMBAT_RULE_TYPE_AURA_ON_PLAYER", "ASSISTED_COMBAT_RULE_TYPE_AURA_MISSING_PLAYER"]
 author = "liantian-cn"
 version = "dev"
 display_name = "玩家是否有任一指定增益"

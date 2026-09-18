@@ -59,6 +59,7 @@ UnitHealthPercent = function(unit, predicted, curve)
     assert(unit == "player" and predicted == true)
     return curveValue(curve, state.health)
 end
+UnitExists = function(unit) return unit == "player" end
 GetRuneCooldown = function(index) return 0, 0, index <= state.runes end
 C_SpellBook = {IsSpellInSpellBook = function(id)
     assert(id ~= 61304, "GCD must not be checked in spellbook")

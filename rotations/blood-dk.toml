@@ -22,7 +22,7 @@ x = 1
 y = 2
 [[conditions]]
 title = "符文数量"
-plugin = "spec_dk_rune@dev"
+plugin = "spec_power_rune@dev"
 # 无参数
 
 [conditions.layout]

@@ -1,0 +1,16 @@
+name = "focus_has_dispellable_buff@dev"
+author = "liantian-cn"
+version = "dev"
+display_name = "焦点敌人可驱散增益存在状态"
+description = "存在且 UnitIsEnemy；HELPFUL|RAID_PLAYER_DISPELLABLE 与 includeDispelTypes。团队有人能驱散不等于玩家本人当前能驱散。空表或全 false 不匹配；Enrage 实际键本地证据不足，游戏待验。"
+recommended_condition_name = "焦点敌人可驱散增益存在状态"
+
+[parameters.dispel_types]
+type = "dict[str, bool]"
+required = true
+description = "Magic/Poison/Disease/Curse/Stealth/Special/Enrage 七键；未列出为 false，空表或全 false 不匹配。"
+
+[returns]
+type = "bool"
+description = "存在且 UnitIsEnemy；HELPFUL|RAID_PLAYER_DISPELLABLE 与 includeDispelTypes。团队有人能驱散不等于玩家本人当前能驱散。空表或全 false 不匹配；Enrage 实际键本地证据不足，游戏待验。"
+fallback = false

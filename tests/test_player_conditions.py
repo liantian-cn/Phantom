@@ -34,8 +34,8 @@ CASES: dict[str, dict[str, object]] = {
     "player_cast_target": {},
     "player_has_big_defensive": {},
     "player_has_dispellable_debuff": {"dispel_types": {"Magic": True, "Poison": False}},
-    "player_has_spell": {"spell_ids": [100, 200]},
-    "player_has_talent": {"spell_ids": [100, 200]},
+    "spell_known": {"spell_ids": [100, 200]},
+    "talent_known": {"spell_ids": [100, 200]},
     "player_damage_absorb": {"threshold": 10000},
     "player_heal_absorb": {"threshold": 10000},
     "player_has_buff": {"buff_ids": [188298, 188290]},
@@ -133,7 +133,7 @@ def test_trinket_slot_bounds(slot: int) -> None:
         create("player_trinket_ready", {"slot_id": slot})
 
 
-@pytest.mark.parametrize("name,field", [("player_has_spell", "spell_ids"), ("player_has_talent", "spell_ids"), ("player_has_buff", "buff_ids")])
+@pytest.mark.parametrize("name,field", [("spell_known", "spell_ids"), ("talent_known", "spell_ids"), ("player_has_buff", "buff_ids")])
 @pytest.mark.parametrize("bad", [[], [0], [-1], [True], [1.5], ["100"], 100, "100", None])
 def test_invalid_id_lists(name: str, field: str, bad: object) -> None:
     with pytest.raises(ValueError):
@@ -402,7 +402,7 @@ def test_cast_targets_all_tokens_secret_retention_and_clearing() -> None:
     assert decode(plugin, 255) == ""
 
 
-@pytest.mark.parametrize("name", ["player_has_spell", "player_has_talent"])
+@pytest.mark.parametrize("name", ["spell_known", "talent_known"])
 def test_spell_candidates_and_next_frame_refresh(name: str) -> None:
     plugin = create(name)
     _, state, _ = harness([plugin])
@@ -483,10 +483,13 @@ def test_dispel_maps_preserve_empty_and_false_entries(types: dict[str, bool]) ->
     assert dict(candidates.includeDispelTypes.items()) == types
 
 
-def test_all_plugins_generate_together_with_independent_layouts() -> None:
+def test_all_plugins_generate_together_with_independent_layouts(tmp_path: Path) -> None:
     entries = tuple(ConditionEntry(name, f"{name}@dev", create(name)) for name in CASES)
     width = allocate([entry.instance for entry in entries])
-    rotation = replace(load_rotation(ROOT / "rotations/blood-dk.toml"), conditions=entries, macros=(), board_width=width)
+    # 加载器可能回写布局，只在测试副本上生成，避免改写正式循环配置。
+    rotation_path = tmp_path / "blood-dk.toml"
+    rotation_path.write_bytes((ROOT / "rotations/blood-dk.toml").read_bytes())
+    rotation = replace(load_rotation(rotation_path), conditions=entries, macros=(), board_width=width)
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     compile_lua: Any = lua.eval("function(source) assert(loadstring(source)); return true end")
     sources = render(rotation, "PhantomTest")

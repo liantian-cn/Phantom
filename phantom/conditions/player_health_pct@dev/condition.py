@@ -2,7 +2,7 @@
 Summary:
     玩家预测生命值百分比。
 Description:
-    参数：无参数，沿用示例 usePredicted=true。
+    参数：use_predicted 为 bool，默认 true；无单位为 0。
     输出：cell，1 个区域，float scalar；4×4 像素。
     API：UnitHealthPercent；UnitDocumentation.lua。秘密生命值经颜色曲线直接渲染。
     核验：2026-09-12，@wow-ui-source，
@@ -12,6 +12,7 @@ Description:
 Key Variables:
     None
 Change Log:
+    2026-09-18: Changed 增加 use_predicted 参数，与目标及焦点生命条件统一。
     2026-09-14: Changed 直接读取像素属性并在插件内完成校验和业务转换，移除解码器封装。
     2026-09-14: Changed 解码接口接收同帧 PixelDecoder，保留原有业务解码。
     2026-09-13: Changed 组合校验器与解码器，保持 @1.0 配对语义。
@@ -21,16 +22,20 @@ Change Log:
 from phantom.core.condition.base import Condition
 from phantom.core.condition.contracts import Output
 from phantom.core.pixels import Cell, IconTile, PixelDecoder, ValueBar
-from phantom.core.validation import Fields
+from phantom.core.validation import Boolean, Fields
 
 
 class Plugin(Condition):
     """校验实例参数，声明输出，再将像素解释为本条件业务值。"""
 
     def __init__(self, args: dict[str, object]) -> None:
-        Fields(frozenset(set())).validate(args, "plugin_args")
+        Fields(frozenset(), frozenset({"use_predicted"})).validate(args, "plugin_args")
+        self.use_predicted: bool = Boolean().validate(args.get("use_predicted", True), "use_predicted")
         # 输出声明只依赖已验证参数，随后由核心分配并冻结区域。
         super().__init__(Output("cell", value_type=float))
+
+    def template_parameters(self) -> dict[str, str]:
+        return {"use_predicted": str(self.use_predicted).lower()}
 
     def decode_value(self, cells: list[Cell], value_bars: list[ValueBar], icon_tiles: list[IconTile], *, decoder: PixelDecoder) -> float:
         cell = cells[0]

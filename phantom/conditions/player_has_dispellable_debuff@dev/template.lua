@@ -43,12 +43,12 @@ local FrameLevel = addonTable.FrameLevel   -- 共享底板和光环显示层级
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local POSITION_X = { { x1 } }             -- 本实例冻结的横向位置
-local POSITION_Y = { { y1 } }             -- 本实例冻结的 Cell 行
+local POSITION_X = {{x1}}             -- 本实例冻结的横向位置
+local POSITION_Y = {{y1}}             -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player"               -- 本版本固定玩家单位
 local SLOT_KEY = "aura"                   -- 容器独立，因此固定键不会跨实例冲突
 local AURA_TEXTURE = "Interface\\AddOns\\" .. addonName .. "\\media\\aura\\aura_border_full.tga"
-local DISPEL_TYPES = { { { dispel_types } } } -- 空表也保留，表示全部排除
+local DISPEL_TYPES = { {{dispel_types}} } -- 空表也保留，表示全部排除
 local AURA_FILTER = "HARMFUL|RAID_PLAYER_DISPELLABLE"
 
 local container

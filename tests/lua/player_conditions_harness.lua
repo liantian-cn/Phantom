@@ -5,7 +5,7 @@ local state = {
     mounted = false, targeting = false, grouped = false, raiding = false,
     units = {player = {name = "Player"}}, ranges = {}, inventory = {}, items = {},
     known = {}, spellbook = {}, progress = 0, absorbs = 0, healAbsorbs = 0,
-    auras = {}, randomCalls = 0,
+    auras = {}, randomCalls = 0, invalidSpells = {},
 }
 local secretValues = {}
 local function reveal(value)
@@ -62,7 +62,10 @@ CreateFrame = function(kind, name, parent, template)
     local frame = {kind = kind, name = name, parent = parent, template = template, events = {}, textures = {}, children = {}, slots = {}}
     if parent then table.insert(parent.children, frame) end
     function frame:RegisterEvent(event) self.events[event] = true end
-    function frame:RegisterUnitEvent(event, unit) assert(unit == "player"); self.events[event] = unit end
+    function frame:RegisterUnitEvent(event, unit)
+        assert(unit == "player" or unit == "target" or unit == "focus" or unit == "pet")
+        self.events[event] = unit
+    end
     function frame:SetScript(script, callback) self[script] = callback end
     function frame:SetAllPoints(anchor) self.anchor = anchor end
     function frame:SetPoint(...) self.point = {...} end
@@ -127,7 +130,11 @@ function state:query(name)
     self.queries[name] = (self.queries[name] or 0) + 1
 end
 UnitGroupRolesAssigned = function() state:query("role"); return state.role end
-UnitAffectingCombat = function() state:query("combat"); return state.combat end
+UnitAffectingCombat = function(unit)
+    state:query("combat")
+    if unit == nil or unit == "player" then return state.combat end
+    return state.units[unit] and state.units[unit].combat == true
+end
 UnitIsUnit = function(a, b) assert(a == "player" and b == "target"); return state.selfTarget end
 IsPlayerMoving = function() state:query("moving"); return state.moving end
 UnitInVehicle = function() return state.vehicle end
@@ -137,12 +144,27 @@ GetCurrentKeyBoardFocus = function() return state.focus end
 IsInGroup = function() return state.grouped end
 IsInRaid = function() return state.raiding end
 UnitExists = function(unit) return state.units[unit] ~= nil end
+UnitIsDeadOrGhost = function(unit) return state.units[unit] and state.units[unit].dead == true end
+UnitHealthPercent = function(unit, predicted, curve)
+    state:query("health")
+    state.lastHealthUnit = unit
+    state.lastHealthPredicted = predicted
+    assert(#curve.points == 2)
+    assert(curve.points[1][1] == 0 and curve.points[1][2].value == 0)
+    assert(curve.points[2][1] == 1 and curve.points[2][2].value == 1)
+    local info = assert(state.units[unit])
+    local value = predicted and info.predictedHealth or info.health
+    return color(reveal(value or 0), true)
+end
 UnitCanAttack = function(player, unit) assert(player == "player"); return state.units[unit].attackable == true end
 UnitName = function(unit) return state.units[unit] and state.units[unit].name end
 C_Spell = {IsSpellInRange = function(id, unit)
+    state:query("range")
     state.lastRangeSpell = id
     return state.ranges[unit]
-end}
+end,
+    DoesSpellExist = function(id) return not state.invalidSpells[id] end,
+}
 GetInventoryItemID = function(unit, slot) assert(unit == "player"); return state.inventory[slot] end
 C_Item = {
     GetItemCooldown = function(id)

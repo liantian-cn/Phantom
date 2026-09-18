@@ -3,6 +3,8 @@
 # revision: a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58
 # 定义：Interface/AddOns/Blizzard_APIDocumentationGenerated/ 下 SpellBookDocumentation.lua, SpellDocumentation.lua, CurveUtilDocumentation.lua
 name = "spell_usable@dev"
+# 仅作规则检索关联；isUsable 不等价于资源支付判断或全部施法成功条件。
+assisted_combat_rule_types = ["ASSISTED_COMBAT_RULE_TYPE_AFFORD_COST", "ASSISTED_COMBAT_RULE_TYPE_COOLDOWN_ALLOW_CASTING_SUCCESS"]
 author = "liantian-cn"
 version = "dev"
 display_name = "技能可用状态"

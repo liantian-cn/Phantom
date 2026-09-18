@@ -39,7 +39,7 @@ local COLOR = addonTable.COLOR             -- 本项目共享黑白及施法颜�
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local POSITION_X = { { x1 } } -- 本实例冻结的横向位置
+local POSITION_X = {{x1}} -- 本实例冻结的横向位置
 local UNIT_TOKEN = "player" -- 本版本固定玩家单位
 
 local display

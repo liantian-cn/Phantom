@@ -57,6 +57,7 @@
 | `display_name` | 简明中文插件名 |
 | `description` | 中等详细用途：主要 API 名称、输入到输出转换、适用边界；无需 API 调用教程 |
 | `recommended_condition_name` | 建议的条件标题；如 `{技能名称}的冷却时间`，占位符需替换，实际标题遵守 rotation 命名规则；截图填写“不适用” |
+| `assisted_combat_rule_types` | 可选顶层字符串列表，记录完整 `ASSISTED_COMBAT_RULE_TYPE_*` 关联供检索；无关联时省略，运行时不读取，也不强制 schema。关联不承诺与官方规则等价，focus 可关联对应 target 规则 |
 | `[parameters]` | 无参数时用 `description` 明确说明；有参数时使用下级表逐项描述 |
 | `[parameters.<参数名>]` | `type`、`required`、`description`，仅有默认值时填写 `default`；说明含义与约束，不罗列内部临时变量 |
 | `[returns]` | `type`、`description`，按业务需要填写 `unit`、`fallback`、输出形状与状态字段说明 |

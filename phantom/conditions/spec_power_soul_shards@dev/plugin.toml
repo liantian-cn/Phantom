@@ -1,0 +1,15 @@
+# AI Agent 自述；仅供检索，运行时不读取。
+name = "spec_power_soul_shards@dev"
+author = "liantian-cn"
+version = "dev"
+display_name = "玩家整灵魂碎片"
+recommended_condition_name = "灵魂碎片"
+description = "固定 Enum.PowerType.SoulShards，以 UnitPower(player, powerType, false) 读取整碎片，不读取原始碎片片段。先检查 secret，再检查 0..255 整数范围，非法返回直接 Lua error。普通值除以 255 写入灰度 Cell，Python 返回整碎片数量。初始化、进入世界及玩家资源、最大资源、显示资源变化时刷新，事件延至下一帧。"
+assisted_combat_rule_types = ["ASSISTED_COMBAT_RULE_TYPE_SOUL_SHARDS_GREATER", "ASSISTED_COMBAT_RULE_TYPE_SOUL_SHARDS_LESS"]
+[parameters]
+description = "无参数，不接受 max_power；仅提供整碎片数量。"
+[returns]
+type = "int"
+unit = "整碎片"
+fallback = 0
+description = "一个 4×4 灰度 Cell，输出 0..255 整数；像素解码异常返回 0，Lua 非法资源返回硬错误。"

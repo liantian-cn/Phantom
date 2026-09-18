@@ -7,9 +7,10 @@ plugin: player_health_pct@dev
 描述：
     通过 UIInitFuncs 创建普通 Cell，立即读取玩家生命值比例并映射为颜色。
     默认使用预测生命值，0 为黑色、1 为白色，中间按比例线性插值。
-    独立事件框架仅监听玩家的当前生命值和最大生命值变化，结果直接交给 Cell 渲染。
+    独立事件框架监听玩家生命值、最大生命值变化；预测模式额外监听预测治疗和吸收变化。
 
 修改记录：
+2026-09-18：统一 use_predicted 参数、无单位零值和预测生命事件刷新。
 2026-09-15：事件统一延至下一帧刷新。
 2026-09-12：生成器条件模板 @1.0，参数校验与解码见同目录 condition.py。
 2026-09-11：按解码开发前的 Lua 示例需求新增玩家血量 Cell。
@@ -24,6 +25,7 @@ local After = C_Timer.After -- 事件后延至下一帧刷新
 
 local CreateFrame = CreateFrame                       -- 创建独立的玩家生命值事件框架
 local UnitHealthPercent = UnitHealthPercent           -- 获取玩家生命值比例的曲线求值结果
+local UnitExists = UnitExists -- 无单位时显示零值
 local CreateColorCurve = C_CurveUtil.CreateColorCurve -- 创建黑白颜色曲线
 local Linear = Enum.LuaCurveType.Linear               -- 按生命值比例线性插值
 local insert = table.insert                           -- 注册 UI 初始化函数
@@ -58,7 +60,7 @@ local RATIO_MAX = 1.0 -- 灰度曲线白色端点
 -- 条件实例位置由 Python 生成器填入。
 local POSITION_Y = {{y1}} -- 本实例冻结的 Cell 行
 local POSITION_X = {{x1}} -- 本实例冻结的横向位置
-local USE_PREDICTED = true             -- 本版本固定使用预测生命值
+local USE_PREDICTED = {{use_predicted}} -- 是否使用预测生命值
 
 local healthCurve = CreateColorCurve() -- 将生命值比例直接映射为灰度颜色
 healthCurve:SetType(Linear)
@@ -73,6 +75,10 @@ local function update()
         return
     end
 
+    if not UnitExists(UNIT_TOKEN) then
+        healthCell:setCell(COLOR.BLACK)
+        return
+    end
     local color = UnitHealthPercent(UNIT_TOKEN, USE_PREDICTED, healthCurve)
     healthCell:setCell(color) -- 使用局部曲线的颜色结果，不依赖 Cell 上不存在的曲线字段
 end
@@ -85,6 +91,11 @@ end
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")        -- 首次进入世界时刷新当前状态
 eventFrame:RegisterUnitEvent("UNIT_HEALTH", UNIT_TOKEN)    -- 只接收玩家当前生命值变化
 eventFrame:RegisterUnitEvent("UNIT_MAXHEALTH", UNIT_TOKEN) -- 只接收玩家最大生命值变化
+if USE_PREDICTED then
+    eventFrame:RegisterUnitEvent("UNIT_HEAL_PREDICTION", UNIT_TOKEN) -- 预测治疗变化
+    eventFrame:RegisterUnitEvent("UNIT_ABSORB_AMOUNT_CHANGED", UNIT_TOKEN) -- 吸收量变化
+    eventFrame:RegisterUnitEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED", UNIT_TOKEN) -- 治疗吸收变化
+end
 eventFrame:SetScript("OnEvent", function()
     After(0, function() update() end)
 end)

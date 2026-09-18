@@ -38,10 +38,10 @@ local FrameLevel = addonTable.FrameLevel   -- 共享底板和光环显示层级
 local UIInitFuncs = addonTable.UIInitFuncs -- 共享布局就绪后初始化本实例
 
 --[[  logical code  ]]
-local POSITION_X = { { x1 } }   -- 本实例冻结的横向位置
-local POSITION_Y = { { y1 } }   -- 本实例冻结的 Cell 行
+local POSITION_X = {{x1}}   -- 本实例冻结的横向位置
+local POSITION_Y = {{y1}}   -- 本实例冻结的 Cell 行
 local UNIT_TOKEN = "player"     -- 本版本固定玩家单位
-local THRESHOLD = { { threshold } } -- N 与 N+1 都可精确表示
+local THRESHOLD = {{threshold}} -- N 与 N+1 都可精确表示
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 
 local absorbBar

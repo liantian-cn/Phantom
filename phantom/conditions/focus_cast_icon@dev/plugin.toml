@@ -1,0 +1,16 @@
+name = "focus_cast_icon@dev"
+# SetTexture 返回 false 时清空图标及角标；不比较秘密 texture。
+# 返回 true 不保证异步资源最终加载成功，详见模板核验证据；此边界仍需游戏验收。
+author = "liantian-cn"
+version = "dev"
+display_name = "焦点施法或引导图标"
+description = "存在且当前有施法或引导；纹理直接安全显示，内部 6×6 hash，空闲或失败空字符串。沿用玩家图标样式，角标不表示打断许可。"
+recommended_condition_name = "焦点施法或引导图标"
+
+[parameters]
+description = "无业务参数；拒绝多余字段。"
+
+[returns]
+type = "str"
+description = "存在且当前有施法或引导；纹理直接安全显示，内部 6×6 hash，空闲或失败空字符串。沿用玩家图标样式，角标不表示打断许可。"
+fallback = ""
