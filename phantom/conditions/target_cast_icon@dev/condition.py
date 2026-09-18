@@ -5,10 +5,10 @@ Description:
     参数：无参数；拒绝多余字段。
     输出：icon_tile，1 个区域，str scalar；8×8 像素，采样内部 6×6。
     API：UnitCastingInfo/UnitChannelInfo("target") 第 3 项返回可能秘密的 textureID；用 NeverSecret 的 delayTimeMs/isEmpowered 判断状态。
-    秘密纹理直接送给 Texture:SetTexture，false 时隐藏图标和角标；沿用玩家样式，角标不表示打断许可。
+    秘密纹理通过 IconTile:SetIcon 直接显示，不消费 SetTexture 返回值；沿用玩家样式，角标不表示打断许可。
     核验：2026-09-18，@wow-ui-source，12.1.0.69587，
     revision a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58；具体来源和限制见 template.lua。
-    解码：内部 6×6 RGB hash，空槽或解码异常返回 ""；SetTexture 的 true 不保证异步资源最终加载成功。
+    解码：内部 6×6 RGB hash，空槽或解码异常返回 ""；单位消失或无施法时清空，不保证纹理设置失败时隐藏角标。
 Key Variables:
     None
 Change Log:

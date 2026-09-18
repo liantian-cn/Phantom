@@ -14,7 +14,7 @@
 | [x] | target_in_combat@dev | focus_in_combat@dev | 存在且 UnitAffectingCombat；不表示正与玩家交战 |
 | [x] | target_cast_progress@dev | focus_cast_progress@dev | 已完成 0–100 float，空闲／失败 0.0，无参数 |
 | [x] | target_cast_interruptible@dev | focus_cast_interruptible@dev | 有施法／引导且可中断才 True，普通 nil 保守 False，无参数 |
-| [x] | target_cast_icon@dev | focus_cast_icon@dev | 一个 IconTile 的 hash str，空闲／失败空字符串，无参数 |
+| [x] | target_cast_icon@dev | focus_cast_icon@dev | 一个 IconTile 的 hash str，空槽／解码异常空字符串；单位消失或无施法时清空，无参数 |
 | [x] | target_has_dispellable_buff@dev | focus_has_dispellable_buff@dev | 存在且 UnitIsEnemy；必填 dispel_types 布尔映射 |
 
 施法使用 NeverSecret `delayTimeMs` 或 `isEmpowered ~= nil` 哨兵，普通引导 false 有效；进度只使用 Duration `EvaluateElapsedPercent`，图标直接交给纹理消费者，可中断用 `C_CurveUtil.EvaluateColorFromBoolean`。不对秘密值做 Lua 算术、反转或分支。没有新增施法状态插件。
@@ -76,9 +76,21 @@
 
 最小片段见 `.agents/skills/phantom-plugin-dev/references/target-focus-example.md`，仅声明观察条件。
 
-### P2 复核补充
+### P2 历史纠正（2026-09-19，用户最终确认）
 
-目标／焦点施法图标已在插件内直接处理 `SetTexture` 的 false 返回，隐藏图标和角标；核心及玩家插件不变。新增 target/focus × 普通施法/引导的成功→失败→恢复测试。指定 build 的 `SimpleTextureBaseAPIDocumentation.lua` 允许秘密参数，返回 success: bool，未标记秘密返回；不比较秘密 texture。Wiki `API:TextureBase_SetTexture` 提醒返回值可能始终 true 且纹理异步加载，因此不承诺由返回值识别所有异步加载失败，仍需游戏验收。
+此前 P2 以 `SetTexture` 的 false 返回清空目标／焦点图标和角标，并以普通 bool 替身测试；该实现会消费实际客户端的秘密返回布尔，原“未标记秘密返回即可安全判断”的推断错误。用户已明确撤销“设置失败必定同时隐藏角标”的旧要求。
+
+现改为玩家同款 `IconTile:SetIcon` 直接显示路径，不消费 `SetTexture` 返回值；保留单位消失或无施法时清空图标与角标。只读核对的官方源码仍为上列 revision/build，`SimpleTextureBaseAPIDocumentation.lua` 允许秘密参数且声明 success: bool，不能据此保证普通返回值。回归覆盖 target/focus × 普通施法/引导 × true/false/nil 返回，以及空闲／单位消失后的清空和恢复，并静态约束模板使用不消费返回值的显示调用。普通 Lua 不能真实模拟 WoW 秘密布尔，这些离线检查不等于游戏验收。
+
+- [ ] 修复后的目标实际客户端 Secret Values、纹理及角标显示验收；本次不部署游戏、不运行入口。
+
+本次离线验证（2026-09-19）：
+
+- `.venv/Scripts/python -m pytest tests/test_target_focus_conditions.py tests/test_player_conditions.py tests/test_conditions.py -q`：306 passed，包含生成 Lua 5.1 编译与真实 IconTile 消费者回归。
+- 同一测试命令追加 `tests/test_generator.py`：338 passed、1 failed。失败项 `test_generated_lua_roundtrip_gcd_and_events` 的旧替身缺少 `Enum.PowerType`，在 `spec_power_runic_power@dev/template.lua` 加载阶段报错，尚未执行本次图标逻辑；保留该验证限制。
+- `.venv/Scripts/python scripts/check_types.py`：核心、测试和全部精确版本入口通过。
+- `.venv/Scripts/python -m ruff check` 与 `-m ruff format --check`，范围为 `tests/test_target_focus_conditions.py` 及两个施法图标的 `condition.py`：通过。
+- `git diff --check`：通过；仅有 Git 的 LF／CRLF 提示。已审阅修复 diff，现有 `rotations/blood-dk.toml` 用户修改保留。
 
 ## 5. 排除范围保持
 

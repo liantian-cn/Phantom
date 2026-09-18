@@ -4,7 +4,7 @@ uuid: {{uuid}}
 plugin: focus_cast_icon@dev
 摘要：焦点当前施法图标。
 描述：
-    秘密纹理直接送给 Texture:SetTexture；返回 false 时清空；沿用玩家图标样式，角标不表示打断许可。
+    秘密纹理通过 IconTile:SetIcon 直接显示，不消费 SetTexture 返回值；角标不表示打断许可。
     参数校验和配对解码见 condition.py；本实例使用冻结坐标，不继承旧项目分类色。
 修改记录：
 2026-09-18：事件统一延至下一帧刷新。
@@ -32,9 +32,10 @@ local UnitChannelInfo = UnitChannelInfo -- 使用通道的非秘密蓄力哨兵�
 Wiki 来源与查询入口（2026-09-18 已获取 UnitCastingInfo/UnitChannelInfo 页面；其他链接为查询入口）：
     https://warcraft.wiki.gg/wiki/API_UnitCastingInfo
     https://warcraft.wiki.gg/wiki/API_UnitChannelInfo
-Texture:SetTexture(texture) 允许秘密参数（AllowedWhenTainted），返回 success: bool，
-本 build 的 SimpleTextureBaseAPIDocumentation.lua 未标记 SecretReturns；只判断返回值，不比较 texture。
-false 时清空图标和角标；true 仅表示本次调用结果，不保证异步资源最终加载成功。
+2026-09-19 纠正：SimpleTextureBaseAPIDocumentation.lua 的 Texture:SetTexture(texture) 允许秘密参数
+（AllowedWhenTainted），返回 success: bool；未标记 SecretReturns 不保证返回值可供普通 Lua 判断。
+沿用玩家的 IconTile:SetIcon 显示路径，不消费返回值；单位消失或无施法时清空图标和角标，
+不保证设置失败时同步隐藏角标，也不保证异步资源最终加载成功；实际客户端仍待验收。
 Wiki：https://warcraft.wiki.gg/wiki/API:TextureBase_SetTexture （2026-09-18 获取，提示返回值可能始终 true）。
 ]]
 
@@ -51,11 +52,8 @@ local display
 local eventFrame = CreateFrame("Frame")
 
 local function showTexture(texture)
-    display:Clear() -- 先移除上一施法的图标和角标，失败时保持黑底
-    if display.Icon:SetTexture(texture) then -- 仅消费普通 success，不检查可能秘密的纹理值
-        display.Icon:Show()
-        display:SetBorderColor(COLOR.SPELL_TYPE.PLAYER_SPELL)
-    end
+    display:SetIcon(texture) -- 沿用玩家显示路径，不消费可能秘密的 SetTexture 返回值
+    display:SetBorderColor(COLOR.SPELL_TYPE.PLAYER_SPELL)
 end
 
 local function update()

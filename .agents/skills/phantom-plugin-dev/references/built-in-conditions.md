@@ -147,7 +147,7 @@ Aura 身份分类与普通可辅助条件的语义不同：过滤使用 `UnitCan
 | target_in_combat / focus_in_combat | 无 | 单位处于战斗，不保证与玩家交战；False |
 | target_cast_progress / focus_cast_progress | 无 | 已完成百分比 0–100 float，空闲／失败 0.0 |
 | target_cast_interruptible / focus_cast_interruptible | 无 | 当前有施法或引导且可中断，普通 nil 保守 False；不表示玩家一定能打断 |
-| target_cast_icon / focus_cast_icon | 无 | 一个 IconTile 内部 6×6 hash，空闲／失败空字符串；角标不表示许可 |
+| target_cast_icon / focus_cast_icon | 无 | 一个 IconTile 内部 6×6 hash，空槽／解码异常空字符串；单位消失或无施法时清空，角标不表示许可 |
 | target_has_dispellable_buff / focus_has_dispellable_buff | 必填 dispel_types 布尔映射 | 存在、UnitIsEnemy 且匹配指定类型的 HELPFUL\|RAID_PLAYER_DISPELLABLE，bool；False |
 
 驱散七键为 Magic、Poison、Disease、Curse、Stealth、Special、Enrage。空表／全 false 不匹配；官方过滤表示团队有人能驱散，并非玩家本人当前能驱散。映射键原样传给 `candidateFilters.includeDispelTypes`；Enrage 对应实际 `dispelName` 的本地证据不足，标为游戏待验，不猜测转换为空字符串或其他键。
@@ -160,4 +160,4 @@ Aura 身份分类与普通可辅助条件的语义不同：过滤使用 `UnitCan
 
 可复制的最小配置片段见 [目标／焦点示例](target-focus-example.md)。核验基线为本地 12.1.0.69587、revision `a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58`；UnitTokenPvPRestrictedForAddOns、实际客户端和 Enrage 显示均需另行游戏验收。
 
-目标／焦点施法图标在插件内直接消费 `Texture:SetTexture` 返回值：false 时保持图标和角标隐藏，解码为空字符串，不比较秘密纹理。上述 build 的返回值为未标记秘密的 bool；Wiki 提醒它可能始终返回 true，且资源异步加载，因此此处理不保证识别所有异步加载失败。黑名单的返回值检查同样存在这一边界；不通过纹理身份、可见性或加载时序旁路读取秘密值。
+目标／焦点施法图标沿用玩家的 `IconTile:SetIcon` 显示路径，直接传递秘密纹理，不消费 `Texture:SetTexture` 返回值。2026-09-19 纠正此前“未标记秘密即可判断返回值”的结论：上述 build 允许秘密参数并声明 bool 返回，不保证返回值可用于普通 Lua 分支。单位消失或无施法时清空图标和角标；已撤销设置失败必定同时隐藏角标的保证，空槽／解码异常仍返回空字符串。异步资源加载及实际客户端秘密值行为仍待游戏验收。黑名单使用普通技能纹理的既有返回值检查不在此次修复范围；不通过纹理身份、可见性或加载时序旁路读取秘密值。

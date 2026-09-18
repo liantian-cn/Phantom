@@ -1,5 +1,6 @@
 """目标／焦点与黑名单的生成、像素解码和 Lua 生命周期验证，不替代客户端验收。"""
 
+import re
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -205,8 +206,23 @@ def test_blacklist_panel_defaults_existing_profile_sort_failure_and_events() -> 
 
 
 @pytest.mark.parametrize("unit", ["target", "focus"])
+def test_cast_icon_uses_display_only_texture_path(unit: str) -> None:
+    # 普通 Lua 的 table 替身不能模拟秘密布尔的分支错误，静态约束补充返回值回归保护。
+    plugin = create(f"{unit}_cast_icon")
+    allocate([plugin])
+    source = plugin.generate_lua("cast-icon-regression")
+    source = re.sub(r"--\[\[.*?\]\]|--[^\n]*", "", source, flags=re.DOTALL)
+    assert "SetTexture" not in source
+    calls = [line.strip() for line in source.splitlines() if "SetIcon" in line]
+    assert calls
+    assert all(re.fullmatch(r"display:SetIcon\(\w+\)", line) for line in calls)
+
+
+@pytest.mark.parametrize("unit", ["target", "focus"])
 @pytest.mark.parametrize("mode", ["casting", "channeling"])
-def test_cast_icon_texture_failure_clears_previous_icon_and_border(unit: str, mode: str) -> None:
+@pytest.mark.parametrize("texture_result", [True, False, None])
+@pytest.mark.parametrize("clear_reason", ["idle", "missing_unit"])
+def test_cast_icon_ignores_texture_result_and_clears_on_state_change(unit: str, mode: str, texture_result: bool | None, clear_reason: str) -> None:
     plugin = create(f"{unit}_cast_icon")
     lua, state, _ = harness([plugin])
     state.units[unit] = lua.table_from({})
@@ -217,19 +233,28 @@ def test_cast_icon_texture_failure_clears_previous_icon_and_border(unit: str, mo
     icon = state.icons[1]
     assert icon.textures[2].hidden is False
     assert icon.textures[3].hidden is False
-    state.failedTextures[789] = True
+    state.overrideTextureResult = True
+    state.textureResult = texture_result
     state.casts[unit].texture = state.secret(state, 789)
     state.event(state, event)
     assert icon.textures[2].hidden is False
     state.flushTimers(state)
     assert icon.textures[2].texture == 789
-    assert icon.textures[2].hidden is True
-    assert icon.textures[3].hidden is True
-    decoder = PixelDecoder(np.zeros((20, 128, 3), dtype=np.uint8))
-    assert plugin.value([], [], [IconTile(1, np.zeros((8, 8, 3), dtype=np.uint8))], decoder=decoder) == ""
-    state.casts[unit].texture = state.secret(state, 456)
+    assert icon.textures[2].hidden is False
+    assert icon.textures[3].hidden is False
+    if clear_reason == "idle":
+        state.casts[unit] = None
+    else:
+        state.units[unit] = None
     state.event(state, event)
     state.flushTimers(state)
+    assert icon.textures[2].hidden is True
+    assert icon.textures[3].hidden is True
+    state.units[unit] = lua.table_from({})
+    state.casts[unit] = lua.table_from({"mode": mode, "texture": state.secret(state, 456), "empowered": False})
+    state.event(state, event)
+    state.flushTimers(state)
+    assert icon.textures[2].texture == 456
     assert icon.textures[2].hidden is False
     assert icon.textures[3].hidden is False
 

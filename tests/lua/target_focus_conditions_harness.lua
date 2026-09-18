@@ -65,6 +65,8 @@ CreateFrame = function(kind, name, parent, template)
         local oldSet = tex.SetTexture
         function tex:SetTexture(value)
             oldSet(self, value)
+            -- 普通 Lua 无法模拟 WoW 秘密布尔；仅控制普通返回值验证消费者不依赖真值。
+            if state.overrideTextureResult then return state.textureResult end
             return self.texture ~= nil and not state.failedTextures[self.texture]
         end
         tex.SetPoint = noop

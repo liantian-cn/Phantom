@@ -126,6 +126,9 @@ regions = []
 title = "爆发开启"
 plugin = "in_burst@dev"
 
+[conditions.layout]
+output_type = "none"
+regions = []
 [[conditions]]
 title = "固定符文能量"
 plugin = "spec_power_runic_power@dev"
@@ -133,65 +136,156 @@ plugin = "spec_power_runic_power@dev"
 max_power = 120
 
 # 玩家基础状态。
+
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 8
+y = 2
 [[conditions]]
 title = "玩家职责"
 plugin = "player_role@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 9
+y = 2
 [[conditions]]
 title = "玩家战斗中"
 plugin = "player_in_combat@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 10
+y = 2
 [[conditions]]
 title = "玩家目标是自己"
 plugin = "player_is_player_target@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 11
+y = 2
 [[conditions]]
 title = "玩家正在移动"
 plugin = "player_is_moving@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 12
+y = 2
 [[conditions]]
 title = "玩家在载具或坐骑上"
 plugin = "player_in_vehicle@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 13
+y = 2
 [[conditions]]
 title = "玩家正在选择施法目标"
 plugin = "player_is_targeting_spell@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 14
+y = 2
 [[conditions]]
 title = "玩家存在键盘输入焦点"
 plugin = "player_is_chatting@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 15
+y = 2
 [[conditions]]
 title = "玩家在队伍或团队中"
 plugin = "player_in_group@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 16
+y = 2
 [[conditions]]
 title = "玩家有存活宠物"
 plugin = "player_has_pet@dev"
 
 # 玩家施法与技能已知状态。
+
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 17
+y = 2
 [[conditions]]
 title = "玩家施法进度"
 plugin = "player_cast_progress@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 18
+y = 2
 [[conditions]]
 title = "玩家正在蓄力"
 plugin = "player_is_empowering@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 19
+y = 2
 [[conditions]]
 title = "玩家施法图标"
 plugin = "player_cast_icon@dev"
 
+[conditions.layout]
+output_type = "icon_tile"
+
+[[conditions.layout.regions]]
+x = 1
 [[conditions]]
 title = "玩家施法目标"
 plugin = "player_cast_target@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 20
+y = 2
 [[conditions]]
 title = "心灵冰冻技能已知"
 plugin = "spell_known@dev"
 [conditions.plugin_args]
 spell_ids = [47528]
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 21
+y = 2
 [[conditions]]
 title = "天赋技能439843已知"
 plugin = "talent_known@dev"
@@ -200,42 +294,91 @@ plugin = "talent_known@dev"
 spell_ids = [439843]
 
 # 玩家物品、吸收量与防御光环。
+
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 22
+y = 2
 [[conditions]]
 title = "上栏饰品就绪"
 plugin = "player_trinket_ready@dev"
 [conditions.plugin_args]
 slot_id = 13
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 23
+y = 2
 [[conditions]]
 title = "治疗石就绪"
 plugin = "player_healthstone_ready@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 24
+y = 2
 [[conditions]]
 title = "治疗药水就绪"
 plugin = "player_heal_potion_ready@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 25
+y = 2
 [[conditions]]
 title = "玩家伤害吸收超过一万"
 plugin = "player_damage_absorb@dev"
 [conditions.plugin_args]
 threshold = 10000
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 26
+y = 2
 [[conditions]]
 title = "玩家治疗吸收超过一万"
 plugin = "player_heal_absorb@dev"
 [conditions.plugin_args]
 threshold = 10000
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 27
+y = 2
 [[conditions]]
 title = "玩家有大防御"
 plugin = "player_has_big_defensive@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 28
+y = 2
 [[conditions]]
 title = "玩家有白骨之盾"
 plugin = "player_has_buff@dev"
 [conditions.plugin_args]
 buff_ids = [195181]
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 29
+y = 2
 [[conditions]]
 title = "玩家有可驱散毒或魔法减益"
 plugin = "player_has_dispellable_debuff@dev"
@@ -243,58 +386,136 @@ plugin = "player_has_dispellable_debuff@dev"
 dispel_types = { Poison = true, Magic = true }
 
 # 目标状态、施法与光环。
+
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 30
+y = 2
 [[conditions]]
 title = "目标存在"
 plugin = "target_is_exists@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 31
+y = 2
 [[conditions]]
 title = "目标存活"
 plugin = "target_is_alive@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 32
+y = 2
 [[conditions]]
 title = "目标敌对"
 plugin = "target_is_enemy@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 33
+y = 2
 [[conditions]]
 title = "目标可攻击"
 plugin = "target_can_attack@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 34
+y = 2
 [[conditions]]
 title = "目标可辅助"
 plugin = "target_can_assist@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 35
+y = 2
 [[conditions]]
 title = "目标战斗中"
 plugin = "target_in_combat@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 36
+y = 2
 [[conditions]]
 title = "目标血量百分比"
 plugin = "target_health_pct@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 37
+y = 2
 [[conditions]]
 title = "目标施法进度"
 plugin = "target_cast_progress@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 38
+y = 2
 [[conditions]]
 title = "目标施法可中断"
 plugin = "target_cast_interruptible@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 39
+y = 2
 [[conditions]]
 title = "目标施法图标"
 plugin = "target_cast_icon@dev"
 
+[conditions.layout]
+output_type = "icon_tile"
+
+[[conditions.layout.regions]]
+x = 2
 [[conditions]]
 title = "目标有白骨之盾"
 plugin = "target_has_buff@dev"
 [conditions.plugin_args]
 aura_ids = [195181]
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 40
+y = 2
 [[conditions]]
 title = "目标有血之疫病"
 plugin = "target_has_debuff@dev"
 [conditions.plugin_args]
 aura_ids = [55078]
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 41
+y = 2
 [[conditions]]
 title = "目标有可驱散毒或魔法增益"
 plugin = "target_has_dispellable_buff@dev"
@@ -303,58 +524,136 @@ plugin = "target_has_dispellable_buff@dev"
 dispel_types = { Poison = true, Magic = true }
 
 # 焦点状态、施法与光环。
+
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 42
+y = 2
 [[conditions]]
 title = "焦点存在"
 plugin = "focus_is_exists@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 43
+y = 2
 [[conditions]]
 title = "焦点存活"
 plugin = "focus_is_alive@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 44
+y = 2
 [[conditions]]
 title = "焦点敌对"
 plugin = "focus_is_enemy@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 45
+y = 2
 [[conditions]]
 title = "焦点可攻击"
 plugin = "focus_can_attack@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 46
+y = 2
 [[conditions]]
 title = "焦点可辅助"
 plugin = "focus_can_assist@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 47
+y = 2
 [[conditions]]
 title = "焦点战斗中"
 plugin = "focus_in_combat@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 48
+y = 2
 [[conditions]]
 title = "焦点血量百分比"
 plugin = "focus_health_pct@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 49
+y = 2
 [[conditions]]
 title = "焦点施法进度"
 plugin = "focus_cast_progress@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 50
+y = 2
 [[conditions]]
 title = "焦点施法可中断"
 plugin = "focus_cast_interruptible@dev"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 51
+y = 2
 [[conditions]]
 title = "焦点施法图标"
 plugin = "focus_cast_icon@dev"
 
+[conditions.layout]
+output_type = "icon_tile"
+
+[[conditions.layout.regions]]
+x = 3
 [[conditions]]
 title = "焦点有白骨之盾"
 plugin = "focus_has_buff@dev"
 [conditions.plugin_args]
 aura_ids = [195181]
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 52
+y = 2
 [[conditions]]
 title = "焦点有血之疫病"
 plugin = "focus_has_debuff@dev"
 [conditions.plugin_args]
 aura_ids = [55078]
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 53
+y = 2
 [[conditions]]
 title = "焦点有可驱散毒或魔法增益"
 plugin = "focus_has_dispellable_buff@dev"
@@ -363,18 +662,37 @@ plugin = "focus_has_dispellable_buff@dev"
 dispel_types = { Poison = true, Magic = true }
 
 # 射程与姓名板计数：统一使用死神的抚摩，不代表实际几何距离。
+
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 54
+y = 2
 [[conditions]]
 title = "目标在抚摩射程内"
 plugin = "target_in_range@dev"
 [conditions.plugin_args]
 spell_id = 195292
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 55
+y = 2
 [[conditions]]
 title = "焦点在抚摩射程内"
 plugin = "focus_in_range@dev"
 [conditions.plugin_args]
 spell_id = 195292
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 56
+y = 2
 [[conditions]]
 title = "抚摩对焦点射程结果"
 plugin = "spell_in_range@dev"
@@ -382,6 +700,12 @@ plugin = "spell_in_range@dev"
 spell_id = 195292
 unit_token = "focus"
 
+[conditions.layout]
+output_type = "cell"
+
+[[conditions.layout.regions]]
+x = 57
+y = 2
 [[conditions]]
 title = "抚摩射程内可观察敌人数"
 plugin = "player_melee_enemies_count@dev"
@@ -390,25 +714,29 @@ plugin = "player_melee_enemies_count@dev"
 spell_id = 195292
 combat_only = false
 
-[[conditions]]
-title = "抚摩射程内血之疫病敌人数"
-plugin = "player_range_aura_units_count@dev"
-# 仅统计可观察姓名板。55078 尚未核验为 NeverSecret；用户已接受初始化失败风险。
-# 若游戏检查不满足 NeverSecret，插件会报错并中止后续初始化，不能当作正常零计数。
-[conditions.plugin_args]
-spell_id = 195292
-aura_id = 55078
-combat_only = false
+[conditions.layout]
+output_type = "cell"
 
-# 光环条观测：时长条统一采用零到十比例刻度，层数条仅声明观测。
+[[conditions.layout.regions]]
+x = 58
+y = 2
+
+# 光环条观测：白骨之盾时长条采用比例乘以三十的时间估计，血之疫病保留零到十比例刻度，层数条仅声明观测。
+
 [[conditions]]
-title = "白骨之盾剩余比例刻度"
+title = "白骨之盾剩余时间估计"
 plugin = "aura_player_buff_duration@dev"
-# 返回剩余比例乘以十，是比例刻度而非秒数，不假定真实光环时长为十秒。
+# 返回剩余比例乘以三十的时间估计，并非 API 提供的精确剩余秒数；实际光环时长与配置不同时会有误差。
 [conditions.plugin_args]
 aura_ids = [195181]
-duration = 10
+duration = 30
 
+[conditions.layout]
+output_type = "value_bar"
+
+[[conditions.layout.regions]]
+x = 4
+width = 30
 [[conditions]]
 title = "血之疫病剩余比例刻度"
 plugin = "aura_target_debuff_duration@dev"
@@ -417,6 +745,12 @@ plugin = "aura_target_debuff_duration@dev"
 aura_ids = [55078]
 duration = 10
 
+[conditions.layout]
+output_type = "value_bar"
+
+[[conditions.layout.regions]]
+x = 35
+width = 10
 [[conditions]]
 title = "白骨之盾层数观测"
 plugin = "aura_player_buff_stacks@dev"
@@ -425,6 +759,12 @@ plugin = "aura_player_buff_stacks@dev"
 aura_ids = [195181]
 max_value = 12
 
+[conditions.layout]
+output_type = "value_bar"
+
+[[conditions.layout.regions]]
+x = 46
+width = 2
 [[conditions]]
 title = "血之疫病层数观测"
 plugin = "aura_target_debuff_stacks@dev"
@@ -434,10 +774,49 @@ aura_ids = [55078]
 max_value = 1
 
 # 打断黑名单只提供图标列表，不自动匹配施法或执行打断。
+
+[conditions.layout]
+output_type = "value_bar"
+
+[[conditions.layout.regions]]
+x = 49
+width = 2
 [[conditions]]
 title = "打断黑名单图标"
 plugin = "interrupt_blacklist_icons@dev"
 
+[conditions.layout]
+output_type = "icon_tile"
+
+[[conditions.layout.regions]]
+x = 4
+
+[[conditions.layout.regions]]
+x = 5
+
+[[conditions.layout.regions]]
+x = 6
+
+[[conditions.layout.regions]]
+x = 7
+
+[[conditions.layout.regions]]
+x = 8
+
+[[conditions.layout.regions]]
+x = 9
+
+[[conditions.layout.regions]]
+x = 10
+
+[[conditions.layout.regions]]
+x = 11
+
+[[conditions.layout.regions]]
+x = 12
+
+[[conditions.layout.regions]]
+x = 13
 [[macros]]
 name = "灵界打击"
 macro_text = "/cast [@target] 灵界打击"
