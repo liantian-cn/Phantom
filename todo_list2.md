@@ -1,479 +1,755 @@
-# 辅助战斗条件候选插件清单
+# WowAssistedCombatReveal条件迁移计划
 
-## 范围与使用方式
+WowAssistedCombatReveal 
 
-- 来源：只读参考 `C:\Users\liantian\.local\share\opencode\repos\github.com\liantian-cn\WowAssistedCombatReveal@main\ConditionTypeMap.csv`。
-- 收录 Type 0–69 共 70 条，包括 `Active=N`；仅排除 Type 70 `ASSISTED_COMBAT_RULE_TYPE_AUTOMATION_ONLY`。下表完整枚举、Active 和条件简介沿用 CSV；Active 不表示 Phantom 实现状态。
-- 按候选插件合并同类上下限、存在／缺失条件；每条 Type 仅归属一节。候选名采用 `snake_case@dev`，不代表实现授权，各节实现说明留待补充。
-- 同名或相关现有插件仅作关联，不标记完成，也不承诺覆盖对应官方条件；枚举名为主要依据，CSV 描述差异单独注明。
-- 保留 CSV 的比较含义：距离及普通目标计数的 GREATER 为严格大于，其他条目按各自简介，不统一改成大于等于。
-- 资源按类别独立命名。相关现有 `player_primary_power@dev` 仅返回当前主要资源，不等同于各类指定资源插件。
 
-## 1. `player_has_spell@dev`
+1. 新字段定义
+现有的插件如果满足官方一件辅助的条件字符"ASSISTED_COMBAT_RULE_*"
+则在插件的toml配置文件中增加一个字段，用于指定该条件的类型。这个字段是list类型。
+这是为便于后续搜索。
 
-简介：玩家是否已学习指定技能。
+2. 添加、维护插件
 
-关联：同名现有插件仅检查技能已知／玩家法术书，不解析天赋树。枚举为 SPELL_LEARNED，CSV 则描述为“点出天赋”，两者差异保留待确认。
+按下述内容，添加维护插件。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 0 | ASSISTED_COMBAT_RULE_TYPE_SPELL_LEARNED | Y | 若已点出天赋 {spell} |
 
-### 实现说明
+### 1. 玩家是否已学习指定技能/天覅
 
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_SPELL_LEARNED
 
-## 2. `spell_cooldown@dev`
+目前，有2个相关插件满足这个要求
+phantom\conditions\player_has_spell@dev
+phantom\conditions\player_has_talent@dev
 
-简介：技能冷却状态及剩余冷却时间。
+但目前看起来，这2个插件的命名不合适，应该改成spell_known 和 talent_known。
+使用known不适用learned是因为，C_SpellBook.IsSpellKnown 方法的名字。
 
-关联：同名现有插件返回剩余秒数；CSV 剩余冷却阈值为毫秒，不能直接视为相同契约。
+这俩插件看似完全一样，是因为游戏内，天赋=被动技能。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 1 | ASSISTED_COMBAT_RULE_TYPE_SPELL_ON_COOLDOWN | Y | 若技能 {arg1} 正在冷却 |
-| 2 | ASSISTED_COMBAT_RULE_TYPE_SPELL_OFF_COOLDOWN | Y | 若技能 {spell} 不在冷却中 |
-| 65 | ASSISTED_COMBAT_RULE_TYPE_COOLDOWN_REMAINING_GREATER | Y | 若技能 {arg1} 的剩余冷却大于等于 {arg2} 毫秒 |
-| 66 | ASSISTED_COMBAT_RULE_TYPE_COOLDOWN_REMAINING_LESS | Y | 若技能 {arg1} 的剩余冷却小于等于 {arg2} 毫秒 |
 
-### 实现说明
 
 
-## 3. `target_distance@dev`
+### 2. 技能冷却状态及剩余冷却时间
 
-简介：玩家与目标的距离。
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_SPELL_ON_COOLDOWN
+ - ASSISTED_COMBAT_RULE_TYPE_SPELL_OFF_COOLDOWN
+ - ASSISTED_COMBAT_RULE_TYPE_COOLDOWN_REMAINING_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_COOLDOWN_REMAINING_LESS
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 3 | ASSISTED_COMBAT_RULE_TYPE_TARGET_DISTANCE_LESS | Y | 若目标距离小于等于 {arg1} 码 |
-| 4 | ASSISTED_COMBAT_RULE_TYPE_TARGET_DISTANCE_GREATER | Y | 若目标距离大于 {arg1} 码 |
 
-### 实现说明
+目前，有1个相关插件满足这个要求
+- `spell_cooldown@dev`
 
+虽然返回值是秒，只要通过表达式则完全可用。
 
-## 4. `target_is_hostile@dev`
 
-简介：目标是否为敌对单位。
+### 3. 玩家与目标的距离
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 5 | ASSISTED_COMBAT_RULE_TYPE_HOSTILE_TARGET | Y | 若目标是敌对单位 |
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_TARGET_DISTANCE_LESS
+ - ASSISTED_COMBAT_RULE_TYPE_TARGET_DISTANCE_GREATER
 
-### 实现说明
+需制作插件 `target_in_range`和`focus_in_range`
 
+描述：目标/焦点在距离范围内
 
-## 5. `target_is_friendly@dev`
+说明，实际上目前完全无法实现距离判断，只能判断某个技能是否在施法范围。
 
-简介：目标是否为友方单位。
+参考实现方法：
+    local IsSpellInRange        = C_Spell.IsSpellInRange
+    local isInRange = IsSpellInRange(spellID, UNIT_TOKEN)
+    if isInRange == nil then
+        cell:clearCell()
+        return
+    end
+    cell:setCellBoolean(isInRange)
+入参：
+    - spellID：技能ID
+补充：
+    先要判断目标/焦点是否存在。兜底为否
+参考来源：
+    @PhantomProject/src/0206_target_in_ranged.lua
+    @PhantomProject/src/0306_focus_in_ranged.lua
+    @PhantomProject/src/0301_focus_is_exists.lua
+    @PhantomProject/src/0201_target_is_exists.lua
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 6 | ASSISTED_COMBAT_RULE_TYPE_FRIENDLY_TARGET | N | 若目标是友方单位 |
+### 4. 目标/焦点是否为敌对单位
 
-### 实现说明
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_HOSTILE_TARGET
 
+需要制作插件 `target_is_enemy`和`focus_is_enemy`
 
-## 6. `target_health_pct@dev`
+使用enemy而不是hostile，是因为，游戏内接口是 UnitIsEnemy
 
-简介：目标生命值百分比。
+入参：无
+返回值：布尔值
+补充：
+    先要判断目标/焦点是否存在。兜底为否
+参考
+    @PhantomProject/src/0204_target_is_enemy.lua
+    @PhantomProject/src/0304_focus_is_enemy.lua
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 7 | ASSISTED_COMBAT_RULE_TYPE_HEALTH_PCT_GREATER | N | 若目标生命值大于等于 {arg1}% |
-| 8 | ASSISTED_COMBAT_RULE_TYPE_HEALTH_PCT_LESS | Y | 若目标生命值小于等于 {arg1}% |
 
-### 实现说明
 
+### 5. 目标/焦点是否可辅助
 
-## 7. `player_has_aura@dev`
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_FRIENDLY_TARGET
 
-简介：玩家指定增益／减益的存在与缺失。
+需要制作插件 `target_can_assist`和`focus_can_assist`
 
-关联：现有 `player_has_buff@dev` 仅检查 HELPFUL 增益，不等于通用 aura 条件。
+和`*_is_enemy` 相似，区别是API，使用UnitCanAssist("player",unitToken)
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 9 | ASSISTED_COMBAT_RULE_TYPE_AURA_ON_PLAYER | Y | 若玩家拥有增益/减益 {arg1} |
-| 16 | ASSISTED_COMBAT_RULE_TYPE_AURA_MISSING_PLAYER | Y | 若玩家没有增益/减益 {arg1} |
 
-### 实现说明
+### 6. 目标/焦点生命百分比
 
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_HEALTH_PCT_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_HEALTH_PCT_LESS
 
-## 8. `target_has_aura@dev`
+需要制作插件 `target_health_pct`和`focus_health_pct`
 
-简介：目标指定增益／减益的存在与缺失。
+参考 `player_health_pct`
+补充：
+    先要判断目标/焦点是否存在。兜底为0
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 10 | ASSISTED_COMBAT_RULE_TYPE_AURA_ON_TARGET | Y | 若目标拥有增益/减益 {arg1} |
-| 15 | ASSISTED_COMBAT_RULE_TYPE_AURA_MISSING_TARGET | Y | 若目标没有增益/减益 {arg1} |
 
-### 实现说明
+### 7. 玩家指定增益的存在
 
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_AURA_ON_PLAYER
+ - ASSISTED_COMBAT_RULE_TYPE_AURA_MISSING_PLAYER
 
-## 9. `target_nearby_units_count@dev`
+ `player_has_buff` 已经实现
 
-简介：目标周围指定距离内的目标数量。
+注意：玩家只能过滤buff，具体见Aura的Spellid过滤限制。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 11 | ASSISTED_COMBAT_RULE_TYPE_TARGET_COUNT_NEAR_TARGET_GREATER | Y | 若目标周围 {arg2} 码内的目标数量大于 {arg1} 个 |
-| 49 | ASSISTED_COMBAT_RULE_TYPE_TARGET_COUNT_NEAR_TARGET_LESS | Y | 若目标周围 {arg2} 码内的目标数量小于等于 {arg1} 个 |
+### 8. 可辅助目标/焦点指定增益的存在
 
-### 实现说明
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_AURA_ON_TARGET
+ - ASSISTED_COMBAT_RULE_TYPE_AURA_MISSING_TARGET
 
+需要开发插件 `target_has_buff`和`focus_has_buff`
 
-## 10. `player_nearby_units_count@dev`
+注意：只有可辅助的目标/焦点能过滤buff，具体见Aura的Spellid过滤限制。
 
-简介：玩家周围指定距离内的目标数量。
 
-关联：现有 `player_melee_enemies_count@dev` 按指定技能范围统计可攻击姓名板单位，仅为相关插件。
+### 9. 可辅助目标/焦点指定减益的存在
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 12 | ASSISTED_COMBAT_RULE_TYPE_TARGET_COUNT_NEAR_PLAYER_GREATER | Y | 若玩家周围 {arg2} 码内的目标数量大于 {arg1} 个 |
-| 50 | ASSISTED_COMBAT_RULE_TYPE_TARGET_COUNT_NEAR_PLAYER_LESS | Y | 若玩家周围 {arg2} 码内的目标数量小于等于 {arg1} 个 |
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_AURA_ON_TARGET
+ - ASSISTED_COMBAT_RULE_TYPE_AURA_MISSING_TARGET
 
-### 实现说明
+需要开发插件 `target_has_debuff`和`focus_has_debuff`
 
+注意：只有可敌对的目标/焦点能过滤debuff，具体见Aura的Spellid过滤限制。
 
-## 11. `player_nearby_aura_units_count@dev`
+### 10. 目标周围指定距离内的目标数量。
 
-简介：玩家周围指定距离内带有指定增益／减益的目标数量。
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_TARGET_COUNT_NEAR_TARGET_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_TARGET_COUNT_NEAR_TARGET_LESS
 
-备注：Type 13 的 CSV 描述包含参数，但 Value1、Value2、Value3 全为 UNUSED，此差异留待补充。
+目前靠lua无法实现...
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 13 | ASSISTED_COMBAT_RULE_TYPE_AURA_COUNT_NEAR_PLAYER_GREATER | N | 若玩家周围 {arg2} 码内带有增益/减益 {arg3} 的目标数量大于等于 {arg1} 个 |
-| 51 | ASSISTED_COMBAT_RULE_TYPE_AURA_COUNT_NEAR_PLAYER_LESS | Y | 若玩家周围 {arg2} 码内带有增益/减益 {arg3} 的目标数量小于等于 {arg1} 个 |
+### 11. 玩家周围指定距离内的目标数量。
 
-### 实现说明
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_TARGET_COUNT_NEAR_PLAYER_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_TARGET_COUNT_NEAR_PLAYER_LESS
 
+可通过姓名版实现，需要更新插件: `player_melee_enemies_count`
 
-## 12. `spell_afford_cost@dev`
+入参：
+    - spellid: 一个技能的ID，用于判断玩家是否在施法范围。
+    - combatOnly：是否统计在战斗中的单位。** 新增参数**
+返回值：目标数量
+代码示例
 
-简介：玩家资源是否足够支付技能消耗。
+    ```
+    local function GetEnemyCountBySpell(spellID, combatOnly)
+        local count = 0
 
-关联：现有 `spell_usable@dev` 不等于资源足够，也不等于成功施放。
+        if not C_Spell.DoesSpellExist(spellID) then
+            return 0
+        end
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 14 | ASSISTED_COMBAT_RULE_TYPE_AFFORD_COST | Y | 若玩家有足够资源施放技能 {spell} |
+        for i = 1, 40 do
+            local unit = "nameplate" .. i
 
-### 实现说明
+            if UnitExists(unit)
+                and UnitCanAttack("player", unit)
+                and not UnitIsDeadOrGhost(unit)
+                and (not combatOnly or UnitAffectingCombat(unit))
+            then
+                if C_Spell.IsSpellInRange(spellID, unit) == true then
+                    count = count + 1
+                end
+            end
+        end
 
+        return count
+    end
+    ```
 
-## 13. `player_aura_duration@dev`
 
-简介：玩家指定增益／减益的剩余时间。
+### 12. 玩家周围指定距离内带有指定增益／减益的目标数量。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 17 | ASSISTED_COMBAT_RULE_TYPE_AURA_DURATION_PLAYER | Y | 若玩家身上的增益/减益 {arg1} 剩余时间小于等于 {arg2} 毫秒 |
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_AURA_COUNT_NEAR_PLAYER_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_AURA_COUNT_NEAR_PLAYER_LESS
 
-### 实现说明
+需要开发插件： `player_range_aura_units_count`
 
+入参：
+    - spellID：检测距离的技能ID
+    - auraID：增益/减益ID
+    - combatOnly：是否统计在战斗中的单位。
 
-## 14. `target_aura_duration@dev`
 
-简介：目标指定增益／减益的剩余时间。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 18 | ASSISTED_COMBAT_RULE_TYPE_AURA_DURATION_TARGET | Y | 若目标身上的增益/减益 {arg1} 剩余时间小于等于 {arg2} 毫秒 |
+代码经验：要判断这个spellID是否是秘密值，然后在初始化阶段就报错。
 
-### 实现说明
+local function IsAuraSpellNonSecret(spellID)
+    return C_Secrets.GetSpellAuraSecrecy(spellID)
+        == Enum.SecrecyLevel.NeverSecret
+end
 
+demo代码块
 
-## 15. `player_mana@dev`
+-- spellID    : 用于检测距离的技能 ID
+-- auraID     : 要检测的 Buff / Debuff ID
+-- combatOnly : true = 只统计战斗中的单位
+--
+-- 返回：
+--   count             成功时为敌人数量
+--   nil, "AURA_SECRET" 当前 auraID 属于秘密 Aura，无法安全计数
 
-简介：玩家法力数量。
+local function CountEnemiesWithAura(spellID, auraID, combatOnly)
+    -- 先判断该 Aura 当前是否允许读取。
+    -- GetUnitAuraBySpellID 要求传入可访问的 Aura SpellID。
+    if C_Secrets.ShouldSpellAuraBeSecret(auraID) then
+        return nil, "AURA_SECRET"
+    end
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 19 | ASSISTED_COMBAT_RULE_TYPE_MANA_GREATER | N | 若玩家法力大于等于 {arg1} |
-| 20 | ASSISTED_COMBAT_RULE_TYPE_MANA_LESS | Y | 若玩家法力小于等于 {arg1} |
+    local count = 0
 
-### 实现说明
+    for i = 1, 40 do
+        local unit = "nameplate" .. i
 
+        if UnitExists(unit)
+            and UnitCanAttack("player", unit)
+            and not UnitIsDeadOrGhost(unit)
+            and (not combatOnly or UnitAffectingCombat(unit))
+        then
+            -- 距离检测：
+            -- true  = 在该技能射程内
+            -- false = 超出射程
+            -- nil   = 该技能无法对这个单位进行射程判断
+            local inRange = C_Spell.IsSpellInRange(spellID, unit)
 
-## 16. `player_rage@dev`
+            if inRange ~= nil
+                and not issecretvalue(inRange)
+                and inRange == true
+            then
+                local aura =
+                    C_UnitAuras.GetUnitAuraBySpellID(unit, auraID)
 
-简介：玩家怒气数量。
+                -- aura ~= nil 即表示该单位存在这个 Aura。
+                -- aura table 本身在这里已经通过
+                -- ShouldSpellAuraBeSecret() 做过前置判断。
+                if aura ~= nil then
+                    count = count + 1
+                end
+            end
+        end
+    end
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 21 | ASSISTED_COMBAT_RULE_TYPE_RAGE_GREATER | Y | 若玩家怒气大于等于 {arg1} |
-| 22 | ASSISTED_COMBAT_RULE_TYPE_RAGE_LESS | N | 若玩家怒气小于等于 {arg1} |
+    return count
+end
 
-### 实现说明
 
+-- 示例
+local count, err = CountEnemiesWithAura(
+    133,      -- spellID：火球术，用它判断射程
+    123456,   -- auraID：要检测的 Buff / Debuff
+    true      -- 只统计战斗中的敌人
+)
 
-## 17. `player_focus@dev`
+if count then
+    print("范围内带指定 Aura 的敌人数量:", count)
+elseif err == "AURA_SECRET" then
+    print("该 Aura 当前是秘密值，无法计数")
+end
 
-简介：玩家集中值数量。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 23 | ASSISTED_COMBAT_RULE_TYPE_FOCUS_GREATER | Y | 若玩家集中值大于等于 {arg1} |
-| 24 | ASSISTED_COMBAT_RULE_TYPE_FOCUS_LESS | N | 若玩家集中值小于等于 {arg1} |
 
-### 实现说明
+### 13. 玩家资源是否足够支付技能消耗
 
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_AFFORD_COST
 
-## 18. `player_energy@dev`
+已有插件：phantom\conditions\spell_usable@dev
 
-简介：玩家能量数量。
+因为不可能返回值是true，true，所以spell_usable可以完全替代。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 25 | ASSISTED_COMBAT_RULE_TYPE_ENERGY_GREATER | Y | 若玩家能量大于等于 {arg1} |
-| 26 | ASSISTED_COMBAT_RULE_TYPE_ENERGY_LESS | N | 若玩家能量小于等于 {arg1} |
 
-### 实现说明
 
 
-## 19. `player_combo_points@dev`
 
-简介：玩家连击点数量。
+### 14. 玩家指定增益的剩余时间。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 27 | ASSISTED_COMBAT_RULE_TYPE_COMBO_POINTS_GREATER | Y | 若玩家连击点大于等于 {arg1} |
-| 28 | ASSISTED_COMBAT_RULE_TYPE_COMBO_POINTS_LESS | Y | 若玩家连击点小于等于 {arg1} |
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_AURA_DURATION_PLAYER
 
-### 实现说明
+需要新开发插件 `aura_player_buff_duration`
 
+这是一个valuebar的插件，返回玩家身上的增益的剩余时间。
 
-## 20. `spec_dk_rune@dev`
+入参：
+    - auraIDs：list，增益ID，可以多个ID，只显示一个AuraSlot，以应对同名增益，不同天赋不同id的情况。
+    - duration：持续时间
+返回值
+    - 剩余时间：精度0.25秒。持续时间等于valuebar的宽度，因为每个宽度单位是4像素，所以每个像素表示0.25秒。
 
-简介：死亡骑士玩家符文数量。
+如何实现valuebar参考 phantom\conditions\spell_charges@dev\template.lua
+如何定位特定auraID，参考 phantom\conditions\player_has_buff@dev
+如何在AddAuraSlot中绘制bar，参考@PhantomProject /src/0007_aura_slot_container.lua的DurationBar
 
-关联：已有同名符文插件，仅记录关联，覆盖情况待确认。
+注意，实际上valuebar只是定位，我们通过AuraContainer的StatusBar方法，绘制了一个新bar在valuebar的位置。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 29 | ASSISTED_COMBAT_RULE_TYPE_RUNES_GREATER | Y | 若玩家符文大于等于 {arg1} |
-| 30 | ASSISTED_COMBAT_RULE_TYPE_RUNES_LESS | N | 若玩家符文小于等于 {arg1} |
 
-### 实现说明
+### 15. 目标指定减益的剩余时间
 
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_AURA_DURATION_TARGET
 
-## 21. `player_runic_power@dev`
+ 需要开发插件 `aura_target_debuff_duration`
 
-简介：玩家符文能量数量。
+ 参考上面的`aura_player_buff_duration`
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 31 | ASSISTED_COMBAT_RULE_TYPE_RUNIC_POWER_GREATER | Y | 若玩家符文能量大于等于 {arg1} |
-| 32 | ASSISTED_COMBAT_RULE_TYPE_RUNIC_POWER_LESS | Y | 若玩家符文能量小于等于 {arg1} |
 
-### 实现说明
+## 资源
 
+资源分为两类，一是主要资源，二是次要资源。
+主要资源是秘密值，必须转化为亮度，然后乘最大值获得。
+次要资源可以直接读取。
 
-## 22. `player_soul_shards@dev`
 
-简介：玩家灵魂碎片数量。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 33 | ASSISTED_COMBAT_RULE_TYPE_SOUL_SHARDS_GREATER | Y | 若玩家灵魂碎片大于等于 {arg1} |
-| 34 | ASSISTED_COMBAT_RULE_TYPE_SOUL_SHARDS_LESS | Y | 若玩家灵魂碎片小于等于 {arg1} |
+| 资源                                 | 12.1 插件读取状态             | 分类/备注                            |
+| ---------------------------------- | ----------------------- | -------------------------------- |
+| **法力 Mana**                        | 🔒 **可成为 Secret Value** | Primary Resource                 |
+| **怒气 Rage**                        | 🔒 **可成为 Secret Value** | Primary Resource                 |
+| **集中值 Focus**                      | 🔒 **可成为 Secret Value** | Primary Resource                 |
+| **能量 Energy**                      | 🔒 **可成为 Secret Value** | Primary Resource；盗贼/猫德/武僧等       |
+| **符文能量 Runic Power**               | 🔒 **可成为 Secret Value** | DK Primary Resource              |
+| **星界能量 Astral/Lunar Power**        | 🔒 **可成为 Secret Value** | 未列入 secondary 豁免名单               |
+| **漩涡值 Maelstrom**                  | 🔒 **可成为 Secret Value** | 未列入 UnitPower secondary 豁免名单     |
+| **狂乱 Insanity**                    | 🔒 **可成为 Secret Value** | 暗牧主要战斗资源                         |
+| **恶魔之怒 Fury**                      | 🔒 **可成为 Secret Value** | DH 等主要资源                         |
+| **痛苦值 Pain**                       | 🔒 **可成为 Secret Value** | 主要资源                             |
+| **连击点 Combo Points**               | ✅ **Non-secret**        | 暴雪明确豁免                           |
+| **符文 Runes**                       | ✅ **Non-secret**        | 注意：**符文 ≠ 符文能量**                 |
+| **灵魂碎片 Soul Shards**               | ✅ **Non-secret**        | 暴雪明确豁免                           |
+| **神圣能量 Holy Power**                | ✅ **Non-secret**        | 暴雪明确豁免                           |
+| **真气 Chi**                         | ✅ **Non-secret**        | 暴雪明确豁免                           |
+| **奥术充能 Arcane Charges**            | ✅ **Non-secret**        | 暴雪明确豁免                           |
+| **精华 Essence**                     | ✅ **Non-secret**        | 唤魔师，暴雪明确豁免                       |
+| **醉拳 Stagger**                     | ✅ **玩家自身为 Non-secret**  | `UnitStagger()` 后来也被解除 Secret 限制 |
+| **最大资源值 `UnitPowerMax("player")`** | ✅ **通常不是 Secret**       | 暴雪后来特意放开了玩家自己的最大资源值              |
 
-### 实现说明
 
 
-## 23. `player_lunar_power@dev`
+### 16. 玩家法力值 
 
-简介：玩家星界能量数量。
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_MANA_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_MANA_LESS
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 35 | ASSISTED_COMBAT_RULE_TYPE_LUNAR_POWER_GREATER | Y | 若玩家星界能量大于等于 {arg1} |
-| 36 | ASSISTED_COMBAT_RULE_TYPE_LUNAR_POWER_LESS | N | 若玩家星界能量小于等于 {arg1} |
+需要新建插件 `spec_power_mana`
 
-### 实现说明
+法力值在多数职业，都是秘密值，而且目前版本的法力值，都是在固定天赋和职业下的固定值。
 
+- 入参：
+    - maxValue：最大法力值
 
-## 24. `player_holy_power@dev`
+- 参考 phantom\conditions\player_primary_power@dev 使用曲线构造亮度值。
+- 不使用 UnitPowerType(UNIT_TOKEN) 而是固定的 Enum.PowerType.Mana。
+- python端把亮度 * maxValue，得到法力值。
 
-简介：玩家神圣能量数量。
+### 17. 玩家怒气值
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 37 | ASSISTED_COMBAT_RULE_TYPE_HOLY_POWER_GREATER | Y | 若玩家神圣能量大于等于 {arg1} |
-| 38 | ASSISTED_COMBAT_RULE_TYPE_HOLY_POWER_LESS | Y | 若玩家神圣能量小于等于 {arg1} |
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_RAGE_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_RAGE_LESS
 
-### 实现说明
+需要新建插件 `spec_power_rage`
 
+- 入参：
+    - maxValue：最大怒气值
 
-## 25. `player_maelstrom@dev`
+-  Enum.PowerType.Rage。
+怒气也是主要能量，参考法力值，大概率是秘密值，使用曲线构造亮度，然后计算。
 
-简介：玩家漩涡值数量。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 39 | ASSISTED_COMBAT_RULE_TYPE_MAELSTROM_GREATER | N | 若玩家漩涡值大于等于 {arg1} |
-| 40 | ASSISTED_COMBAT_RULE_TYPE_MAELSTROM_LESS | N | 若玩家漩涡值小于等于 {arg1} |
+### 18. 玩家集中值
 
-### 实现说明
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_FOCUS_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_FOCUS_LESS
 
+需要新建插件 `spec_power_focus`
 
-## 26. `player_chi@dev`
+- 入参：
+    - maxValue：最大集中值
 
-简介：玩家真气数量。
+-  Enum.PowerType.Focus。
+集中值也是主要能量，参考法力值，大概率是秘密值，使用曲线构造亮度，然后计算。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 41 | ASSISTED_COMBAT_RULE_TYPE_CHI_GREATER | N | 若玩家真气大于等于 {arg1} |
-| 42 | ASSISTED_COMBAT_RULE_TYPE_CHI_LESS | Y | 若玩家真气小于等于 {arg1} |
+### 19. 玩家能量值
 
-### 实现说明
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_ENERGY_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_ENERGY_LESS
 
+需要新建插件 `spec_power_energy`
 
-## 27. `player_insanity@dev`
+- 入参：
+    - maxValue：最大能量值
 
-简介：玩家狂乱值数量。
+-  Enum.PowerType.Energy。
+能量也是主要能量，参考法力值，大概率是秘密值，使用曲线构造亮度，然后计算。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 43 | ASSISTED_COMBAT_RULE_TYPE_INSANITY_GREATER | Y | 若玩家狂乱值大于等于 {arg1} |
-| 44 | ASSISTED_COMBAT_RULE_TYPE_INSANITY_LESS | N | 若玩家狂乱值小于等于 {arg1} |
+### 20. 玩家连击点值
 
-### 实现说明
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_COMBO_POINTS_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_COMBO_POINTS_LESS
 
+需要新建插件 `spec_power_combo_points`
 
-## 28. `player_essence@dev`
+连击点不是主要能量，所以不是秘密值，直接使用下面的方式就行。
 
-简介：玩家精华数量。
+local power = UnitPower("player", Enum.PowerType.ComboPoints)
+local mean = power / 255
+cell:setCellRGBA(mean, mean, mean)
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 45 | ASSISTED_COMBAT_RULE_TYPE_ESSENCE_GREATER | Y | 若玩家精华大于等于 {arg1} |
-| 46 | ASSISTED_COMBAT_RULE_TYPE_ESSENCE_LESS | N | 若玩家精华小于等于 {arg1} |
+返回值，连击点值。整数。
 
-### 实现说明
+### 21. 死亡骑士玩家符文数量
 
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_RUNES_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_RUNES_LESS
 
-## 29. `player_arcane_charges@dev`
+已有符文插件`spec_dk_rune@dev`，改名为`spec_power_rune`
 
-简介：玩家奥术充能数量。
+### 22. 玩家符文能量数量
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 47 | ASSISTED_COMBAT_RULE_TYPE_ARCANE_CHARGES_GREATER | Y | 若玩家奥术充能大于等于 {arg1} |
-| 48 | ASSISTED_COMBAT_RULE_TYPE_ARCANE_CHARGES_LESS | Y | 若玩家奥术充能小于等于 {arg1} |
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_RUNIC_POWER_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_RUNIC_POWER_LESS
 
-### 实现说明
+需要新建插件 `spec_power_runic_power`
 
+- 入参：
+    - maxValue：最大能量值
 
-## 30. `target_aura_stacks@dev`
+-  Enum.PowerType.RunicPower
+符文能量也是主要能量，参考法力值，大概率是秘密值，使用曲线构造亮度，然后计算。
 
-简介：目标指定增益／减益的层数。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 52 | ASSISTED_COMBAT_RULE_TYPE_TARGET_AURA_APPLICATION_GREATER | Y | 若目标身上增益/减益 {arg1} 的层数大于等于 {arg2} |
-| 53 | ASSISTED_COMBAT_RULE_TYPE_TARGET_AURA_APPLICATION_LESS | Y | 若目标身上增益/减益 {arg1} 的层数小于等于 {arg2} |
+### 23. 玩家灵魂碎片数量。
 
-### 实现说明
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_SOUL_SHARDS_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_SOUL_SHARDS_LESS
 
+需要新建插件 `spec_power_soul_shards`
 
-## 31. `player_aura_stacks@dev`
+- 入参：
+    - maxValue：最大灵魂碎片值
 
-简介：玩家指定增益／减益的层数。
+参考 spec_power_combo_points ，灵魂碎片不是秘密值。使用 Enum.PowerType.SoulShards
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 54 | ASSISTED_COMBAT_RULE_TYPE_PLAYER_AURA_APPLICATION_GREATER | Y | 若玩家身上增益/减益 {arg1} 的层数大于等于 {arg2} |
-| 55 | ASSISTED_COMBAT_RULE_TYPE_PLAYER_AURA_APPLICATION_LESS | Y | 若玩家身上增益/减益 {arg1} 的层数小于等于 {arg2} |
 
-### 实现说明
 
+### 24. 玩家星界能量数量。
 
-## 32. `spell_in_range@dev`
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_LUNAR_POWER_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_LUNAR_POWER_LESS
 
-简介：技能是否在射程内。
+需要新建插件 `spec_power_lunar_power`
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 56 | ASSISTED_COMBAT_RULE_TYPE_SPELL_IN_RANGE | Y | 若技能 {spell} 在射程内 |
+星界能量是秘密值，参考上述主要能量的实现说明。
 
-### 实现说明
 
+### 25. 玩家神圣能量数量。
 
-## 33. `player_has_pet@dev`
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_HOLY_POWER_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_HOLY_POWER_LESS
 
-简介：玩家宠物的存在与缺失。
+需要新建插件 `spec_power_holy_power`
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 57 | ASSISTED_COMBAT_RULE_TYPE_HAS_PET | Y | 若玩家有宠物 |
-| 58 | ASSISTED_COMBAT_RULE_TYPE_HAS_NO_PET | Y | 若玩家没有宠物 |
+神圣能量不是秘密值，参考上述连击点的实现说明。
 
-### 实现说明
 
+### 26. 玩家漩涡值数量。
 
-## 34. `player_fury@dev`
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_MAELSTROM_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_MAELSTROM_LESS
 
-简介：玩家恶魔之怒数量。
+需要新建插件 `spec_power_maelstrom`
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 59 | ASSISTED_COMBAT_RULE_TYPE_FURY_GREATER | N | 若玩家恶魔之怒大于等于 {arg1} |
-| 60 | ASSISTED_COMBAT_RULE_TYPE_FURY_LESS | N | 若玩家恶魔之怒小于等于 {arg1} |
+漩涡值是秘密值，参考上述主要能量的实现说明。
 
-### 实现说明
 
+### 27. 玩家真气数量。
 
-## 35. `player_pain@dev`
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_CHI_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_CHI_LESS
 
-简介：玩家苦痛值数量。
+需要新建插件 `spec_power_chi`
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 61 | ASSISTED_COMBAT_RULE_TYPE_PAIN_GREATER | N | 若玩家苦痛值大于等于 {arg1} |
-| 62 | ASSISTED_COMBAT_RULE_TYPE_PAIN_LESS | N | 若玩家苦痛值小于等于 {arg1} |
+真气不是秘密值，参考上述连击点的实现说明。
 
-### 实现说明
+### 28. 玩家狂乱值数量。
 
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_INSANITY_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_INSANITY_LESS
 
-## 36. `spell_charges@dev`
+需要新建插件 `spec_power_insanity`
 
-简介：技能充能层数。
+狂乱值是秘密值，参考上述主要能量的实现说明。
 
-关联：已有同名充能插件，仅记录关联，覆盖情况待确认。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 63 | ASSISTED_COMBAT_RULE_TYPE_SPELL_CHARGES_GREATER | Y | 若技能 {spell} 的充能层数大于等于 {arg1} |
-| 64 | ASSISTED_COMBAT_RULE_TYPE_SPELL_CHARGES_LESS | N | 若技能 {spell} 的充能层数小于等于 {arg1} |
+### 29. 玩家精华数量。
 
-### 实现说明
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_ESSENCE_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_ESSENCE_LESS
 
+需要新建插件 `spec_power_essence`
 
-## 37. `spell_can_cast@dev`
+精华不是秘密值，参考上述连击点的实现说明。
 
-简介：技能可成功施放条件的候选分类。
 
-备注：按 COOLDOWN_ALLOW_CASTING_SUCCESS 字面暂命名，具体语义待补充。相关现有 `spell_usable@dev` 不保证成功施放或资源足够。
+### 30. 玩家奥术充能数量。
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 67 | ASSISTED_COMBAT_RULE_TYPE_COOLDOWN_ALLOW_CASTING_SUCCESS | Y | 若技能 {spell} 可以成功施放 |
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_ARCANE_CHARGES_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_ARCANE_CHARGES_LESS
 
-### 实现说明
+需要新建插件 `spec_power_arcane_charges`
 
+奥术充能不是秘密值，参考上述连击点的实现说明。
 
-## 38. `player_health_pct@dev`
 
-简介：玩家生命值百分比。
+### 31. 玩家恶魔之怒数量。
 
-关联：同名现有插件返回预测生命百分比，与 CSV 生命值百分比不能直接视为相同语义。
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_FURY_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_FURY_LESS
 
-| Type | 完整官方枚举 | Active | CSV 条件简介 |
-| --- | --- | --- | --- |
-| 68 | ASSISTED_COMBAT_RULE_TYPE_PLAYER_HEALTH_PCT_GREATER | Y | 若玩家生命值大于等于 {arg1}% |
-| 69 | ASSISTED_COMBAT_RULE_TYPE_PLAYER_HEALTH_PCT_LESS | Y | 若玩家生命值小于等于 {arg1}% |
+需要新建插件 `spec_power_fury`
 
-### 实现说明
+- 入参：
+    - maxValue：最大恶魔之怒值
+
+-  Enum.PowerType.Fury。
+恶魔之怒是秘密值，参考上述主要能量的实现说明。
+
+
+### 32. 玩家苦痛值数量。
+
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_PAIN_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_PAIN_LESS
+
+需要新建插件 `spec_power_pain`
+
+- 入参：
+    - maxValue：最大苦痛值
+
+-  Enum.PowerType.Pain。
+苦痛值是秘密值，参考上述主要能量的实现说明。
+
+
+### 33. 玩家指定增益的层数。
+
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_PLAYER_AURA_APPLICATION_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_PLAYER_AURA_APPLICATION_LESS
+
+需要新建插件 `aura_player_buff_stacks`
+
+这是一个valuebar的插件，返回玩家身上的增益的层数时间。
+
+入参：
+    - auraIDs：list，增益ID，可以多个ID，只显示一个AuraSlot，以应对同名增益，不同天赋不同id的情况。
+    - 最大值
+    - 最小值
+    - 宽度：默认值2
+返回值
+    - 层数
+提供1/（4*宽度）精度。
+有些buff的层数很高才有意义，比如最大值30，最小值20，占比50%，则返回25。
+
+如何实现valuebar参考 phantom\conditions\spell_charges@dev\template.lua
+如何定位特定auraID，参考 phantom\conditions\player_has_buff@dev
+如何在AddAuraSlot中绘制bar，参考@PhantomProject /src/0007_aura_slot_container.lua的ApplicationBar 
+
+注意，实际上valuebar只是定位，我们通过AuraContainer的StatusBar方法，绘制了一个新bar在valuebar的位置。
+
+
+### 34. 目标指定减益的层数
+
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_TARGET_AURA_APPLICATION_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_TARGET_AURA_APPLICATION_LESS
+
+
+
+需要新建插件 `aura_target_debuff_stacks`
+
+和 aura_player_buff_stacks类似 
+
+
+
+### 35. 技能是否在射程内。。
+
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_SPELL_IN_RANGE
+
+新建插件 `spell_in_range`
+
+入参:
+    - spell：技能ID
+    - unitToken：目标单位
+返回值
+    - 是否在射程内：boolean
+
+使用定时刷新，1/10秒。判断UnitExists(unitToken)是否存在，若不存在，则返回false。
+
+C_Spell.IsSpellInRange(spellID, unit)
+
+是秘密值，使用EvaluateColorFromBoolean构建颜色。
+
+### 36. 玩家是否有宠物。
+
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_HAS_PET
+ - ASSISTED_COMBAT_RULE_TYPE_HAS_NO_PET
+
+新建插件 `player_has_pet`
+
+返回值
+    - 是否有宠物：boolean
+
+UnitExists("pet")好像就满足了。
+
+
+
+### 37. 技能充能层数
+
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_SPELL_CHARGES_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_SPELL_CHARGES_LESS
+
+已有插件：`spell_charges@dev`
+维护说明即可
+
+
+### 38. 技能可成功施放条件。
+
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_COOLDOWN_ALLOW_CASTING_SUCCESS
+
+已有插件 "spell_usable"
+维护说明即可
+
+### 39. 玩家生命值百分比。
+
+关联：
+ - ASSISTED_COMBAT_RULE_TYPE_PLAYER_HEALTH_PCT_GREATER
+ - ASSISTED_COMBAT_RULE_TYPE_PLAYER_HEALTH_PCT_LESS
+
+已有插件：`player_health_pct@dev`
+维护说明即可
+
+
+
+
+
+
+
+
+
+
+
+
+## Aura的Spellid过滤限制。
+
+```lua
+local canAssist = UnitCanAssist("player", unitToken, true, true)
+```
+
+AuraContainer 的 `includeSpellIDs / excludeSpellIDs` 大致规则：
+
+```lua
+if filter == "HELPFUL" then
+    allowed = canAssist
+elseif filter == "HARMFUL" then
+    allowed = not canAssist
+end
+```
+
+也就是：
+
+```text
+友方/可辅助单位：
+HELPFUL + spellID ✅
+HARMFUL + spellID ❌
+
+不可辅助单位：
+HELPFUL + spellID ❌
+HARMFUL + spellID ✅
+```
+
+注意：
+
+```lua
+UnitCanAssist("player", unitToken)
+```
+
+默认等价于：
+
+```lua
+UnitCanAssist("player", unitToken, false, false)
+```
+
+而 Blizzard AuraContainer 用：
+
+```lua
+UnitCanAssist("player", unitToken, true, true)
+```
+
+目的是让“免疫 / 暂时不可交互”的友方仍然稳定归类为可辅助侧。
+
+另外，`includeSpellIDs` 不能替代 `HELPFUL/HARMFUL`：
+
+```lua
+"HELPFUL|HARMFUL" -- ❌ 不是 OR
+```
+
+所以一个 Slot 不能直接做到“同一 spellID，不管 Buff 还是 Debuff 都匹配”。
