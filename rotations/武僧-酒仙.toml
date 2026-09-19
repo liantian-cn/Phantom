@@ -277,6 +277,10 @@ plugin = "player_melee_enemies_count@dev"
 spell_id = 100780
 combat_only = false
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "轮回之触"
 macro_text = "/cast 轮回之触"

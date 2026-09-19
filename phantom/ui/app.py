@@ -1,6 +1,6 @@
 """
 Summary:
-    承载 Phantom 采集、条件解码、单份插件生成与状态展示的 Textual 界面。
+    承载 Phantom 采集、多份 rotation 生成与同帧路由状态展示的 Textual 界面。
 Description:
     content 展示五个标签页，底部 footer 只包含一行状态。
     游戏检测通过消息交付，采集读取最新快照；停止和退出等待后台资源释放。
@@ -10,6 +10,7 @@ Key Variables:
     PhantomApp.stopping: 后台正在释放截图资源，期间禁止再次启动。
     PhantomApp.business_log: 主动业务日志入口，与 Textual 诊断日志分离。
 Change Log:
+    2026-09-19: Changed 启动加载职业专精集合，生成复用内存配置，底栏与条件表跟随同帧匹配项。
     2026-09-14: Changed 接入后台新帧运行器及键盘停止清理，展示实际同帧决策。
     2026-09-13: Fixed 在 Textual 停止消息循环后拒绝采集刷新，避免访问已卸载控件。
     2026-09-13: Changed 将同帧决策与宏名称日志整合进启动后的采集流程。
@@ -37,11 +38,13 @@ from phantom.core.capture.contracts import CaptureWorker
 from phantom.core.capture.registry import Registry as CaptureRegistry
 from phantom.core.configuration import AppConfig
 from phantom.core.game import GameMonitor, GameStatus, detect_game
-from phantom.core.generator import GenerationResult, generate
+from phantom.core.generator import RotationGenerationResult, generate_rotations
 from phantom.core.keyboard.contracts import Keyboard
 from phantom.core.keyboard.registry import Registry as KeyboardRegistry
-from phantom.core.rotation import Decision, Rotation, RotationError, load_rotation
-from phantom.core.runtime import RotationRuntime
+from phantom.core.pixels import PixelDecoder
+from phantom.core.rotation import Decision, Rotation
+from phantom.core.rotation_catalog import load_rotations
+from phantom.core.runtime import RotationRuntime, decode_specialization
 from phantom.ui.business_log import BusinessLog
 from phantom.ui.capture import GENERAL_FIELDS, GeneralData, decode_general
 from phantom.ui.theme import FLEXOKI, PHANTOM_THEME
@@ -66,9 +69,9 @@ class CaptureStopped(Message):
 
 
 class GenerationFinished(Message):
-    def __init__(self, result: GenerationResult | None, error: str = "") -> None:
+    def __init__(self, result: RotationGenerationResult | None, error: str = "") -> None:
         super().__init__()
-        self.result: GenerationResult | None = result
+        self.result: RotationGenerationResult | None = result
         self.error: str = error
 
 
@@ -102,12 +105,11 @@ class PhantomApp(App[None]):
         self.decision: Decision | None = None
         self._decision_log: str = ""
         self.rotation: Rotation | None = None
+        self.rotation_state: str = "尚未识别"
         self.rotation_error: str = ""
-        if config.rotation_path is not None:
-            try:
-                self.rotation = load_rotation(config.rotation_path)
-            except RotationError as error:
-                self.rotation_error = str(error)
+        loaded = load_rotations(config)
+        self.rotations: tuple[Rotation, ...] = loaded.rotations
+        self.rotation_warnings: tuple[str, ...] = loaded.warnings
         self.generating: bool = False
         self._generation_done: Event = Event()
         self._generation_done.set()
@@ -183,8 +185,9 @@ class PhantomApp(App[None]):
         self.game_monitor.start()
         self.set_interval(1 / self.config.fps, self.refresh_capture)
         self.business_log.log("程序已暂停")
-        if self.rotation_error:
-            self.business_log.log(self.rotation_error)
+        for warning in self.rotation_warnings:
+            self.business_log.log(warning)
+        self.business_log.log(f"已加载 {len(self.rotations)} 份 rotation；修改配置后需重启")
 
     def on_resize(self, event: events.Resize) -> None:
         if self._mounted_ui:
@@ -249,11 +252,12 @@ class PhantomApp(App[None]):
         if self.collecting or self.stopping or self.closing or self.generating or not self.game_status.running:
             return
         self.runtime = None
+        self._select_rotation(None)
         self.collecting = True
         try:
             self.capture.start()
-            if self.rotation is not None:
-                self.runtime = RotationRuntime(self.capture, self.keyboard, self.rotation, self.config.fps)
+            if self.rotations:
+                self.runtime = RotationRuntime(self.capture, self.keyboard, self.rotations, self.config.fps)
                 self.runtime.start()
         except Exception as error:
             self._request_stop(f"启动失败：{error}")
@@ -282,12 +286,19 @@ class PhantomApp(App[None]):
 
     def _populate_conditions(self) -> None:
         self._show_decision(None)
-        self.query_one("#rotation_title", Static).update(f"当前 rotation：{self.rotation.profile.title}" if self.rotation else "未加载 rotation")
+        self.query_one("#rotation_title", Static).update(f"当前 rotation：{self.rotation.profile.title}" if self.rotation else f"当前 rotation：{self.rotation_state}（已加载 {len(self.rotations)} 份）")
         table = self.query_one("#condition_table", DataTable)
         table.clear()
         if self.rotation is not None:
             for index, entry in enumerate(self.rotation.conditions):
                 table.add_row(entry.title, entry.plugin, "—", key=str(index))
+
+    def _select_rotation(self, rotation: Rotation | None, state: str = "尚未识别") -> None:
+        changed = self.rotation is not rotation or self.rotation_state != state
+        self.rotation = rotation
+        self.rotation_state = state
+        if changed:
+            self._populate_conditions()
 
     def _clear_conditions(self) -> None:
         self._show_decision(None)
@@ -298,7 +309,7 @@ class PhantomApp(App[None]):
 
     @on(Button.Pressed, "#generate")
     def generate_addon(self) -> None:
-        if self.collecting or self.stopping or self.closing or self.generating or self.config.rotation_path is None or self.config.wow_executable is None:
+        if self.collecting or self.stopping or self.closing or self.generating or not self.rotations or self.config.wow_executable is None:
             return
         self.generating = True
         self._generation_done.clear()
@@ -310,8 +321,8 @@ class PhantomApp(App[None]):
         result = None
         error = ""
         try:
-            assert self.config.rotation_path is not None and self.config.wow_executable is not None
-            result = generate(self.config.rotation_path, self.config.wow_executable, self.config.addon_name)
+            assert self.config.wow_executable is not None
+            result = generate_rotations(self.rotations, self.config.wow_executable, self.config.addon_name)
         except Exception as exception:
             error = f"生成插件失败：{exception}"
         finally:
@@ -325,11 +336,9 @@ class PhantomApp(App[None]):
             return
         self.rotation_error = message.error
         if message.result is not None:
-            self.rotation = message.result.rotation
-            self.business_log.log(f"插件已生成：{message.result.directory}")
+            self.business_log.log(f"插件已生成：{message.result.directory}（{len(message.result.rotations)} 份 rotation），请在游戏内 /reload")
         else:
-            # 生成失败可能已重排 TOML，旧内存布局不能继续作为有效条件输入。
-            self.rotation = None
+            # 集合生成不重读或改写 rotation，生成失败不会使本次启动的内存布局失效。
             self.business_log.log(message.error)
         self._populate_conditions()
         self._refresh_status()
@@ -341,6 +350,9 @@ class PhantomApp(App[None]):
         self.stopping = True
         if self.runtime is not None:
             self.runtime.request_stop()
+        if error:
+            # 仅用户正常暂停保留名称；致命停止不能把失效截图的身份继续当作当前项。
+            self._select_rotation(None)
         self._show_data(None)
         self._set_capture_state("采集失败" if error else "已暂停", error)
         self.business_log.log("程序已暂停")
@@ -383,6 +395,7 @@ class PhantomApp(App[None]):
         self.business_log.log(f"游戏{state}" + (f"：{message.status.description}" if message.status.description else ""))
         if not message.status.running:
             self._request_stop()
+            self._select_rotation(None)
         self._refresh_status()
         if self.focused is None and not self._small:
             self.call_after_refresh(self._focus_page)
@@ -406,21 +419,25 @@ class PhantomApp(App[None]):
             self._request_stop(result.status.description or "截图线程已结束")
             return
         if result.status.has_error:
+            self._select_rotation(None)
             self._show_data(None)
             self._set_capture_state("采集失败", result.status.description)
         elif result.image is None:
+            self._select_rotation(None)
             self._show_data(None)
             self._set_capture_state("等待截图")
         else:
             try:
                 data = decode_general(result)
             except (ValueError, TypeError, IndexError) as error:
+                self._select_rotation(None)
                 self._show_data(None)
                 self._set_capture_state("解析失败", f"通用数据解析失败：{error}")
             else:
                 self._show_data(data)
                 condition_error = ""
                 if snapshot is not None:
+                    self._select_rotation(snapshot.rotation, "无匹配" if snapshot.specialization is not None and snapshot.rotation is None else "尚未识别")
                     if snapshot.error:
                         self._clear_conditions()
                         condition_error = snapshot.error
@@ -429,7 +446,15 @@ class PhantomApp(App[None]):
                         table = self.query_one("#condition_table", DataTable)
                         self._show_decision(decision)
                         for index, value in enumerate(decision.values):
-                            table.update_cell(str(index), "value", str(value))
+                            table.update_cell(str(index), "value", str(value), update_width=True)
+                else:
+                    # 没有加载项时保留基础采集，只识别路由状态，不在界面中求值。
+                    try:
+                        decode_specialization(PixelDecoder(result.image))
+                    except (ValueError, IndexError):
+                        self._select_rotation(None)
+                    else:
+                        self._select_rotation(None, "无匹配")
                 self._set_capture_state("条件不可用" if condition_error else "采集正常", condition_error)
         self._refresh_status()
 
@@ -459,10 +484,12 @@ class PhantomApp(App[None]):
             return
         program = "已启动" if self.collecting else "已暂停"
         game = "已启动" if self.game_status.running else "未启动"
-        status = Text()
+        status = Text(no_wrap=True, overflow="ellipsis")
         status.append(f"程序：{program}", style=FLEXOKI["green" if self.collecting else "subtext_1"])
         status.append(" · ", style=FLEXOKI["text"])
         status.append(f"游戏：{game}", style=FLEXOKI["green" if self.game_status.running else "subtext_1"])
+        status.append(" · rotation：", style=FLEXOKI["text"])
+        status.append(self.rotation.profile.title if self.rotation is not None else self.rotation_state, style=FLEXOKI["text" if self.rotation is not None else "subtext_1"])
         self.query_one("#status_line", Static).update(status)
         values = {
             "program_state": "正在停止" if self.stopping else program,
@@ -477,8 +504,8 @@ class PhantomApp(App[None]):
         self.query_one("#start", Button).disabled = self.collecting or self.stopping or self.closing or self.generating or not self.game_status.running
         self.query_one("#stop", Button).disabled = not self.collecting or self.closing
         missing = ""
-        if self.config.rotation_path is None:
-            missing = "请配置 rotation.path"
+        if not self.rotations:
+            missing = "没有可用 rotation，请配置 [rotations] 或添加 rotations/*.toml 后重启"
         elif self.config.wow_executable is None:
             missing = "请配置 wow.executable"
         self.query_one("#generate", Button).disabled = bool(missing) or (self.collecting or self.stopping or self.closing or self.generating)

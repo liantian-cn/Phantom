@@ -398,6 +398,10 @@ plugin = "spell_cooldown@dev"
 spell_ids = [1122]
 ignore_gcd = true
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "大灾变"
 macro_text = "/cast 大灾变"

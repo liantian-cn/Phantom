@@ -83,6 +83,7 @@ Decoder 负责切分，区域构造器只分析已切分的 RGB 数组，坐标�
 通过局部缓存的 `C_SpecializationInfo.GetSpecialization` 无参数读取 `specializationIndex`，RGB 三个分量均为 `(specializationIndex or 0) / 255`，透明度为 1；无返回值时使用黑色，数值索引直接保留，包括 5，不限制为 1–4。
 构造函数同样注册到 `UIInitFuncs`，沿用共享缩放、计数和背景扩宽，构造完成立即刷新。独立事件框架监听 `PLAYER_LOGIN`、`PLAYER_ENTERING_WORLD`、`ACTIVE_PLAYER_SPECIALIZATION_CHANGED`，并使用 `RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", "player")` 过滤玩家专精事件；初始化前事件不访问未创建的 Cell。
 该字段只显示当前专精，不改变 rotation 切换专精后需要 `/reload` 的规则。
+多份运行器以严格灰度纯色读取前两个 Cell 路由；没有可用组合不发键，不通过 RGB 均值猜测职业专精。协议不新增已加载 rotation 身份或等待重载字段。2026-09-19 用户确认只通过游戏弹窗提示重载，接受切专精后当前索引可能先于 UUID Lua 布局变化的间隙，不额外隐藏画布或停键。
 
 第三个字段为插件启用状态，坐标 `x=3, y=1`，每次读取 `addonTable.ENABLE`；第四个字段为爆发状态，坐标 `x=4, y=1`，每次调用 `addonTable.InBurst()`。两个字段均使用普通 `Cell:setCellBoolean`，true 为不透明白色，false 为不透明黑色；启用状态不影响爆发字段的独立输出。
 两个构造函数注册到 `UIInitFuncs`，沿用共享缩放、计数和背景扩宽，构造完成保持默认黑色，等待错峰首次刷新。

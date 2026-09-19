@@ -110,6 +110,67 @@ def test_new_frames_idle_recovery_and_same_decision(tmp_path: Path) -> None:
     assert keyboard.closed
 
 
+def test_routes_rotation_and_decision_from_same_frame(tmp_path: Path) -> None:
+    first = rotation_copy(tmp_path)
+    macros = parse_macros([{"name": "法师测试", "macro_text": "/say 法师"}])
+    second = replace(first, profile=replace(first.profile, title="火焰法师", unit_class="MAGE", unit_class_id=8, unit_spec=2), conditions=(), macros=macros, rules=parse_rules([{"condition": "True", "macro": "法师测试"}], {}, {"法师测试"}))
+    capture, keyboard = Capture(), Keyboard()
+    runtime = RotationRuntime(capture, keyboard, (first, second), 100)
+    runtime.start()
+    try:
+        capture.result = frame(1)
+        wait_for(lambda: runtime.get_latest_result().capture.sequence == 1)
+        snapshot = runtime.get_latest_result()
+        assert snapshot.rotation is first and snapshot.specialization == (6, 1)
+        assert snapshot.decision is not None and len(snapshot.decision.values) == len(first.conditions)
+
+        changed = frame(2)
+        assert changed.image is not None
+        changed.image[:4, 4:8] = 8
+        changed.image[:4, 8:12] = 2
+        capture.result = changed
+        wait_for(lambda: runtime.get_latest_result().capture.sequence == 2)
+        snapshot = runtime.get_latest_result()
+        assert snapshot.rotation is second and snapshot.specialization == (8, 2)
+        assert snapshot.decision is not None and snapshot.decision.macro == macros[0]
+        assert snapshot.decision.values == () and len(keyboard.sent) == 2
+        assert snapshot.capture.image is not None
+        snapshot.capture.image[:] = 0
+        assert runtime.get_latest_result().specialization == (8, 2)
+        assert changed.image[0, 4, 0] == 8
+
+        missing = frame(3)
+        assert missing.image is not None
+        missing.image[:4, 8:12] = 3
+        capture.result = missing
+        wait_for(lambda: runtime.get_latest_result().capture.sequence == 3)
+        snapshot = runtime.get_latest_result()
+        assert snapshot.rotation is None and snapshot.decision is None
+        assert snapshot.specialization == (6, 3) and snapshot.error and not snapshot.fatal
+        assert len(keyboard.sent) == 2
+
+        invalid = frame(4)
+        assert invalid.image is not None
+        invalid.image[:4, 4:8] = (5, 6, 7)  # 均值为职业 6 的纯彩色不是合法路由。
+        capture.result = invalid
+        wait_for(lambda: runtime.get_latest_result().capture.sequence == 4)
+        snapshot = runtime.get_latest_result()
+        assert snapshot.rotation is None and snapshot.specialization is None and snapshot.decision is None
+        assert len(keyboard.sent) == 2
+
+        capture.result = frame(5)
+        wait_for(lambda: runtime.get_latest_result().capture.sequence == 5)
+        assert runtime.get_latest_result().rotation is first and len(keyboard.sent) == 3
+    finally:
+        runtime.stop()
+
+
+def test_runtime_rejects_duplicate_specialization(tmp_path: Path) -> None:
+    rotation = rotation_copy(tmp_path)
+    with pytest.raises(ValueError, match="同一职业专精"):
+        RotationRuntime(Capture(), Keyboard(), (rotation, rotation), 100)
+
+
 @pytest.mark.parametrize("index", [0, 65, 121, 147])
 def test_runtime_sends_automatically_assigned_key(tmp_path: Path, index: int) -> None:
     # 隔离条件布局，只验证已冻结的自动键位确实传给键盘后端。

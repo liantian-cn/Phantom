@@ -8,6 +8,7 @@ Key Variables:
     Rotation.conditions: 按配置顺序保存的独立条件实例。
     CLASS_IDS: Blizzard 职业 token 对应的亮度 ID。
 Change Log:
+    2026-09-19: Changed 共用合法四十组合与只读元数据解析，支持按需选择和验证后持久化 UUID 去重。
     2026-09-19: Changed 按宏声明顺序分配固定快捷键，忽略旧键位字段并统一要求宏文本。
     2026-09-19: Changed 停止布局回写，全部校验成功后递归补齐插件声明的默认参数。
     2026-09-14: Changed 仅以配置条件求值，向插件传递当前帧解码器。
@@ -25,14 +26,15 @@ import os
 import re
 import tempfile
 import tomllib
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import tomlkit
 from tomlkit.container import OutOfOrderTableProxy
 from tomlkit.items import AoT, InlineTable, Table
+from tomlkit.toml_document import TOMLDocument
 
 from phantom.core.condition.base import Condition
 from phantom.core.condition.contracts import Output, Value
@@ -42,10 +44,10 @@ from phantom.core.expression import evaluate, parse_expression
 from phantom.core.keyboard.contracts import KeyCombination, parse_key
 from phantom.core.macro_keys import MACRO_KEYS
 from phantom.core.pixels import PixelDecoder
+from phantom.core.specializations import CLASS_IDS as CLASS_IDS
+from phantom.core.specializations import SPECIALIZATION_BY_PROFILE, Specialization
 from phantom.core.validation import Fields, Items, String
 from phantom.core.validation import Table as TableValidator
-
-CLASS_IDS = {"WARRIOR": 1, "PALADIN": 2, "HUNTER": 3, "ROGUE": 4, "PRIEST": 5, "DEATHKNIGHT": 6, "SHAMAN": 7, "MAGE": 8, "WARLOCK": 9, "MONK": 10, "DRUID": 11, "DEMONHUNTER": 12, "EVOKER": 13}
 
 
 class RotationError(ValueError):
@@ -85,6 +87,16 @@ def atomic_write(path: Path, content: str | bytes) -> None:
         Path(temporary).unlink(missing_ok=True)
 
 
+def write_toml(path: Path, source: str, document: TOMLDocument) -> None:
+    """保留纯 CRLF 风格，在源文件仍一致时原子保存编辑后的 TOML。"""
+    content = tomlkit.dumps(document)
+    if "\r\n" in source and "\n" not in source.replace("\r\n", ""):
+        content = content.replace("\r\n", "\n").replace("\n", "\r\n")
+    if path.read_bytes().decode("utf-8") != source:
+        raise ValueError("配置在加载期间被修改，请重新加载")
+    atomic_write(path, content)
+
+
 def fill_config_defaults(table: Table | InlineTable | OutOfOrderTableProxy, defaults: Mapping[str, object]) -> bool:
     """只补缺失键，原位修改 TOML 节点以保留显式值、键顺序和注释。"""
     changed = False
@@ -109,6 +121,12 @@ class Profile:
     unit_class: str
     unit_class_id: int
     unit_spec: int
+
+
+@dataclass(frozen=True)
+class RotationMetadata:
+    uuid: str
+    profile: Profile
 
 
 @dataclass(frozen=True)
@@ -189,9 +207,27 @@ def parse_profile(value: object) -> Profile:
     if type(class_id) is not int or class_id != CLASS_IDS[token]:
         raise ValueError("unit_class_id 与职业 token 不一致")
     spec = table["unit_spec"]
-    if type(spec) is not int or not 1 <= spec <= 4:
-        raise ValueError("unit_spec 必须为专精顺序索引 1–4")
+    if type(spec) is not int or (token, spec) not in SPECIALIZATION_BY_PROFILE:
+        raise ValueError("unit_spec 必须为合法专精顺序索引：DRUID 允许 1–4，其余职业允许 1–3")
     return Profile(string(table, "title"), string(table, "description", empty=True), token, class_id, spec)
+
+
+def parse_rotation_metadata(document: dict[str, object]) -> RotationMetadata:
+    """发现阶段只核验标识与职业专精，不构造插件或补写候选。"""
+    if type(document.get("schema_version")) is not int or document["schema_version"] != 1:
+        raise ValueError("schema_version 必须为整数 1")
+    identifier = string(document, "uuid")
+    parsed_uuid = UUID(identifier)
+    if str(parsed_uuid) != identifier or parsed_uuid.variant != "specified in RFC 4122":
+        raise ValueError("uuid 必须为带连字符的标准 RFC 4122 文本")
+    return RotationMetadata(identifier, parse_profile(document.get("profile")))
+
+
+def read_rotation_metadata(path: Path) -> RotationMetadata:
+    try:
+        return parse_rotation_metadata(tomllib.loads(path.read_bytes().decode("utf-8")))
+    except (OSError, ValueError, TypeError, OverflowError) as error:
+        raise RotationError(f"Rotation {path}：{error}") from error
 
 
 def parse_macros(value: object) -> tuple[Macro, ...]:
@@ -236,19 +272,17 @@ def parse_rules(value: object, outputs: dict[str, Output], macro_names: set[str]
     return tuple(result)
 
 
-def load_rotation(path: Path, registry: Registry | None = None) -> Rotation:
+def load_rotation(path: Path, registry: Registry | None = None, *, expected_specialization: Specialization | None = None, reserved_uuids: Collection[str] = ()) -> Rotation:
+    """完整验证并补写默认参数；集合入口可限定组合并要求持久化修复已占用的 UUID。"""
     path = path.resolve()
     try:
         source = path.read_bytes().decode("utf-8")
         document = object_table(tomllib.loads(source), "rotation document")
         fields(document, {"schema_version", "uuid", "profile", "conditions", "macros", "rotation"}, set())
-        if type(document["schema_version"]) is not int or document["schema_version"] != 1:
-            raise ValueError("schema_version 必须为整数 1")
-        identifier = string(document, "uuid")
-        parsed_uuid = UUID(identifier)
-        if str(parsed_uuid) != identifier or parsed_uuid.variant != "specified in RFC 4122":
-            raise ValueError("uuid 必须为带连字符的标准 RFC 4122 文本")
-        profile = parse_profile(document["profile"])
+        metadata = parse_rotation_metadata(document)
+        identifier, profile = metadata.uuid, metadata.profile
+        if expected_specialization is not None and (profile.unit_class, profile.unit_spec) != (expected_specialization.unit_class, expected_specialization.unit_spec):
+            raise ValueError(f"职业专精与配置组合 {expected_specialization.key} 不符")
         macros = parse_macros(document["macros"])
         loader = registry or Registry()
         entries: list[ConditionEntry] = []
@@ -269,7 +303,8 @@ def load_rotation(path: Path, registry: Registry | None = None) -> Rotation:
         condition_tables = editable["conditions"]
         changed = False
         if entries:
-            assert isinstance(condition_tables, AoT)
+            if not isinstance(condition_tables, AoT):
+                raise ValueError("conditions 必须使用 [[conditions]] 表数组")
             for table, entry in zip(condition_tables, entries):
                 assert isinstance(table, Table)
                 defaults = entry.instance.config_defaults
@@ -280,14 +315,20 @@ def load_rotation(path: Path, registry: Registry | None = None) -> Rotation:
                 arguments = table["plugin_args"]
                 assert isinstance(arguments, (Table, InlineTable, OutOfOrderTableProxy))
                 changed = fill_config_defaults(arguments, defaults) or changed
-        if changed:
-            if path.read_bytes().decode("utf-8") != source:
-                raise ValueError("配置在加载期间被修改，请重新加载")
-            content = tomlkit.dumps(editable)
-            # TOML Kit 新节点默认使用 LF；纯 CRLF 文件延续原风格，混合换行不全量规整。
-            if "\r\n" in source and "\n" not in source.replace("\r\n", ""):
-                content = content.replace("\r\n", "\n").replace("\n", "\r\n")
-            atomic_write(path, content)
+        conflicting_uuid = identifier in reserved_uuids
+        if conflicting_uuid:
+            # 完整校验成功才修复 UUID，并与默认参数一起保存；失败不会留下仅内存生效的身份。
+            identifier = str(uuid4())
+            while identifier in reserved_uuids:
+                identifier = str(uuid4())
+            editable["uuid"] = identifier
+        if changed or conflicting_uuid:
+            write_toml(path, source, editable)
+        if conflicting_uuid:
+            reloaded = load_rotation(path, registry, expected_specialization=expected_specialization)
+            if reloaded.uuid != identifier:
+                raise ValueError("UUID 修复后配置再次被修改，请重新加载")
+            return reloaded
         return Rotation(path, identifier, profile, tuple(entries), macros, rules, board_width)
     except (OSError, ValueError, TypeError, SyntaxError, OverflowError) as error:
         raise RotationError(f"Rotation {path}：{error}") from error

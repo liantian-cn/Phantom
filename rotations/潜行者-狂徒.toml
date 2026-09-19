@@ -529,6 +529,10 @@ plugin = "player_has_buff@dev"
 [conditions.plugin_args]
 buff_ids = [1301405]
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "命运骨骰"
 macro_text = "/cast 命运骨骰"

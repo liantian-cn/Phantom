@@ -241,6 +241,10 @@ plugin = "talent_known@dev"
 [conditions.plugin_args]
 spell_ids = [691]
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "召唤恶魔卫士"
 macro_text = "/cast 召唤恶魔卫士"

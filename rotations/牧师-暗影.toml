@@ -388,6 +388,10 @@ spell_ids = [1227280]
 max_charges = 2
 width = 1
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "触须猛击"
 macro_text = "/cast 触须猛击"

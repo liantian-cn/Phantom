@@ -344,6 +344,10 @@ aura_ids = [264571]
 duration = 12
 width = 3
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "腐蚀之种"
 macro_text = "/cast 腐蚀之种"

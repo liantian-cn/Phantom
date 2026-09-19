@@ -333,6 +333,8 @@ class Builder:
             macros[step.spell.name] = None
             rows.append({"condition": " and ".join(atoms), "macro": step.spell.name, "annotate": f"来源步骤 {step.index}：{step.spell.name}（ID {step.spell.id}）"})
             row_comments.append(comments)
+        # 黑名单仅供观测与面板编辑，不参与冻结来源的动作门控。
+        self.add("打断黑名单图标", "interrupt_blacklist_icons")
         lines = [
             "# 此文件由 .script/generate_assisted_rotations.py 按冻结 TXT 显示顺序生成。",
             f"# 唯一规则来源：{self.source.path}；未读取 CSV 或补充隐藏字段。",

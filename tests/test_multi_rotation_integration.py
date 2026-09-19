@@ -1,0 +1,51 @@
+import shutil
+import tomllib
+from pathlib import Path
+from typing import Any
+
+from lupa.lua51 import LuaRuntime  # type: ignore[import-untyped]
+
+from phantom.core.configuration import load_config
+from phantom.core.generator import generate_rotations
+from phantom.core.rotation_catalog import load_rotations
+
+
+def test_all_forty_rotations_discover_persist_and_generate_one_addon(tmp_path: Path) -> None:
+    # 只加载正式循环的副本，验证完整集合且不把默认参数回写到仓库源文件。
+    root = Path(__file__).resolve().parents[1]
+    directory = tmp_path / "rotations"
+    shutil.copytree(root / "rotations", directory)
+    originals = {path.name: path.read_bytes() for path in directory.glob("*.toml")}
+    config = load_config(tmp_path)
+    loaded = load_rotations(config)
+    assert not loaded.warnings
+    assert len(loaded.rotations) == 40
+    groups = {(item.profile.unit_class, item.profile.unit_spec) for item in loaded.rotations}
+    assert len(groups) == 40 and len({item.profile.unit_class for item in loaded.rotations}) == 13
+    assert ("DEMONHUNTER", 3) in groups and ("DRUID", 4) in groups
+    assert len({item.uuid for item in loaded.rotations}) == 40
+    assert originals == {path.name: path.read_bytes() for path in directory.glob("*.toml")}
+
+    saved = config.path.read_bytes()
+    paths = tomllib.loads(saved.decode("utf-8"))["rotations"]
+    assert len(paths) == 40
+    assert {Path(value).name for value in paths.values()} == set(originals)
+    assert paths["demonhunter.devourer"].endswith("恶魔猎手-噬灭.toml")
+    restarted = load_rotations(load_config(tmp_path))
+    assert not restarted.warnings and config.path.read_bytes() == saved
+    assert [(item.path, item.uuid) for item in restarted.rotations] == [(item.path, item.uuid) for item in loaded.rotations]
+
+    executable = tmp_path / "_retail_/Wow.exe"
+    executable.parent.mkdir()
+    executable.touch()
+    generated = generate_rotations(loaded.rotations, executable)
+    assert generated.rotations is loaded.rotations
+    toc = (generated.directory / "Phantom.toc").read_text(encoding="utf-8")
+    files = [line.replace("\\", "/") for line in toc.splitlines() if line and not line.startswith("##")]
+    assert len(files) == len(set(files))
+    assert {name for name in files if "/" not in name} == {f"{item.uuid}.lua" for item in loaded.rotations}
+    assert files.count("runtime/11_specialization_reload.lua") == 1
+    lua: Any = LuaRuntime(unpack_returned_tuples=True)
+    compile_lua: Any = lua.eval("function(source) local chunk, err = loadstring(source); assert(chunk, err); return true end")
+    for name in files:
+        assert compile_lua((generated.directory / name).read_text(encoding="utf-8")), name

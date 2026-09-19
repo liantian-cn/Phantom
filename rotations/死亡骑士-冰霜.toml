@@ -404,6 +404,10 @@ plugin = "spell_cooldown@dev"
 spell_ids = [1249658]
 ignore_gcd = true
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "死神印记"
 macro_text = "/cast 死神印记"

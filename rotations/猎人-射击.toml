@@ -325,6 +325,10 @@ plugin = "spell_in_range@dev"
 spell_id = 212431
 unit_token = "target"
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "多重射击"
 macro_text = "/cast 多重射击"

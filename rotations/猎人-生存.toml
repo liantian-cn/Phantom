@@ -251,6 +251,10 @@ plugin = "target_in_range@dev"
 [conditions.plugin_args]
 spell_id = 1251592
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "野火炸弹"
 macro_text = "/cast 野火炸弹"

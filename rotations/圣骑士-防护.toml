@@ -259,6 +259,10 @@ plugin = "spell_cooldown@dev"
 spell_ids = [389539]
 ignore_gcd = true
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "圣洁鸣钟"
 macro_text = "/cast 圣洁鸣钟"

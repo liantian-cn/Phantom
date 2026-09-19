@@ -254,6 +254,10 @@ plugin = "player_has_buff@dev"
 [conditions.plugin_args]
 buff_ids = [269651]
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "火焰冲击"
 macro_text = "/cast 火焰冲击"

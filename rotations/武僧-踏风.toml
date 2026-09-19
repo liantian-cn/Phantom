@@ -487,6 +487,10 @@ plugin = "player_has_buff@dev"
 [conditions.plugin_args]
 buff_ids = [1250554]
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "风领主之击"
 macro_text = "/cast 风领主之击"

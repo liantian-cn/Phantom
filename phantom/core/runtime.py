@@ -5,9 +5,10 @@ Description:
     独立线程串行处理业务，不积压旧帧；界面只读取该轮结果，不另行求值。
     临时图像不可用跳过本轮；插件及未预期异常结束本次运行，必须手动重新启动。
 Key Variables:
-    RuntimeSnapshot: 同一轮的截图、决策和错误。
+    RuntimeSnapshot: 同一轮的截图、职业专精、所选 rotation、决策和错误。
     RotationRuntime._stop: 停止新一轮派发并唤醒等待。
 Change Log:
+    2026-09-19: Changed 按同帧职业专精自动路由已加载集合，无匹配时保持检测且不发键。
     2026-09-14: Added 第 15 步新帧驱动持续执行及停止生命周期。
 """
 
@@ -27,13 +28,33 @@ class RuntimeSnapshot:
     decision: Decision | None = None
     error: str = ""
     fatal: bool = False
+    rotation: Rotation | None = None
+    specialization: tuple[int, int] | None = None
+
+
+def decode_specialization(decoder: PixelDecoder) -> tuple[int, int]:
+    """职业与专精均须为严格灰度纯色，不能把彩色像素均值当成路由值。"""
+    values: list[int] = []
+    for x in (1, 2):
+        cell = decoder.getCell(x, 1)
+        value = int(cell.inner[0, 0, 0])
+        if value == 0 or not bool((cell.inner == value).all()):
+            raise ValueError("无法识别截图职业或专精")
+        values.append(value)
+    return values[0], values[1]
 
 
 class RotationRuntime:
-    def __init__(self, capture: CaptureWorker, keyboard: Keyboard, rotation: Rotation, fps: float) -> None:
+    def __init__(self, capture: CaptureWorker, keyboard: Keyboard, rotation: Rotation | tuple[Rotation, ...], fps: float) -> None:
         self.capture: CaptureWorker = capture
         self.keyboard: Keyboard = keyboard
-        self.rotation: Rotation = rotation
+        rotations = (rotation,) if isinstance(rotation, Rotation) else rotation
+        self.rotations: dict[tuple[int, int], Rotation] = {}
+        for item in rotations:
+            key = (item.profile.unit_class_id, item.profile.unit_spec)
+            if key in self.rotations:
+                raise ValueError("同一职业专精不能运行多份 rotation")
+            self.rotations[key] = item
         self._interval: float = 1 / PositiveNumber().validate(fps, "runtime fps")
         self._stop: Event = Event()
         self._gate: Lock = Lock()
@@ -61,7 +82,7 @@ class RotationRuntime:
         with self._lock:
             result = self._latest
             capture = result.capture
-            return RuntimeSnapshot(CaptureResult(None if capture.image is None else capture.image.copy(), capture.status, capture.sequence), result.decision, result.error, result.fatal)
+            return RuntimeSnapshot(CaptureResult(None if capture.image is None else capture.image.copy(), capture.status, capture.sequence), result.decision, result.error, result.fatal, result.rotation, result.specialization)
 
     def _publish(self, result: RuntimeSnapshot) -> None:
         with self._lock:
@@ -86,10 +107,17 @@ class RotationRuntime:
                     raise RuntimeError("截图帧序号倒退")
                 elif result.sequence != last_sequence:
                     last_sequence = result.sequence
+                    rotation = None
+                    specialization = None
                     try:
-                        decision = self.rotation.trial(PixelDecoder(result.image))
+                        decoder = PixelDecoder(result.image)
+                        specialization = decode_specialization(decoder)
+                        rotation = self.rotations.get(specialization)
+                        if rotation is None:
+                            raise ValueError(f"当前职业专精没有可用 rotation：职业 {specialization[0]}，专精 {specialization[1]}")
+                        decision = rotation.trial(decoder)
                     except (ValueError, IndexError) as error:
-                        self._publish(RuntimeSnapshot(result, error=str(error)))
+                        self._publish(RuntimeSnapshot(result, error=str(error), rotation=rotation, specialization=specialization))
                     else:
                         # 锁内完成派发接纳；停止后不再接纳新组合。
                         with self._gate:
@@ -98,7 +126,7 @@ class RotationRuntime:
                         if decision.macro is not None:
                             self.keyboard.send(decision.macro.keys)
                         if not self._stop.is_set():
-                            self._publish(RuntimeSnapshot(result, decision))
+                            self._publish(RuntimeSnapshot(result, decision, rotation=rotation, specialization=specialization))
                 self._stop.wait(self._interval)
         except Exception as error:
             self._publish(RuntimeSnapshot(result, error=f"运行失败：{error}", fatal=True))

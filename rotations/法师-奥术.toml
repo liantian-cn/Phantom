@@ -315,6 +315,10 @@ plugin = "player_has_buff@dev"
 [conditions.plugin_args]
 buff_ids = [1295942]
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "奥术飞弹"
 macro_text = "/cast 奥术飞弹"

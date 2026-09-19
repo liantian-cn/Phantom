@@ -9,13 +9,16 @@ from threading import enumerate as enumerate_threads
 import numpy as np
 import pytest
 from textual.color import Color
-from textual.widgets import Button, DataTable, Log, TabbedContent
+from textual.widgets import Button, DataTable, Log, Static, TabbedContent
 
 from phantom.core.capture.contracts import CaptureResult, CaptureStatus, RGBImage
+from phantom.core.condition.contracts import Value
 from phantom.core.configuration import AppConfig
 from phantom.core.game import GameStatus
-from phantom.core.generator import GenerationResult, generate
+from phantom.core.generator import RotationGenerationResult, generate_rotations
 from phantom.core.keyboard.contracts import KeyCombination
+from phantom.core.rotation import Decision, Rotation
+from phantom.core.runtime import RotationRuntime, RuntimeSnapshot
 from phantom.ui.app import GameUpdated, PhantomApp
 from phantom.ui.business_log import BusinessLog
 from phantom.ui.capture import decode_general
@@ -329,10 +332,16 @@ def rotation_app(tmp_path: Path, capture: FakeCapture, *, game: bool = False, ke
     executable = tmp_path / "_retail_/Wow.exe"
     executable.parent.mkdir()
     executable.touch()
-    return PhantomApp(AppConfig(tmp_path / "phantom.toml", rotation_path=rotation_path, wow_executable=executable), capture=capture, game_detector=lambda: GameStatus(game), keyboard=keyboard if keyboard is not None else FakeKeyboard())
+    (tmp_path / "phantom.toml").write_text('[rotations]\n"deathknight.blood" = "blood.toml"\n', encoding="utf-8")
+    return PhantomApp(
+        AppConfig(tmp_path / "phantom.toml", rotation_paths={"deathknight.blood": rotation_path}, wow_executable=executable),
+        capture=capture,
+        game_detector=lambda: GameStatus(game),
+        keyboard=keyboard if keyboard is not None else FakeKeyboard(),
+    )
 
 
-def test_generation_without_game_and_error_recovery(tmp_path: Path) -> None:
+def test_generation_without_game_uses_startup_snapshot_and_recovers(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     async def scenario() -> None:
         app = rotation_app(tmp_path, FakeCapture())
         async with app.run_test(size=(120, 46)) as pilot:
@@ -340,8 +349,9 @@ def test_generation_without_game_and_error_recovery(tmp_path: Path) -> None:
             assert app.query_one("#start", Button).disabled
             assert not app.query_one("#generate", Button).disabled
             table = app.query_one("#condition_table", DataTable)
-            assert table.row_count == 10
-            assert table.get_cell("4", "plugin") == "spell_gcd@dev"
+            assert table.row_count == 0
+            assert app.rotation is None and len(app.rotations) == 1
+            loaded = app.rotations
             app.generate_addon()
             assert app.generating
             assert app.query_one("#generate", Button).disabled
@@ -349,20 +359,29 @@ def test_generation_without_game_and_error_recovery(tmp_path: Path) -> None:
             await pilot.pause()
             assert not app.generating
             assert (tmp_path / "_retail_/Interface/AddOns/Phantom/Phantom.toc").is_file()
-            assert app.config.rotation_path is not None
-            saved = app.config.rotation_path.read_text(encoding="utf-8")
-            app.config.rotation_path.write_text("invalid TOML =", encoding="utf-8")
+            # 配置文件编辑只能在重启后生效，生成不能绕过该边界重读文件。
+            loaded[0].path.write_text("invalid TOML =", encoding="utf-8")
             app.generate_addon()
             await app.workers.wait_for_complete()
             await pilot.pause()
-            assert app.rotation is None and app.rotation_error
+            assert not app.rotation_error and app.rotations is loaded
+
+            def fail_generate(rotations: tuple[Rotation, ...], executable: Path, addon_name: str) -> RotationGenerationResult:
+                raise ValueError("生成失败测试")
+
+            with monkeypatch.context() as context:
+                context.setattr("phantom.ui.app.generate_rotations", fail_generate)
+                app.generate_addon()
+                await app.workers.wait_for_complete()
+                await pilot.pause()
+                assert "生成失败测试" in app.rotation_error
+                assert app.rotations is loaded
+                assert not app.query_one("#generate", Button).disabled
+            app.generate_addon()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert not app.rotation_error and app.rotations is loaded
             assert table.row_count == 0
-            app.config.rotation_path.write_text(saved, encoding="utf-8")
-            app.generate_addon()
-            await app.workers.wait_for_complete()
-            await pilot.pause()
-            assert app.rotation is not None and not app.rotation_error
-            assert table.row_count == 10
 
     asyncio.run(scenario())
 
@@ -406,7 +425,8 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
             capture.result = CaptureResult(image.copy(), sequence=2)
             await pilot.pause(0.15)
             app.refresh_capture()
-            assert all(table.get_cell(str(i), "value") == "—" for i in range(10))
+            assert table.row_count == 0 and app.rotation is None
+            assert app.rotation_state == "无匹配"
             assert app.decision is None
             await pilot.pause()
             image[:4, 8:12] = 1
@@ -431,8 +451,53 @@ def test_condition_values_same_frame_and_mismatch_clear(tmp_path: Path) -> None:
             app.stop_collection()
             await app.workers.wait_for_complete()
             await pilot.pause()
-            assert all(table.get_cell(str(i), "value") == "—" for i in range(10))
+            assert table.row_count == 0
             assert not app.query_one("#generate", Button).disabled
+
+    asyncio.run(scenario())
+
+
+def test_condition_value_width_tracks_hash_and_list(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def scenario() -> None:
+        capture = FakeCapture()
+        app = rotation_app(tmp_path, capture, game=True)
+        async with app.run_test(size=(120, 46)) as pilot:
+            await pilot.pause()
+            rotation = app.rotations[0]
+            snapshot = RuntimeSnapshot(capture=CaptureResult(general_image(), sequence=1), rotation=rotation, specialization=(6, 1))
+            app.runtime = RotationRuntime(capture, FakeKeyboard(), rotation, 15)
+            monkeypatch.setattr(app.runtime, "get_latest_result", lambda: snapshot)
+            capture.running = app.collecting = True
+            app.query_one("#pages", TabbedContent).active = "conditions"
+            app.refresh_capture()
+            # 先完成占位值的列宽测量，确保测试覆盖后续更新而非首次建行。
+            await pilot.pause()
+            table = app.query_one("#condition_table", DataTable)
+            assert table.get_cell("0", "value") == "—"
+
+            icon_hash = "0123456789abcdef"
+            hashes = [f"{index:016x}" for index in range(10)]
+            values: tuple[Value, ...] = (icon_hash, [], [*hashes], "")
+            for value in values:
+                decision = Decision((value, *([False] * (len(rotation.conditions) - 1))), len(rotation.rules), rotation.rules[-1], None)
+                snapshot = RuntimeSnapshot(capture=snapshot.capture, decision=decision, rotation=rotation, specialization=(6, 1))
+                app.refresh_capture()
+                await pilot.pause()
+                assert table.get_cell("0", "value") == str(value)
+                assert table.ordered_columns[-1].content_width >= len(str(value))
+                assert all(row.height == 1 for row in table.rows.values())
+                if value == icon_hash:
+                    assert icon_hash in "\n".join(table.render_line(y).text for y in range(table.size.height))
+                elif value == hashes:
+                    assert table.max_scroll_x > 0
+                    table.scroll_to(x=table.max_scroll_x, animate=False)
+                    await pilot.pause()
+                    assert hashes[-1] in "\n".join(table.render_line(y).text for y in range(table.size.height))
+
+            app.stop_collection()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert table.get_cell("0", "value") == "—"
 
     asyncio.run(scenario())
 
@@ -444,6 +509,105 @@ def execution_frame(sequence: int) -> CaptureResult:
     image[:4, 12:16] = 255
     image[4:8, 20:24] = 255
     return CaptureResult(image, sequence=sequence)
+
+
+def test_multiple_rotations_footer_generation_and_manual_pause(tmp_path: Path) -> None:
+    directory = tmp_path / "rotations"
+    directory.mkdir()
+    (directory / "blood.toml").write_bytes(Path("tests/fixtures/engine-rotation.toml").read_bytes())
+    mage_title = "火焰法师" * 40
+    (directory / "fire.toml").write_text(
+        f'''schema_version = 1
+uuid = "660e8400-e29b-41d4-a716-446655440000"
+[profile]
+title = "{mage_title}"
+description = "测试多份路由与长名称"
+unit_class = "MAGE"
+unit_spec = 2
+[[conditions]]
+title = "启用"
+plugin = "enable@dev"
+[[macros]]
+name = "法师动作"
+macro_text = "/say 测试"
+[[rotation]]
+condition = "启用"
+macro = "法师动作"
+''',
+        encoding="utf-8",
+    )
+    config_path = tmp_path / "phantom.toml"
+    config_path.write_text("[rotations]\n", encoding="utf-8")
+    executable = tmp_path / "_retail_/Wow.exe"
+    executable.parent.mkdir()
+    executable.touch()
+
+    async def scenario() -> None:
+        capture, keyboard = FakeCapture(), FakeKeyboard()
+        app = PhantomApp(AppConfig(config_path, wow_executable=executable), capture=capture, game_detector=lambda: GameStatus(True), keyboard=keyboard)
+        async with app.run_test(size=(120, 46)) as pilot:
+            await pilot.pause()
+            assert len(app.rotations) == 2 and app.rotation is None
+            assert "尚未识别" in str(app.query_one("#status_line", Static).render())
+            app.generate_addon()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            toc = (executable.parent / "Interface/AddOns/Phantom/Phantom.toc").read_text(encoding="utf-8")
+            assert all(f"{rotation.uuid}.lua" in toc for rotation in app.rotations)
+
+            app.start_collection()
+            capture.result = execution_frame(1)
+            await pilot.pause(0.2)
+            app.refresh_capture()
+            table = app.query_one("#condition_table", DataTable)
+            assert app.rotation is not None and app.rotation.profile.unit_class == "DEATHKNIGHT"
+            assert table.row_count == 10
+            assert "引擎测试循环" in str(app.query_one("#status_line", Static).render())
+
+            mage = execution_frame(2)
+            assert mage.image is not None
+            mage.image[:4, 4:8] = 8
+            mage.image[:4, 8:12] = 2
+            capture.result = mage
+            await pilot.pause(0.2)
+            app.refresh_capture()
+            assert app.rotation is not None and app.rotation.profile.title == mage_title
+            assert table.row_count == 1 and table.get_cell("0", "value") == "True"
+            assert app.decision is not None and app.decision.macro is not None and app.decision.macro.name == "法师动作"
+            assert mage_title in str(app.query_one("#status_line", Static).render())
+            assert app.query_one("#footer").region.height == 1
+            await pilot.resize_terminal(70, 30)
+            assert app.query_one("#footer").region.height == 1
+            await pilot.resize_terminal(120, 46)
+
+            app.stop_collection()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            sent = len(keyboard.sent)
+            capture.result = execution_frame(3)
+            app.refresh_capture()
+            await pilot.pause(0.15)
+            assert not app.collecting and len(keyboard.sent) == sent
+            assert app.rotation is not None and app.rotation.profile.title == mage_title
+            assert app.decision is None and table.get_cell("0", "value") == "—"
+            assert "程序：已暂停" in str(app.query_one("#status_line", Static).render())
+
+            app.start_collection()
+            missing = execution_frame(4)
+            assert missing.image is not None
+            missing.image[:4, 8:12] = 3
+            capture.result = missing
+            await pilot.pause(0.2)
+            app.refresh_capture()
+            assert app.collecting and app.rotation is None and table.row_count == 0
+            assert "无匹配" in str(app.query_one("#status_line", Static).render())
+            assert len(keyboard.sent) == sent
+            capture.result = execution_frame(5)
+            await pilot.pause(0.2)
+            app.refresh_capture()
+            assert app.rotation is not None and table.row_count == 10 and len(keyboard.sent) == sent + 1
+
+    asyncio.run(scenario())
 
 
 def test_keyboard_error_requires_manual_restart(tmp_path: Path) -> None:
@@ -478,12 +642,36 @@ def test_keyboard_error_requires_manual_restart(tmp_path: Path) -> None:
             await app.workers.wait_for_complete()
             await pilot.pause()
             # A later collection-only start must not reuse the prior runtime snapshot.
-            app.rotation = None
+            app.rotations = ()
             app.start_collection()
             capture.result = CaptureResult(general_image())
             await pilot.pause(0.15)
             assert app.runtime is None and app.decision is None
             assert app.general_data is not None
+
+    asyncio.run(scenario())
+
+
+def test_capture_failure_clears_previously_matched_rotation(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        capture = FakeCapture()
+        app = rotation_app(tmp_path, capture, game=True)
+        async with app.run_test(size=(120, 46)) as pilot:
+            await pilot.pause()
+            app.start_collection()
+            capture.result = execution_frame(1)
+            await pilot.pause(0.2)
+            app.refresh_capture()
+            assert app.rotation is not None and app.decision is not None
+            capture.result = CaptureResult(status=CaptureStatus(True, "截图线程失败"))
+            capture.running = False
+            app.refresh_capture()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert not app.collecting and app.rotation is None and app.decision is None
+            assert app.query_one("#condition_table", DataTable).row_count == 0
+            assert "引擎测试循环" not in str(app.query_one("#status_line", Static).render())
+            assert "尚未识别" in str(app.query_one("#status_line", Static).render())
 
     asyncio.run(scenario())
 
@@ -531,12 +719,12 @@ def test_slow_generation_exit_waits_for_output(tmp_path: Path, monkeypatch: pyte
     entered = Event()
     release = Event()
 
-    def slow_generate(rotation_path: Path, executable: Path, addon_name: str) -> GenerationResult:
+    def slow_generate(rotations: tuple[Rotation, ...], executable: Path, addon_name: str) -> RotationGenerationResult:
         entered.set()
         assert release.wait(5)
-        return generate(rotation_path, executable, addon_name)
+        return generate_rotations(rotations, executable, addon_name)
 
-    monkeypatch.setattr("phantom.ui.app.generate", slow_generate)
+    monkeypatch.setattr("phantom.ui.app.generate_rotations", slow_generate)
 
     async def scenario() -> None:
         app = rotation_app(tmp_path, FakeCapture())

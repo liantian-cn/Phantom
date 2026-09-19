@@ -2,7 +2,7 @@
 
 ## 应用配置与 rotation 配置的边界
 
-启动工作目录下的 `phantom.toml` 是应用配置文件，保存截图插件选择、FPS 与界面参数，与 rotation TOML 无关，其字段、默认值和错误规则见 [tui.md](../../phantom-code-dev/references/tui.md)。本文件只规定旋转（rotation）配置的 schema 与语义。
+启动工作目录下的 `phantom.toml` 是应用配置文件，保存截图/键盘插件选择、FPS、界面参数及各职业专精的 rotation 文件路径；它与 rotation TOML 是两种独立配置，其字段、默认值和错误规则见 [tui.md](../../phantom-code-dev/references/tui.md)。本文件只规定旋转（rotation）配置的 schema 与语义。
 
 ## 文件边界
 
@@ -81,7 +81,7 @@ macro = "审判"
 - `schema_version` 当前必须为整数 `1`。未来结构升级通过显式迁移完成，不得猜测字段形状。
 - `uuid` 必须是带连字符的标准 RFC 4122 UUID 文本，并用于生成 `<uuid>.lua`。
 - `profile.unit_class` 使用 Blizzard 的大写职业 token。
-- `profile.unit_spec` 使用 `GetSpecialization()` 的顺序索引 1–4。
+- `profile.unit_spec` 使用 `GetSpecialization()` 的顺序索引；DRUID 允许 1–4，其余 12 个职业允许 1–3，总计固定 40 个组合，DEMONHUNTER 的 3 为 devourer。
 - schema v1 不包含 `unit_talents`。
 - 每个 `conditions[].title` 在文件内唯一；表达式直接引用该标题。
 - 每个 `macros[].name` 在文件内唯一；循环项的 `macro` 直接引用该名称。
@@ -91,7 +91,7 @@ macro = "审判"
 
 ## 条件参数默认值与加载回写
 
-所有 `load_rotation()` 入口使用相同规则，包括启动加载、点击生成和直接调用。只有整份配置的结构、插件参数、宏文本、宏数量与自动键位分配、表达式与引用等全部验证通过，且内存布局分配与冻结成功后，才向 rotation 文件补写缺失的条件插件默认参数。应用配置 `phantom.toml` 不参与此回写。
+所有 `load_rotation()` 入口使用相同规则，包括启动加载、单份生成包装和直接调用；TUI 集合生成复用启动已加载对象，不重读文件。只有整份配置的结构、插件参数、宏文本、宏数量与自动键位分配、表达式与引用等全部验证通过，且内存布局分配与冻结成功后，才向 rotation 文件补写缺失的条件插件默认参数。应用配置 `phantom.toml` 不参与此默认参数回写，其选择回写及 UUID 冲突修复另见 TUI 多份管理规范。
 
 - 默认值唯一来源是精确版本 Python `Condition` 子类公开的 `config_defaults: ClassVar[Mapping[str, object]]`，基类默认为空映射；插件构造与配置回写共享此来源，具体契约见 [条件插件规范](../../phantom-plugin-dev/references/conditions.md#配置默认值)。不读取 `plugin.toml`，也不从模板参数推测默认值。
 - 由其他参数或输出模式派生的布局宽度不属于静态默认补写范围，具体公式见上述条件插件规范。省略 `width` 时每次构造重新推导；显式填写时优先使用配置值，之后改变数值量程不会自动覆盖已有宽度。

@@ -330,6 +330,10 @@ plugin = "player_health_pct@dev"
 [conditions.plugin_args]
 use_predicted = false
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "死神印记"
 macro_text = "/cast 死神印记"

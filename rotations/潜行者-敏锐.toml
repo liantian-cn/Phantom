@@ -481,6 +481,10 @@ plugin = "spell_cooldown@dev"
 spell_ids = [121471]
 ignore_gcd = true
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "速效药膏"
 macro_text = "/cast 速效药膏"

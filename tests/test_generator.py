@@ -1,17 +1,19 @@
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import numpy as np
 import pytest
 from lupa.lua51 import LuaRuntime  # type: ignore[import-untyped]
 
+from phantom.core import generator
 from phantom.core.condition.contracts import Region
 from phantom.core.condition.registry import Registry
-from phantom.core.generator import generate, render
+from phantom.core.generator import generate, generate_rotations, render, render_rotations
 from phantom.core.macro_keys import MACRO_KEYS
 from phantom.core.pixels import PixelDecoder
-from phantom.core.rotation import load_rotation, parse_macros
+from phantom.core.rotation import Rotation, atomic_write, load_rotation, parse_macros
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -73,14 +75,14 @@ def test_generate_real_tree_overwrites_and_retains_stale_files(tmp_path: Path) -
     path = copy_rotation(tmp_path)
     executable = fake_executable(tmp_path)
     result = generate(path, executable, "TestPhantom")
-    assert len(result.files) == 23
+    assert len(result.files) == 24
     stale = result.directory / "old.lua"
     stale.write_text("old", encoding="utf-8")
     toc = result.directory / "TestPhantom.toc"
     toc.write_text("outdated", encoding="utf-8")
     generate(path, executable, "TestPhantom")
     references = [line for line in toc.read_text(encoding="utf-8").splitlines() if line and not line.startswith("##")]
-    assert len(references) == 16
+    assert len(references) == 17
     assert all((result.directory / name.replace("\\", "/")).is_file() for name in references)
     assert all("examples" not in name and "old.lua" not in name for name in references)
     assert stale.read_text(encoding="utf-8") == "old"
@@ -90,6 +92,122 @@ def test_generate_real_tree_overwrites_and_retains_stale_files(tmp_path: Path) -
             destination = result.directory / source.relative_to(ROOT / "phantom/lua")
             assert destination.read_bytes() == source.read_bytes()
     assert not any("media" in name for name in references)
+
+
+def rotation_pair(tmp_path: Path) -> tuple[Rotation, Rotation]:
+    path = copy_rotation(tmp_path)
+    first = load_rotation(path)
+    second = load_rotation(path)
+    return first, replace(second, uuid=str(uuid4()), profile=replace(second.profile, unit_spec=2))
+
+
+def test_generate_collection_writes_shared_files_once_and_toc_last(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    rotations = rotation_pair(tmp_path)
+    executable = fake_executable(tmp_path)
+    writes: list[Path] = []
+
+    def record_write(path: Path, content: str | bytes) -> None:
+        writes.append(path)
+        atomic_write(path, content)
+
+    def reject_load(path: Path) -> Rotation:
+        raise AssertionError(f"集合生成不得重读 rotation：{path}")
+
+    monkeypatch.setattr(generator, "atomic_write", record_write)
+    monkeypatch.setattr(generator, "load_rotation", reject_load)
+    rotations[0].path.unlink()
+    result = generate_rotations(rotations, executable, "TestPhantom")
+    assert result.rotations is rotations
+    assert len(writes) == len(set(writes)) == len(result.files)
+    assert writes[-1].name == result.files[-1] == "TestPhantom.toc"
+    references = [line.replace("\\", "/") for line in writes[-1].read_text(encoding="utf-8").splitlines() if line and not line.startswith("##")]
+    shared = [path.relative_to(generator.LUA_ROOT).as_posix() for directory in ("runtime", "general") for path in sorted((generator.LUA_ROOT / directory).glob("*.lua"))]
+    assert references == shared + [rotation.uuid + ".lua" for rotation in rotations]
+    for asset in (generator.LUA_ROOT / "media").rglob("*"):
+        if asset.is_file():
+            name = asset.relative_to(generator.LUA_ROOT).as_posix()
+            assert result.files.count(name) == 1
+            assert (result.directory / name).read_bytes() == asset.read_bytes()
+    for name, source in render_rotations(rotations, "TestPhantom").items():
+        assert (result.directory / name).read_text(encoding="utf-8") == source
+
+
+@pytest.mark.parametrize("conflict", ["group", "uuid"])
+def test_collection_rejects_duplicates_before_render_or_write(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, conflict: str) -> None:
+    first, second = rotation_pair(tmp_path)
+    second = replace(second, profile=first.profile) if conflict == "group" else replace(second, uuid=first.uuid)
+    executable = fake_executable(tmp_path)
+
+    def reject_render(instance_id: str) -> str:
+        raise AssertionError("重复集合不应开始渲染")
+
+    monkeypatch.setattr(first.conditions[0].instance, "generate_lua", reject_render)
+    message = "重复职业专精" if conflict == "group" else "重复 UUID"
+    with pytest.raises(ValueError, match=message):
+        render_rotations((first, second), "Phantom")
+    with pytest.raises(ValueError, match=message):
+        generate_rotations((first, second), executable)
+    assert not (executable.parent / "Interface").exists()
+
+
+def test_collection_rejects_empty_before_write(tmp_path: Path) -> None:
+    executable = fake_executable(tmp_path)
+    with pytest.raises(ValueError, match="不能为空"):
+        render_rotations((), "Phantom")
+    with pytest.raises(ValueError, match="不能为空"):
+        generate_rotations((), executable)
+    assert not (executable.parent / "Interface").exists()
+
+
+def test_second_rotation_render_failure_preserves_all_existing_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    rotations = rotation_pair(tmp_path)
+    executable = fake_executable(tmp_path)
+    result = generate_rotations((rotations[0],), executable)
+    old = {path.relative_to(result.directory): path.read_bytes() for path in result.directory.rglob("*") if path.is_file()}
+    rendered: list[str] = []
+    generate_first = rotations[0].conditions[0].instance.generate_lua
+
+    def record_first(instance_id: str) -> str:
+        rendered.append("first")
+        return generate_first(instance_id)
+
+    def fail_second(instance_id: str) -> str:
+        rendered.append("second")
+        raise ValueError("第二份渲染失败")
+
+    monkeypatch.setattr(rotations[0].conditions[0].instance, "generate_lua", record_first)
+    monkeypatch.setattr(rotations[1].conditions[0].instance, "generate_lua", fail_second)
+    with pytest.raises(ValueError, match="第二份渲染失败"):
+        generate_rotations(rotations, executable)
+    assert rendered == ["first", "second"]
+    assert old == {path.relative_to(result.directory): path.read_bytes() for path in result.directory.rglob("*") if path.is_file()}
+    assert render(rotations[0], "Phantom")[rotations[0].uuid + ".lua"]
+
+
+def test_single_rotation_wrappers_preserve_results(tmp_path: Path) -> None:
+    path = copy_rotation(tmp_path)
+    executable = fake_executable(tmp_path)
+    single = generate(path, executable, "TestPhantom")
+    collection = generate_rotations((single.rotation,), executable, "TestPhantom")
+    assert single.directory == collection.directory
+    assert single.files == collection.files
+    assert collection.rotations[0] is single.rotation
+    assert render(single.rotation, "TestPhantom") == render_rotations((single.rotation,), "TestPhantom")
+
+
+@pytest.mark.parametrize(("unit_class", "spec", "active"), [("DEATHKNIGHT", 1, 0), ("DEATHKNIGHT", 2, 1), ("MAGE", 1, None)])
+def test_collection_lua_guards_select_only_matching_rotation(tmp_path: Path, unit_class: str, spec: int, active: int | None) -> None:
+    rotations = rotation_pair(tmp_path)
+    lua: Any = LuaRuntime(unpack_returned_tuples=True)
+    state, addon = lua.execute((ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8"))
+    state["class"] = unit_class
+    state.spec = spec
+    execute: Any = lua.eval("function(source, addon) assert(loadstring(source))('Phantom', addon) end")
+    sources = render_rotations(rotations, "Phantom")
+    for index, rotation in enumerate(rotations):
+        before = len(state.frames)
+        execute(sources[rotation.uuid + ".lua"], addon)
+        assert (len(state.frames) > before) == (index == active)
 
 
 def test_invalid_generation_does_not_touch_existing_output(tmp_path: Path) -> None:

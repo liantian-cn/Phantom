@@ -599,6 +599,10 @@ plugin = "player_melee_enemies_count@dev"
 spell_id = 1247227
 combat_only = false
 
+[[conditions]]
+title = "打断黑名单图标"
+plugin = "interrupt_blacklist_icons@dev"
+
 [[macros]]
 name = "锁喉"
 macro_text = "/cast 锁喉"

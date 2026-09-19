@@ -271,7 +271,10 @@ def test_every_source_step_and_atom(sources: dict[str, str], spec: str, stem: st
         for actual_atom, expected_item in zip(actual, expected, strict=True):
             assert isinstance(actual_atom[-1], bool) == isinstance(expected_item[-1], bool)
         referenced.update(node.id for node in ast.walk(ast.parse(row["condition"], mode="eval")) if isinstance(node, ast.Name))
-    assert referenced == set(conditions)
+    blacklist = {"title": "打断黑名单图标", "plugin": "interrupt_blacklist_icons@dev"}
+    assert [condition for condition in document["conditions"] if condition["plugin"] == blacklist["plugin"]] == [blacklist]
+    assert document["conditions"][-1] == blacklist
+    assert referenced == set(conditions) - {blacklist["title"]}
 
 
 @pytest.mark.parametrize("stem", [row[1] for row in EXPECTED])
@@ -282,6 +285,11 @@ def test_copy_load_render_and_lua51_without_rewrite(tmp_path: Path, stem: str) -
     rotation = load_rotation(copied)
     assert copied.read_bytes() == original
     assert [macro.key for macro in rotation.macros] == list(MACRO_KEYS[: len(rotation.macros)])
+    blacklist = rotation.conditions[-1].instance
+    assert blacklist.output.output_type == "icon_tile"
+    assert blacklist.output.value_type is str and blacklist.output.value_shape == "list"
+    assert blacklist.output.output_count == len(blacklist.regions) == 10
+    assert blacklist.fallback_value() == []
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     compile_lua: Any = lua.eval("function(source) local fn,err=loadstring(source); assert(fn,err); return true end")
     for name, content in render(rotation, "Phantom").items():
@@ -308,6 +316,10 @@ def test_copy_load_render_and_lua51_without_rewrite(tmp_path: Path, stem: str) -
     decision = rotation.decide([snapshot[entry.title] for entry in rotation.conditions])
     assert decision.rule_index == 1
     assert decision.rule.macro == first.macro
+    # 观测值从空列表变为非空列表，仍须保持相同的首条动作决策。
+    snapshot[rotation.conditions[-1].title] = ["0123456789abcdef"]
+    observed = rotation.decide([snapshot[entry.title] for entry in rotation.conditions])
+    assert observed.rule_index == decision.rule_index and observed.macro == decision.macro
     for entry in rotation.conditions:
         if entry.instance.output.output_type == "value_bar":
             args = next(condition["plugin_args"] for condition in raw_rotation(stem)["conditions"] if condition["title"] == entry.title)
