@@ -115,17 +115,30 @@ AuraContainer 在世界事件调用公开的 UpdateAllAuras，平时由官方容
 
 Aura 身份分类与普通可辅助条件的语义不同：过滤使用 `UnitCanAssist("player", unit, true, true)`，可辅助侧允许指定 Buff，不可辅助侧允许指定 Debuff。多个 ID 使用官方单槽首个匹配，不承诺列表优先级。日常更新由官方 AuraContainer 管理。
 
-`target_has_debuff@dev`、`focus_has_debuff@dev`、`aura_target_debuff_duration@dev`、`aura_target_debuff_stacks@dev` 固定使用 `PLAYER|HARMFUL`；官方 PLAYER 包含玩家、玩家宠物和载具。没有 `player_only` 参数；重新生成后排除其他来源的同技能减益。驱散条件不使用 PLAYER 过滤。
+`target_has_debuff@dev`、`focus_has_debuff@dev`、`aura_target_debuff_duration@dev`、`aura_target_debuff_duration_pct@dev`、`aura_target_debuff_stacks@dev` 固定使用 `PLAYER|HARMFUL`；官方 PLAYER 包含玩家、玩家宠物和载具。没有 `player_only` 参数；重新生成后排除其他来源的同技能减益。驱散条件不使用 PLAYER 过滤。
 
-玩家增益存在、层数、时长三个插件均接受 `player_only`，默认 true 使用 `HELPFUL|PLAYER`，显式 false 使用 `HELPFUL`。这是已确认的默认语义变化，不批量为其他循环补参数；加载时仍遵循通用默认值补写契约。
+玩家增益存在、层数、秒数时长和剩余百分比插件均接受 `player_only`，默认 true 使用 `HELPFUL|PLAYER`，显式 false 使用 `HELPFUL`。这是已确认的默认语义变化，不批量为其他循环补参数；加载时仍遵循通用默认值补写契约。
 
 时长条直接使用官方 `SetDurationBar` 的立即插值与剩余时间方向，不特殊处理永久或无限 DurationObject，也不保证其满条。玩家增益 duration 允许有限正小数，拒绝 bool、NaN、Inf；目标减益 duration 仍只允许正整数。配置 duration 必须与实际时长匹配才能准确换算；名义像素步长为 `duration/(4×width)`，不保证延长或时长变体的绝对秒数精度。时长与充能的派生宽度不补写，显式宽度可超过默认公式的上限；宽度改变不改变数值量程。
 
 本次玩家时长配置量程为白骨之盾 duration=30/width=8、正义盾击 duration=13.5/width=4、奉献 duration=4/width=2。奉献条的8个内容像素对应0..4秒，每增加一列纯白像素换算0.5秒；这是解码量程验证，不代表游戏中实际光环时长或永久光环渲染已验收。
 
+新编写秒数条件应按[rotation 配置精度标准](../../phantom-rotation-dev/references/configuration.md#光环时长的配置精度)显式选择宽度；该 skill 建议不同于本节插件代码的缺省公式，不修改以上已经确认的个案参数。
+
 层数条使用官方 `SetApplicationBar`，实际量程为 0..max_value，名义层数步长为 `max_value / (4 * width)`。保留 min_value 参数但仅允许 0；Warcraft Wiki 将 `minApplications` 标记为 12.1.5 新增，当前实现不使用它。零填充无法区分无光环与应用层数为零的光环。
 
 范围 Debuff 计数只接受 NeverSecret 的 aura_id；游戏初始化发现不满足条件会直接报错并中止后续初始化，不能把此状态当作正常零计数。combat_only 表示单位自身处于战斗，不保证正与玩家交战。技能射程与姓名板子集不代表几何半径内的完整单位集合。
+
+### 光环剩余百分比（2026-09-20）
+
+| 插件 | 参数 | 固定输出 |
+| --- | --- | --- |
+| `aura_player_buff_duration_pct@dev` | 必填 `aura_ids`；可选 `player_only=true` | 单个 ValueBar，内容 width=5；float 剩余百分比 |
+| `aura_target_debuff_duration_pct@dev` | 仅必填 `aura_ids` | 同上，固定目标 `PLAYER\|HARMFUL` |
+
+`aura_ids` 为非空正整数列表；两者均拒绝 `duration` 和 `width`，目标版也拒绝 `player_only`。输出为 `ratio×100`，范围 `0.0..100.0`；正常计时从 100 降至 0，不是已过百分比。玩家版来源默认 `HELPFUL|PLAYER`，显式 false 为 `HELPFUL`；目标版沿用存在且不可辅助的容器门控，不额外要求敌对或可攻击。无光环、目标门控无效或插件解码异常为 `0.0`；分配区域越界仍遵循核心错误边界，不伪装成合法 0。
+
+固定五单位对应 20 个内容像素，两侧红色分隔合计 4 像素，完整占位 24×4／6 个 Cell。两采样行一致的纯黑白整列图像对应 `0,5,…,100`，名义步长 5 个百分点；部分灰色像素从分母排除或两行不一致时，原样返回现有比例算法结果，不额外量化。Lua 继续使用官方 `SetDurationBar`、`Immediate`、`RemainingTime`，永久光环行为由官方显示绑定负责，不新增特殊分支。
 
 ### 固定资源
 
