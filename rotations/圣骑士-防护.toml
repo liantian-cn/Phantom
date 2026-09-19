@@ -1,18 +1,9 @@
-# 此文件由 .script/generate_assisted_rotations.py 按冻结 TXT 显示顺序生成。
-# 唯一规则来源：paladin/protection.txt；未读取 CSV 或补充隐藏字段。
-# 所有叶子条件按 AND 保留顺序；无冷却标签按 0 秒；仅启用与动作冷却 >= 60 秒的爆发门控。
-# 天赋条件按技能 ID 查询已知/法术书状态，不解析天赋树。
-# 资源可支付/成功施放规则映射 spell_usable 的 isUsable；不保证所有实际施放条件。
-# 技能射程规则使用当前步骤动作 ID 对 target 的射程结果，无效射程返回 False。
-# 玩家周围人数近似为本步骤技能可攻击敌人总数，仅可观察 nameplate1–40；secret/nil 射程漏计，不代表原码数圆内完整人数。
-# 距离条件近似为当前步骤技能射程，忽略 TXT 码数；无效技能/无目标/nil 射程也返回 False。
-# 玩家光环限定 HELPFUL 增益；TXT 的增益/减益合称按现有插件能力映射。
 schema_version = 1
 uuid = "1daf2f41-18fa-55d5-83f0-69dc71343da7"
 
 [profile]
 title = "圣骑士-防护"
-description = "圣骑士一键辅助"
+description = "作者：liantian-cn"
 unit_class = "PALADIN"
 unit_class_id = 2
 unit_spec = 2
@@ -22,46 +13,88 @@ title = "插件启用"
 plugin = "enable@dev"
 
 [[conditions]]
-title = "爆发开启"
-plugin = "in_burst@dev"
+title = "正在延迟"
+plugin = "delaying@dev"
 
 [[conditions]]
-title = "已学会圣洁鸣钟"
-plugin = "talent_known@dev"
+title = "玩家有圣言祭礼"
+plugin = "player_has_buff@dev"
 [conditions.plugin_args]
-spell_ids = [375576]
+buff_ids = [433550]
+player_only = true
 
 [[conditions]]
-title = "圣洁鸣钟可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [375576]
+title = "玩家战斗中"
+plugin = "player_in_combat@dev"
 
 [[conditions]]
-title = "圣洁鸣钟冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [375576]
-ignore_gcd = true
+title = "玩家施法进度"
+plugin = "player_cast_progress@dev"
 
 [[conditions]]
-title = "圣洁鸣钟对目标在射程内"
-plugin = "spell_in_range@dev"
-[conditions.plugin_args]
-spell_id = 375576
-unit_token = "target"
+title = "玩家正在蓄力"
+plugin = "player_is_empowering@dev"
 
 [[conditions]]
-title = "已学会复仇者之盾"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [31935]
+title = "目标存在"
+plugin = "target_is_exists@dev"
 
 [[conditions]]
-title = "复仇者之盾可用"
-plugin = "spell_usable@dev"
+title = "目标存活"
+plugin = "target_is_alive@dev"
+
+[[conditions]]
+title = "目标可攻击"
+plugin = "target_can_attack@dev"
+
+[[conditions]]
+title = "目标可协助"
+plugin = "target_can_assist@dev"
+
+[[conditions]]
+title = "神圣能量"
+plugin = "spec_power_holy_power@dev"
+
+[[conditions]]
+title = "正义盾击剩余时间"
+plugin = "aura_player_buff_duration@dev"
 [conditions.plugin_args]
-spell_ids = [31935]
+aura_ids = [132403]
+duration = 13.5
+width = 4
+player_only = true
+
+[[conditions]]
+title = "玩家生命值"
+plugin = "player_health_pct@dev"
+[conditions.plugin_args]
+use_predicted = true
+
+[[conditions]]
+title = "闪耀之光层数"
+plugin = "aura_player_buff_stacks@dev"
+[conditions.plugin_args]
+aura_ids = [327510]
+max_value = 2
+min_value = 0
+width = 1
+player_only = true
+
+[[conditions]]
+title = "法力值"
+plugin = "spec_power_mana@dev"
+[conditions.plugin_args]
+max_power = 100
+
+[[conditions]]
+title = "小闪耀之光层数"
+plugin = "aura_player_buff_stacks@dev"
+[conditions.plugin_args]
+aura_ids = [182104]
+max_value = 3
+min_value = 0
+width = 3
+player_only = true
 
 [[conditions]]
 title = "复仇者之盾冷却"
@@ -71,186 +104,79 @@ spell_ids = [31935]
 ignore_gcd = true
 
 [[conditions]]
-title = "复仇者之盾对目标在射程内"
-plugin = "spell_in_range@dev"
-[conditions.plugin_args]
-spell_id = 31935
-unit_token = "target"
+title = "焦点存在"
+plugin = "focus_is_exists@dev"
 
 [[conditions]]
-title = "已学会愤怒之锤"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [24275]
+title = "焦点存活"
+plugin = "focus_is_alive@dev"
 
 [[conditions]]
-title = "愤怒之锤可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [24275]
+title = "焦点可攻击"
+plugin = "focus_can_attack@dev"
 
 [[conditions]]
-title = "愤怒之锤冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [24275]
-ignore_gcd = true
+title = "焦点可协助"
+plugin = "focus_can_assist@dev"
 
 [[conditions]]
-title = "愤怒之锤对目标在射程内"
-plugin = "spell_in_range@dev"
-[conditions.plugin_args]
-spell_id = 24275
-unit_token = "target"
+title = "焦点可打断"
+plugin = "focus_cast_interruptible@dev"
 
 [[conditions]]
-title = "已学会审判"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [275779]
-
-[[conditions]]
-title = "审判可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [275779]
-
-[[conditions]]
-title = "审判冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [275779]
-ignore_gcd = true
-
-[[conditions]]
-title = "审判对目标在射程内"
-plugin = "spell_in_range@dev"
-[conditions.plugin_args]
-spell_id = 275779
-unit_token = "target"
-
-[[conditions]]
-title = "圣洁鸣钟技能可攻击敌人总数"
-plugin = "player_melee_enemies_count@dev"
-[conditions.plugin_args]
-spell_id = 375576
-combat_only = false
-
-[[conditions]]
-title = "玩家神圣能量"
-plugin = "spec_power_holy_power@dev"
-
-[[conditions]]
-title = "已学会十字军打击"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [35395]
-
-[[conditions]]
-title = "十字军打击可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [35395]
-
-[[conditions]]
-title = "十字军打击冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [35395]
-ignore_gcd = true
-
-[[conditions]]
-title = "目标在十字军打击技能范围内"
+title = "目标在复仇者之盾范围内"
 plugin = "target_in_range@dev"
 [conditions.plugin_args]
-spell_id = 35395
+spell_id = 31935
 
 [[conditions]]
-title = "已学会奉献_26573"
-plugin = "talent_known@dev"
+title = "目标可打断"
+plugin = "target_cast_interruptible@dev"
+
+[[conditions]]
+title = "责难冷却"
+plugin = "spell_cooldown@dev"
 [conditions.plugin_args]
-spell_ids = [26573]
+spell_ids = [96231]
+ignore_gcd = true
 
 [[conditions]]
-title = "奉献_26573可用"
-plugin = "spell_usable@dev"
+title = "目标在责难范围内"
+plugin = "target_in_range@dev"
 [conditions.plugin_args]
-spell_ids = [26573]
+spell_id = 96231
 
 [[conditions]]
-title = "奉献_26573冷却"
+title = "奉献剩余时间"
+plugin = "aura_player_buff_duration@dev"
+[conditions.plugin_args]
+aura_ids = [188370]
+duration = 4
+width = 2
+player_only = true
+
+[[conditions]]
+title = "奉献冷却"
 plugin = "spell_cooldown@dev"
 [conditions.plugin_args]
 spell_ids = [26573]
 ignore_gcd = true
 
 [[conditions]]
-title = "玩家有奉献_188370增益"
-plugin = "player_has_buff@dev"
-[conditions.plugin_args]
-buff_ids = [188370]
+title = "玩家正在移动"
+plugin = "player_is_moving@dev"
 
 [[conditions]]
-title = "已学会正义盾击_53600"
-plugin = "talent_known@dev"
+title = "审判充能"
+plugin = "spell_charges@dev"
 [conditions.plugin_args]
-spell_ids = [53600]
+spell_ids = [275779]
+max_charges = 2
+width = 1
 
 [[conditions]]
-title = "正义盾击_53600可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [53600]
-
-[[conditions]]
-title = "正义盾击_53600冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [53600]
-ignore_gcd = true
-
-[[conditions]]
-title = "玩家有正义盾击_132403增益"
-plugin = "player_has_buff@dev"
-[conditions.plugin_args]
-buff_ids = [132403]
-
-[[conditions]]
-title = "玩家当前血量百分比"
-plugin = "player_health_pct@dev"
-[conditions.plugin_args]
-use_predicted = false
-
-[[conditions]]
-title = "已学会复仇之怒"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [31884]
-
-[[conditions]]
-title = "复仇之怒可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [31884]
-
-[[conditions]]
-title = "复仇之怒冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [31884]
-ignore_gcd = true
-
-[[conditions]]
-title = "已学会戒卫"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [389539]
-
-[[conditions]]
-title = "戒卫可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [389539]
+title = "爆发开启"
+plugin = "in_burst@dev"
 
 [[conditions]]
 title = "戒卫冷却"
@@ -260,127 +186,188 @@ spell_ids = [389539]
 ignore_gcd = true
 
 [[conditions]]
+title = "圣洁鸣钟冷却"
+plugin = "spell_cooldown@dev"
+[conditions.plugin_args]
+spell_ids = [375576]
+ignore_gcd = true
+
+[[conditions]]
+title = "神圣壁垒充能"
+plugin = "spell_charges@dev"
+[conditions.plugin_args]
+spell_ids = [432459]
+max_charges = 2
+width = 1
+
+[[conditions]]
+title = "圣洁武器充能"
+plugin = "spell_charges@dev"
+[conditions.plugin_args]
+spell_ids = [432472]
+max_charges = 2
+width = 1
+
+[[conditions]]
+title = "祝福之锤充能"
+plugin = "spell_charges@dev"
+[conditions.plugin_args]
+spell_ids = [204019]
+max_charges = 3
+width = 1
+
+[[conditions]]
 title = "打断黑名单图标"
 plugin = "interrupt_blacklist_icons@dev"
 
 [[macros]]
-name = "圣洁鸣钟"
-macro_text = "/cast 圣洁鸣钟"
-
-[[macros]]
-name = "复仇者之盾"
-macro_text = "/cast 复仇者之盾"
-
-[[macros]]
-name = "愤怒之锤"
-macro_text = "/cast 愤怒之锤"
-
-[[macros]]
-name = "审判"
-macro_text = "/cast 审判"
-
-[[macros]]
-name = "十字军打击"
-macro_text = "/cast 十字军打击"
-
-[[macros]]
-name = "奉献"
-macro_text = "/cast 奉献"
+name = "圣言祭礼"
+macro_text = "/cast 圣言祭礼\n/use 16"
 
 [[macros]]
 name = "正义盾击"
 macro_text = "/cast 正义盾击"
 
 [[macros]]
+name = "荣耀圣令"
+macro_text = "/cast [@player] 荣耀圣令"
+
+[[macros]]
+name = "焦点复仇者之盾"
+macro_text = "/cast [@focus] 复仇者之盾"
+
+[[macros]]
+name = "目标复仇者之盾"
+macro_text = "/cast [@target] 复仇者之盾"
+
+[[macros]]
+name = "目标责难"
+macro_text = "/cast [@target] 责难"
+
+[[macros]]
+name = "奉献"
+macro_text = "/cast 奉献"
+
+[[macros]]
+name = "审判"
+macro_text = "/cast 审判"
+
+[[macros]]
 name = "复仇之怒"
 macro_text = "/cast 复仇之怒"
 
 [[macros]]
-name = "戒卫"
-macro_text = "/cast 戒卫"
+name = "圣洁鸣钟"
+macro_text = "/cast 圣洁鸣钟"
 
-# 来源 paladin/protection.txt:2，步骤 0，动作 ID 375576，TXT 冷却 60 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (爆发开启 == True) and (已学会圣洁鸣钟 == True) and (圣洁鸣钟可用 == True) and (圣洁鸣钟冷却 == 0) and (圣洁鸣钟对目标在射程内 == True)"
-macro = "圣洁鸣钟"
-annotate = "来源步骤 0：圣洁鸣钟（ID 375576）"
+[[macros]]
+name = "神圣壁垒"
+macro_text = "/cast 神圣壁垒"
 
-# 来源 paladin/protection.txt:7，步骤 1，动作 ID 31935，TXT 冷却 15 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (已学会复仇者之盾 == True) and (复仇者之盾可用 == True) and (复仇者之盾冷却 == 0) and (复仇者之盾对目标在射程内 == True)"
-macro = "复仇者之盾"
-annotate = "来源步骤 1：复仇者之盾（ID 31935）"
+[[macros]]
+name = "祝福之锤"
+macro_text = "/cast 祝福之锤"
 
-# 来源 paladin/protection.txt:12，步骤 2，动作 ID 24275，TXT 冷却 0 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (已学会愤怒之锤 == True) and (愤怒之锤可用 == True) and (愤怒之锤冷却 == 0) and (愤怒之锤对目标在射程内 == True)"
-macro = "愤怒之锤"
-annotate = "来源步骤 2：愤怒之锤（ID 24275）"
+condition = "not 插件启用"
+macro = "Idle"
 
-# 来源 paladin/protection.txt:17，步骤 3，动作 ID 275779，TXT 冷却 0 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (已学会审判 == True) and (审判可用 == True) and (审判冷却 == 0) and (审判对目标在射程内 == True)"
-macro = "审判"
-annotate = "来源步骤 3：审判（ID 275779）"
+condition = "正在延迟"
+macro = "Idle"
 
-# 来源 paladin/protection.txt:22，步骤 4，动作 ID 375576，TXT 冷却 60 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (爆发开启 == True) and (已学会圣洁鸣钟 == True) and (圣洁鸣钟可用 == True) and (圣洁鸣钟冷却 == 0) and (圣洁鸣钟技能可攻击敌人总数 > 3) and (玩家神圣能量 <= 2)"
-macro = "圣洁鸣钟"
-annotate = "来源步骤 4：圣洁鸣钟（ID 375576）"
+condition = "not 玩家有圣言祭礼"
+macro = "圣言祭礼"
 
-# 来源 paladin/protection.txt:28，步骤 5，动作 ID 375576，TXT 冷却 60 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (爆发开启 == True) and (已学会圣洁鸣钟 == True) and (圣洁鸣钟可用 == True) and (圣洁鸣钟冷却 == 0) and (圣洁鸣钟技能可攻击敌人总数 <= 2) and (玩家神圣能量 <= 3)"
-macro = "圣洁鸣钟"
-annotate = "来源步骤 5：圣洁鸣钟（ID 375576）"
+condition = "not 玩家战斗中"
+macro = "Idle"
 
-# 来源 paladin/protection.txt:34，步骤 6，动作 ID 35395，TXT 冷却 0 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (已学会十字军打击 == True) and (十字军打击可用 == True) and (十字军打击冷却 == 0) and (目标在十字军打击技能范围内 == True)"
-macro = "十字军打击"
-annotate = "来源步骤 6：十字军打击（ID 35395）"
+condition = "玩家施法进度 > 0"
+macro = "Idle"
 
-# 来源 paladin/protection.txt:39，步骤 7，动作 ID 26573，TXT 冷却 9 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (已学会奉献_26573 == True) and (奉献_26573可用 == True) and (奉献_26573冷却 == 0) and (玩家有奉献_188370增益 == False)"
+condition = "玩家正在蓄力"
+macro = "Idle"
+
+[[rotation]]
+condition = "not (目标存在 and 目标存活 and 目标可攻击 and not 目标可协助)"
+macro = "Idle"
+
+[[rotation]]
+condition = "神圣能量 >= 3 and 正义盾击剩余时间 <= 4"
+macro = "正义盾击"
+
+[[rotation]]
+condition = "玩家生命值 <= 75 and 闪耀之光层数 == 2 and 法力值 >= 20"
+macro = "荣耀圣令"
+
+[[rotation]]
+condition = "玩家生命值 <= 55 and 闪耀之光层数 == 1 and 法力值 >= 5"
+macro = "荣耀圣令"
+
+[[rotation]]
+condition = "闪耀之光层数 == 2 and 小闪耀之光层数 == 2 and 神圣能量 >= 3 and 玩家生命值 <= 90 and 法力值 >= 50"
+macro = "荣耀圣令"
+
+[[rotation]]
+condition = "(复仇者之盾冷却 == 0 and (焦点存在 and 焦点存活 and 焦点可攻击 and not 焦点可协助)) and (焦点可打断)"
+macro = "焦点复仇者之盾"
+
+[[rotation]]
+condition = "(复仇者之盾冷却 == 0 and 目标在复仇者之盾范围内) and (目标可打断)"
+macro = "目标复仇者之盾"
+
+[[rotation]]
+condition = "(责难冷却 == 0 and 目标在责难范围内) and (目标可打断)"
+macro = "目标责难"
+
+[[rotation]]
+condition = "奉献剩余时间 <= 1 and 奉献冷却 == 0 and not 玩家正在移动"
 macro = "奉献"
-annotate = "来源步骤 7：奉献（ID 26573）"
 
-# 来源 paladin/protection.txt:44，步骤 8，动作 ID 275779，TXT 冷却 0 秒。
-# TXT 原无条件步骤，仍在原位置并保留启用/适用爆发门控。
 [[rotation]]
-condition = "(插件启用 == True)"
+condition = "审判充能 == 2"
 macro = "审判"
-annotate = "来源步骤 8：审判（ID 275779）"
 
-# 来源 paladin/protection.txt:45，步骤 9，动作 ID 53600，TXT 冷却 0 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (已学会正义盾击_53600 == True) and (正义盾击_53600可用 == True) and (正义盾击_53600冷却 == 0) and (玩家有正义盾击_132403增益 == False)"
-macro = "正义盾击"
-annotate = "来源步骤 9：正义盾击（ID 53600）"
-
-# 来源 paladin/protection.txt:50，步骤 10，动作 ID 53600，TXT 冷却 0 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (已学会正义盾击_53600 == True) and (正义盾击_53600可用 == True) and (正义盾击_53600冷却 == 0) and (玩家当前血量百分比 >= 40)"
-macro = "正义盾击"
-annotate = "来源步骤 10：正义盾击（ID 53600）"
-
-# 来源 paladin/protection.txt:55，步骤 11，动作 ID 31884，TXT 冷却 120 秒。
-# 来源行 59：AUTOMATION_ONLY；仅作来源标记，保留步骤。原文：仅自动化施放（不属于游戏的辅助战斗循环）
-[[rotation]]
-condition = "(插件启用 == True) and (爆发开启 == True) and (已学会复仇之怒 == True) and (复仇之怒可用 == True) and (复仇之怒冷却 == 0)"
+condition = "爆发开启 and 戒卫冷却 == 0 and not 玩家正在移动"
 macro = "复仇之怒"
-annotate = "来源步骤 11：复仇之怒（ID 31884）"
 
-# 来源 paladin/protection.txt:60，步骤 12，动作 ID 389539，TXT 冷却 120 秒。
-# 来源行 64：AUTOMATION_ONLY；仅作来源标记，保留步骤。原文：仅自动化施放（不属于游戏的辅助战斗循环）
 [[rotation]]
-condition = "(插件启用 == True) and (爆发开启 == True) and (已学会戒卫 == True) and (戒卫可用 == True) and (戒卫冷却 == 0)"
-macro = "戒卫"
-annotate = "来源步骤 12：戒卫（ID 389539）"
+condition = "爆发开启 and 圣洁鸣钟冷却 == 0 and not 玩家正在移动 and 神圣能量 <= 2"
+macro = "圣洁鸣钟"
+
+[[rotation]]
+condition = "神圣壁垒充能 == 2 and 爆发开启"
+macro = "神圣壁垒"
+
+[[rotation]]
+condition = "圣洁武器充能 == 2 and 爆发开启"
+macro = "神圣壁垒"
+
+[[rotation]]
+condition = "复仇者之盾冷却 == 0"
+macro = "目标复仇者之盾"
+
+[[rotation]]
+condition = "审判充能 == 1"
+macro = "审判"
+
+[[rotation]]
+condition = "神圣能量 == 5"
+macro = "正义盾击"
+
+[[rotation]]
+condition = "祝福之锤充能 >= 1"
+macro = "祝福之锤"
+
+[[rotation]]
+condition = "神圣能量 == 5"
+macro = "正义盾击"
 
 [[rotation]]
 condition = ""
 macro = "Idle"
-annotate = "末尾兜底"

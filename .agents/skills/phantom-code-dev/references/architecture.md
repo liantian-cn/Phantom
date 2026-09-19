@@ -88,7 +88,7 @@ phantom/
   captures/
 scripts/
 rotations/
-  死亡骑士-鲜血.toml  # 以及其余39份职业专精辅助循环
+  死亡骑士-鲜血.toml  # 以及其余39份职业专精配置
 ```
 
 `phantom/lua/runtime/` 保存生成器使用的共享 Lua 运行时源码。这些源码会进入生成后的 WoW 插件，为条件插件生成的实例 Lua 提供公共运行能力；条件专属模板仍保存在对应的 `phantom/conditions/<name>@<version>/template.lua` 中。该目录不保存生成后的插件产物。

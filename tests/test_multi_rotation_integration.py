@@ -26,7 +26,15 @@ def test_all_forty_rotations_discover_persist_and_generate_one_addon(tmp_path: P
     assert len(groups) == 40 and len({item.profile.unit_class for item in loaded.rotations}) == 13
     assert ("DEMONHUNTER", 3) in groups and ("DRUID", 4) in groups
     assert len({item.uuid for item in loaded.rotations}) == 40
-    assert originals == {path.name: path.read_bytes() for path in directory.glob("*.toml")}
+    # 旧配置不批量补参数，首次加载副本仅补入已批准的玩家来源默认值。
+    for path in directory.glob("*.toml"):
+        expected = tomllib.loads(originals[path.name].decode("utf-8"))
+        for condition in expected["conditions"]:
+            if condition["plugin"] in {"player_has_buff@dev", "aura_player_buff_stacks@dev", "aura_player_buff_duration@dev"}:
+                condition.setdefault("plugin_args", {}).setdefault("player_only", True)
+        assert tomllib.loads(path.read_text(encoding="utf-8")) == expected
+        assert (root / "rotations" / path.name).read_bytes() == originals[path.name]
+    normalized = {path.name: path.read_bytes() for path in directory.glob("*.toml")}
 
     saved = config.path.read_bytes()
     paths = tomllib.loads(saved.decode("utf-8"))["rotations"]
@@ -35,6 +43,7 @@ def test_all_forty_rotations_discover_persist_and_generate_one_addon(tmp_path: P
     assert paths["demonhunter.devourer"].endswith("恶魔猎手-噬灭.toml")
     restarted = load_rotations(load_config(tmp_path))
     assert not restarted.warnings and config.path.read_bytes() == saved
+    assert normalized == {path.name: path.read_bytes() for path in directory.glob("*.toml")}
     assert [(item.path, item.uuid) for item in restarted.rotations] == [(item.path, item.uuid) for item in loaded.rotations]
 
     executable = tmp_path / "_retail_/Wow.exe"

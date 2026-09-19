@@ -18,7 +18,7 @@
 | 精确插件版本 | 配置使用 `包名@版本` 引用插件，不自动升级或替换；多个版本可以并存。 |
 | 多专精配置 | 多份 rotation 共同生成一个游戏插件，运行时根据画面中的职业、专精选择对应循环。 |
 
-OBS、采集卡、串口及其他驱动属于可扩展方向，仓库目前未附带这些后端。仓库提供 13 个职业、40 个专精的 rotation，适合作为修改起点；其中包含辅助循环转换的近似映射和固定量程，不能等同于所有天赋与场景下的最优循环。具体边界见[辅助循环说明](.agents/skills/phantom-rotation-dev/references/assisted-rotations.md)。
+OBS、采集卡、串口及其他驱动属于可扩展方向，仓库目前未附带这些后端。仓库提供 13 个职业、40 个专精的 rotation，适合作为修改起点；其中 38 份保留[辅助循环 TXT 转换](.agents/skills/phantom-rotation-dev/references/assisted-rotations.md)，鲜血死亡骑士与防护圣骑士采用[用户确认的 Shigure JSON 迁移策略](.agents/skills/phantom-shigure-migration/references/confirmed-tank-migration.md)。这些配置含近似映射和固定量程，不能等同于所有天赋与场景下的最优循环。
 
 ## 工作原理
 
@@ -183,6 +183,7 @@ annotate = "末尾兜底"
 | 任务 | 使用的 skill |
 | --- | --- |
 | 编写循环、组合条件、调整优先级 | [phantom-rotation-dev](.agents/skills/phantom-rotation-dev/SKILL.md) |
+| 将 Shigure JSON 与技能 Lua 迁移为 Phantom 循环 | [Shigure迁移工具](.agents/skills/phantom-shigure-migration/SKILL.md) |
 | 增加条件、截图或键盘插件 | [phantom-plugin-dev](.agents/skills/phantom-plugin-dev/SKILL.md) |
 | 修改 TUI、核心引擎、生成器或像素协议 | [phantom-code-dev](.agents/skills/phantom-code-dev/SKILL.md) |
 | 核验 WoW API、事件和调用限制 | [phantom-wow-api](.agents/skills/phantom-wow-api/SKILL.md) |
@@ -198,6 +199,10 @@ annotate = "末尾兜底"
 > 请读取 AGENTS.md，使用 phantom-rotation-dev，为 [职业与专精] 编写 [场景] 的 rotation。技能优先级是 [顺序]，爆发策略是 [策略]，宏文本是 [文本]。先核对内置插件，缺少能力时说明缺口。请在临时副本中校验配置并在内存中生成 Lua，报告尚未完成的游戏内验证。
 
 离线校验应操作临时副本：`load_rotation()` 成功后可能回写插件默认参数。配置和生成检查通过后，再由使用者在游戏内检查条件、键位和实际表现。
+
+### 迁移 Shigure 循环
+
+向 Agent 提供源 JSON、对应技能 Lua 和希望保留或调整的策略，使用 [Shigure迁移工具](.agents/skills/phantom-shigure-migration/SKILL.md)。它按源 `Rules` 顺序盘点条件、单位、别名和宏，先复用 Phantom 现有插件，报告语义缺口及优先级疑点，再按确认结果迁移并离线验证。默认依靠用户输入与 skill 中的经验完成；未覆盖语义先报告，只有另获授权才查阅外部 Shigure 源码。
 
 ### 用插件强化 Phantom
 

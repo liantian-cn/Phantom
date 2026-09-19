@@ -140,6 +140,25 @@ def test_invalid_id_lists(name: str, field: str, bad: object) -> None:
         create(name, {field: bad})
 
 
+@pytest.mark.parametrize("player_only", [None, True, False])
+def test_player_buff_source_filter_default_and_override(player_only: bool | None) -> None:
+    args = CASES["player_has_buff"].copy()
+    if player_only is not None:
+        args["player_only"] = player_only
+    plugin = create("player_has_buff", args)
+    _, state, _ = harness([plugin])
+    container = next(frame for frame in state.frames.values() if frame.kind == "AuraContainer")
+    assert plugin.config_defaults["player_only"] is True
+    assert container.slots.aura.filter == ("HELPFUL" if player_only is False else "HELPFUL|PLAYER")
+    assert dict(container.slots.aura.options.candidateFilters.includeSpellIDs.items()) == {188298: True, 188290: True}
+
+
+@pytest.mark.parametrize("bad", [None, 0, 1, "true", [], {}])
+def test_player_buff_source_filter_requires_boolean(bad: object) -> None:
+    with pytest.raises(ValueError, match="player_only"):
+        create("player_has_buff", {**CASES["player_has_buff"], "player_only": bad})
+
+
 @pytest.mark.parametrize("name", ["player_damage_absorb", "player_heal_absorb"])
 @pytest.mark.parametrize("bad", [True, False, -1, 0.5, "0", None, 9007199254740991, 10**100])
 def test_invalid_threshold(name: str, bad: object) -> None:
@@ -449,7 +468,7 @@ def test_absorb_opaque_values_boundaries_and_units(name: str, field: str, event:
     assert value(plugin, state) is False
 
 
-@pytest.mark.parametrize("name,filter_string", [("player_has_big_defensive", "HELPFUL|BIG_DEFENSIVE"), ("player_has_dispellable_debuff", "HARMFUL|RAID_PLAYER_DISPELLABLE"), ("player_has_buff", "HELPFUL")])
+@pytest.mark.parametrize("name,filter_string", [("player_has_big_defensive", "HELPFUL|BIG_DEFENSIVE"), ("player_has_dispellable_debuff", "HARMFUL|RAID_PLAYER_DISPELLABLE"), ("player_has_buff", "HELPFUL|PLAYER")])
 def test_managed_aura_slot_contract_and_world_refresh(name: str, filter_string: str) -> None:
     plugin = create(name)
     _, state, addon = harness([plugin])

@@ -49,7 +49,8 @@ def saved_conditions(path: Path) -> list[dict[str, object]]:
 @pytest.mark.parametrize(
     ("plugin", "arguments", "expected"),
     [
-        ("aura_player_buff_duration", "aura_ids = [1], duration = 12", 3),
+        ("aura_player_buff_duration", "aura_ids = [1], duration = 12, player_only = false", 3),
+        ("aura_player_buff_duration", "aura_ids = [1], duration = 13.5, player_only = true", 4),
         ("aura_target_debuff_duration", "aura_ids = [1], duration = 40", 8),
         ("spell_charges", "spell_ids = [1], max_charges = 3", 2),
         ("spec_power_soul_shards", "fractional = true", 25),
@@ -94,7 +95,9 @@ def test_invalid_derived_width_prevents_other_defaults_writeback(tmp_path: Path,
         ("focus_health_pct", "[conditions.plugin_args]\n", {"use_predicted": True}),
         ("player_melee_enemies_count", "plugin_args = { spell_id = 49998 }\n", {"combat_only": False}),
         ("player_range_aura_units_count", "[conditions.plugin_args]\nspell_id = 49998\naura_id = 55078\n", {"combat_only": False}),
-        ("aura_player_buff_stacks", "plugin_args = { aura_ids = [195181], max_value = 10 }\n", {"min_value": 0, "width": 2}),
+        ("player_has_buff", "plugin_args = { buff_ids = [195181] }\n", {"player_only": True}),
+        ("aura_player_buff_duration", "plugin_args = { aura_ids = [195181], duration = 30 }\n", {"player_only": True}),
+        ("aura_player_buff_stacks", "plugin_args = { aura_ids = [195181], max_value = 10 }\n", {"min_value": 0, "width": 2, "player_only": True}),
         ("aura_target_debuff_stacks", "[conditions.plugin_args]\naura_ids = [55078]\nmax_value = 10\n", {"min_value": 0, "width": 2}),
     ],
 )
@@ -224,7 +227,7 @@ def test_explicit_values_and_instances_are_independent(tmp_path: Path) -> None:
         tmp_path,
         condition("player_health_pct", "plugin_args = { use_predicted = false }\n", title="显式")
         + condition("player_health_pct", title="默认")
-        + condition("aura_player_buff_stacks", "plugin_args = { aura_ids = [1], max_value = 10, min_value = 0, width = 4 }\n", title="层数")
+        + condition("aura_player_buff_stacks", "plugin_args = { aura_ids = [1], max_value = 10, min_value = 0, width = 4, player_only = false }\n", title="层数")
         + condition("player_has_dispellable_debuff", "plugin_args = { dispel_types = { Magic = true } }\n", title="驱散一")
         + condition("player_has_dispellable_debuff", "plugin_args = { dispel_types = {} }\n", title="驱散二"),
     )
@@ -232,7 +235,7 @@ def test_explicit_values_and_instances_are_independent(tmp_path: Path) -> None:
     rows = saved_conditions(path)
     assert rows[0]["plugin_args"] == {"use_predicted": False}
     assert rows[1]["plugin_args"] == {"use_predicted": True}
-    assert rows[2]["plugin_args"] == {"aura_ids": [1], "max_value": 10, "min_value": 0, "width": 4}
+    assert rows[2]["plugin_args"] == {"aura_ids": [1], "max_value": 10, "min_value": 0, "width": 4, "player_only": False}
     assert rows[3]["plugin_args"] == {"dispel_types": DISPEL_DEFAULTS | {"Magic": True}}
     assert rows[4]["plugin_args"] == {"dispel_types": DISPEL_DEFAULTS}
     assert rotation.conditions[0].instance is not rotation.conditions[1].instance

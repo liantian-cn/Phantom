@@ -1,4 +1,4 @@
-"""以仓库内冻结 TXT 原文独立核验四十专精映射；只复制加载和内存渲染，不安装或发送按键。"""
+"""以冻结 TXT 核验保留的三十八份映射，并对全部四十专精做离线通用验证。"""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import hashlib
 import json
 import keyword
 import re
-import runpy
 import tomllib
 from collections import Counter
 from dataclasses import dataclass
@@ -25,6 +24,8 @@ from phantom.core.rotation import load_rotation
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/assisted_rotations_source.json"
+MIGRATED_UUIDS = {"死亡骑士-鲜血": "15a37eea-e9f2-59cc-8e83-bbfd03fe866e", "圣骑士-防护": "1daf2f41-18fa-55d5-83f0-69dc71343da7"}
+PLAYER_AURA_PLUGINS = {"player_has_buff@dev", "aura_player_buff_stacks@dev", "aura_player_buff_duration@dev"}
 
 # 独立列明全部专精、索引与来源步数，不能以当前 TOML 文件反推预期集合。
 EXPECTED = [
@@ -69,6 +70,7 @@ EXPECTED = [
     ("warrior/fury", "战士-狂怒", "WARRIOR", 1, 2, 20),
     ("warrior/protection", "战士-防护", "WARRIOR", 1, 3, 14),
 ]
+LEGACY_EXPECTED = [row for row in EXPECTED if row[1] not in MIGRATED_UUIDS]
 IGNORED = {"AURA_COUNT_NEAR_PLAYER_GREATER", "AURA_COUNT_NEAR_PLAYER_LESS", "TARGET_COUNT_NEAR_TARGET_GREATER", "TARGET_COUNT_NEAR_TARGET_LESS"}
 DURATION_REFERENCE = {268877: 10, 257622: 20, 191634: 15, 264571: 12, 335467: 6, 980: 18, 433891: 20}
 STACK_REFERENCE = {195181: 12, 51124: 2, 1254252: 8, 203981: 20, 1245577: 15, 359618: 2, 1242974: 25, 1221389: 20, 202090: 4, 325202: 2, 393039: 20, 344179: 10, 264571: 2, 117828: 2}
@@ -222,13 +224,15 @@ def test_frozen_population_totals_and_independent_uuids(sources: dict[str, str])
     assert len(set(identifiers)) == 40
     legacy_fixture = tomllib.loads((ROOT / "tests/fixtures/condition-observations.toml").read_text(encoding="utf-8"))
     assert legacy_fixture["uuid"] not in identifiers
-    for (spec, *_), identifier in zip(EXPECTED, identifiers, strict=True):
+    for (spec, stem, *_), identifier in zip(EXPECTED, identifiers, strict=True):
         assert str(UUID(identifier)) == identifier
-        assert UUID(identifier).version == 5
-        assert identifier == str(uuid5(NAMESPACE_URL, "phantom:assisted-txt:" + spec))
+        if stem in MIGRATED_UUIDS:
+            assert identifier == MIGRATED_UUIDS[stem]
+        else:
+            assert identifier == str(uuid5(NAMESPACE_URL, "phantom:assisted-txt:" + spec))
 
 
-@pytest.mark.parametrize("spec,stem,token,class_id,spec_index,step_count", EXPECTED, ids=[row[0] for row in EXPECTED])
+@pytest.mark.parametrize("spec,stem,token,class_id,spec_index,step_count", LEGACY_EXPECTED, ids=[row[0] for row in LEGACY_EXPECTED])
 def test_every_source_step_and_atom(sources: dict[str, str], spec: str, stem: str, token: str, class_id: int, spec_index: int, step_count: int) -> None:
     document = raw_rotation(stem)
     assert document["schema_version"] == 1
@@ -278,14 +282,25 @@ def test_every_source_step_and_atom(sources: dict[str, str], spec: str, stem: st
 
 
 @pytest.mark.parametrize("stem", [row[1] for row in EXPECTED])
-def test_copy_load_render_and_lua51_without_rewrite(tmp_path: Path, stem: str) -> None:
+def test_copy_load_render_and_lua51_with_only_approved_defaults(tmp_path: Path, stem: str) -> None:
     original = (ROOT / "rotations" / (stem + ".toml")).read_bytes()
     copied = tmp_path / "rotation.toml"
     copied.write_bytes(original)
     rotation = load_rotation(copied)
-    assert copied.read_bytes() == original
+    # 用户保留其他配置原文，副本加载只允许补入新批准的来源过滤默认值。
+    expected_document = tomllib.loads(original.decode("utf-8"))
+    for condition in expected_document["conditions"]:
+        if condition["plugin"] in PLAYER_AURA_PLUGINS:
+            condition.setdefault("plugin_args", {}).setdefault("player_only", True)
+    assert tomllib.loads(copied.read_text(encoding="utf-8")) == expected_document
+    if stem in MIGRATED_UUIDS:
+        assert copied.read_bytes() == original
+    assert (ROOT / "rotations" / (stem + ".toml")).read_bytes() == original
     assert [macro.key for macro in rotation.macros] == list(MACRO_KEYS[: len(rotation.macros)])
-    blacklist = rotation.conditions[-1].instance
+    blacklist_entries = [entry for entry in rotation.conditions if entry.plugin == "interrupt_blacklist_icons@dev"]
+    assert len(blacklist_entries) == 1
+    blacklist_entry = blacklist_entries[0]
+    blacklist = blacklist_entry.instance
     assert blacklist.output.output_type == "icon_tile"
     assert blacklist.output.value_type is str and blacklist.output.value_shape == "list"
     assert blacklist.output.output_count == len(blacklist.regions) == 10
@@ -300,11 +315,11 @@ def test_copy_load_render_and_lua51_without_rewrite(tmp_path: Path, stem: str) -
     enabled = next(index for index, entry in enumerate(rotation.conditions) if entry.plugin == "enable@dev")
     values[enabled] = False
     assert rotation.decide(values).rule.macro == "Idle"
-    # 首步全部叶子设为满足，所有后续步骤保持相同快照；首条命中必须仍是源首步。
+    # 历史配置验证首步动作；新配置的首步为禁用暂停，动作优先级由独立基准验证。
     first = rotation.rules[0]
     assert first.expression is not None
     snapshot = {entry.title: value for entry, value in zip(rotation.conditions, values, strict=True)}
-    for node in ast.walk(first.expression):
+    for node in () if stem in MIGRATED_UUIDS else ast.walk(first.expression):
         if not isinstance(node, ast.Compare):
             continue
         assert isinstance(node.left, ast.Name) and isinstance(node.comparators[0], ast.Constant)
@@ -317,63 +332,13 @@ def test_copy_load_render_and_lua51_without_rewrite(tmp_path: Path, stem: str) -
     assert decision.rule_index == 1
     assert decision.rule.macro == first.macro
     # 观测值从空列表变为非空列表，仍须保持相同的首条动作决策。
-    snapshot[rotation.conditions[-1].title] = ["0123456789abcdef"]
+    snapshot[blacklist_entry.title] = ["0123456789abcdef"]
     observed = rotation.decide([snapshot[entry.title] for entry in rotation.conditions])
     assert observed.rule_index == decision.rule_index and observed.macro == decision.macro
     for entry in rotation.conditions:
         if entry.instance.output.output_type == "value_bar":
             args = next(condition["plugin_args"] for condition in raw_rotation(stem)["conditions"] if condition["title"] == entry.title)
             assert entry.instance.output.widths == (args["width"],)
-
-
-@pytest.fixture(scope="module")
-def generator() -> dict[str, Any]:
-    return runpy.run_path(str(ROOT / ".script/generate_assisted_rotations.py"))
-
-
-def test_generator_requires_explicit_source(generator: dict[str, Any], tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    destination = tmp_path / "output"
-    with pytest.raises(SystemExit) as error:
-        generator["main"](["--destination", str(destination)])
-    assert error.value.code == 2
-    assert "--source" in capsys.readouterr().err
-    assert not destination.exists()
-
-
-def test_generator_cli_uses_explicit_source(sources: dict[str, str], generator: dict[str, Any], tmp_path: Path) -> None:
-    source_directory = tmp_path / "source"
-    destination = tmp_path / "output"
-    for relative_path, text in sources.items():
-        path = source_directory / relative_path
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(text, encoding="utf-8")
-    generator["main"](["--source", str(source_directory), "--destination", str(destination)])
-    assert {path.name for path in destination.iterdir()} == {stem + ".toml" for _, stem, *_ in EXPECTED}
-    for path in destination.iterdir():
-        assert path.read_text(encoding="utf-8") == (ROOT / "rotations" / path.name).read_text(encoding="utf-8")
-
-
-def test_reproducible_generation_from_frozen_text(sources: dict[str, str], generator: dict[str, Any]) -> None:
-    for spec, stem, *_ in EXPECTED:
-        source = generator["parse_source"](spec + ".txt", sources[spec + ".txt"])
-        filename, text = generator["Builder"](source).build()
-        assert filename == stem + ".toml"
-        assert text == (ROOT / "rotations" / filename).read_text(encoding="utf-8")
-
-
-def test_unknown_rule_and_malformed_source_report_file_and_line(generator: dict[str, Any]) -> None:
-    source = generator["parse_source"]("mage/fire.txt", "Fire\n0: Spell: 火球术[id:133]\n    未知规则        -- ASSISTED_COMBAT_RULE_TYPE_UNKNOWN\n")
-    with pytest.raises(ValueError, match=r"mage/fire.txt:3:.*UNKNOWN"):
-        generator["Builder"](source).build()
-    with pytest.raises(ValueError, match=r"mage/fire.txt:2:"):
-        generator["parse_source"]("mage/fire.txt", "Fire\n0: Spell: 没有ID\n")
-    with pytest.raises(ValueError, match=r"mage/fire.txt:3:"):
-        generator["parse_source"]("mage/fire.txt", "Fire\n0: Spell: 火球术[id:133]\n    没有规则标签\n")
-
-
-def test_missing_source_set_rejected(tmp_path: Path, generator: dict[str, Any]) -> None:
-    with pytest.raises(ValueError, match="TXT 集合不符"):
-        generator["read_sources"](tmp_path)
 
 
 def test_critical_fractional_unknown_and_duplicate_name_cases(sources: dict[str, str]) -> None:

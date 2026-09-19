@@ -125,7 +125,10 @@ def test_invalid_aura_ids(name: str, bad: object) -> None:
         create(name, {**CASES[name], "aura_ids": bad})
 
 
-@pytest.mark.parametrize("name,field", [(name, field) for name in CASES for field in ("duration", "max_value", "width") if field in CASES[name] or (field == "width" and name.endswith(("stacks", "duration")))])
+@pytest.mark.parametrize(
+    "name,field",
+    [(name, field) for name in CASES for field in ("duration", "max_value", "width") if (field in CASES[name] or (field == "width" and name.endswith(("stacks", "duration")))) and (name, field) != ("aura_player_buff_duration", "duration")],
+)
 @pytest.mark.parametrize("bad", [True, False, 0, -1, 1.5, "2", None, float("inf")])
 def test_positive_integer_parameters(name: str, field: str, bad: object) -> None:
     with pytest.raises(ValueError):
@@ -181,7 +184,7 @@ def test_lua_slot_binding_and_backing(name: str) -> None:
     assert len(list(container.slots.keys())) == 1
     slot = container.slots.aura
     assert dict(slot.options.candidateFilters.includeSpellIDs.items()) == {100: True, 200: True}
-    assert slot.filter == ("PLAYER|HARMFUL" if "debuff" in name else "HELPFUL")
+    assert slot.filter == ("PLAYER|HARMFUL" if "debuff" in name else ("HELPFUL|PLAYER" if "player" in name else "HELPFUL"))
     unit = "player" if "player" in name else ("focus" if "focus" in name else "target")
     assert container.unit == unit
     if plugin.output.output_type == "value_bar":
@@ -232,6 +235,38 @@ def test_custom_stacks_width_and_zero_minimum() -> None:
         state.initialize(state)
         container = next(frame for frame in state.frames.values() if frame.kind == "AuraContainer")
         assert container.slots.aura.button.width == 28
+
+
+@pytest.mark.parametrize("name", ["aura_player_buff_duration", "aura_player_buff_stacks"])
+@pytest.mark.parametrize("player_only", [None, True, False])
+def test_player_aura_source_filter(name: str, player_only: bool | None) -> None:
+    args = CASES[name].copy()
+    if player_only is not None:
+        args["player_only"] = player_only
+    plugin = create(name, args)
+    _, state, _ = harness([plugin])
+    state.initialize(state)
+    container = next(frame for frame in state.frames.values() if frame.kind == "AuraContainer")
+    assert plugin.config_defaults["player_only"] is True
+    assert container.slots.aura.filter == ("HELPFUL" if player_only is False else "HELPFUL|PLAYER")
+    assert dict(container.slots.aura.options.candidateFilters.includeSpellIDs.items()) == {100: True, 200: True}
+
+
+@pytest.mark.parametrize("name", ["aura_player_buff_duration", "aura_player_buff_stacks"])
+@pytest.mark.parametrize("bad", [None, 0, 1, "true", [], {}])
+def test_player_aura_source_filter_requires_boolean(name: str, bad: object) -> None:
+    with pytest.raises(ValueError, match="player_only"):
+        create(name, {**CASES[name], "player_only": bad})
+
+
+def test_player_fractional_duration_keeps_official_bar_binding() -> None:
+    plugin = create("aura_player_buff_duration", {"aura_ids": [132403], "duration": 13.5})
+    _, state, _ = harness([plugin])
+    state.initialize(state)
+    container = next(frame for frame in state.frames.values() if frame.kind == "AuraContainer")
+    assert plugin.output.widths == (4,)
+    assert container.slots.aura.button.width == 16
+    assert dict(container.slots.aura.button.durationOptions.items()) == {"interpolation": 0, "direction": 1}
 
 
 @pytest.mark.parametrize("name", [name for name in CASES if name.endswith("duration")])
