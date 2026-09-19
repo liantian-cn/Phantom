@@ -4,7 +4,7 @@
 
 ## 分支与范围
 
-- 只在 `develop` 分支修改 Phantom。用户负责把特定版本冻结到 `main`。
+- 日常开发只在 `develop` 分支修改 Phantom；`main` 由 GitHub Actions 发布过滤后的快照，同步工作流仅在用户授权下于 `main` 维护。发布规则见根 [README](../../../../README.md#分支与对外同步)。
 - 根 `README.md` 预留给最终用户说明；详细规范写入所属 skill 的 references；同一规则只维护一份，跨 skill 按需引用。
 - 不得把 `@wow-ui-source`、`@PhantomProject`、`@Shigure` 纳入 Phantom 仓库。
 - 外部源码目录作为只读参考。除非用户明确要求更新，不得修改、提交、切换分支、fetch、pull 或 reset。
