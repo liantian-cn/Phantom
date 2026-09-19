@@ -21,7 +21,7 @@
 
 ## 完整示例
 
-此处 `health_pct@dev` 是说明 `unit_token` 参数的假设插件，不是内置插件；当前可运行示例见 `rotations/blood-dk.toml`。
+此处 `health_pct@dev` 是说明 `unit_token` 参数的假设插件，不是内置插件；正式配置示例见 `rotations/死亡骑士-鲜血.toml`，批量来源和近似边界见 [辅助循环转换](assisted-rotations.md)。
 
 ```toml
 schema_version = 1
@@ -62,13 +62,10 @@ ignore_gcd = true
 [[macros]]
 name = "对玩家释放圣光术"
 macro_text = "/cast [@player] 圣光术"
-key = "ALT-NUMPAD1"
-bind_key = true
 
 [[macros]]
 name = "审判"
-key = "E"
-bind_key = false
+macro_text = "/cast 审判"
 
 [[rotation]]
 condition = "玩家血量 < 70 and 圣光术冷却时间 == 0"
@@ -94,9 +91,10 @@ macro = "审判"
 
 ## 条件参数默认值与加载回写
 
-所有 `load_rotation()` 入口使用相同规则，包括启动加载、点击生成和直接调用。只有整份配置的结构、插件参数、宏键位、表达式与引用等全部验证通过，且内存布局分配与冻结成功后，才向 rotation 文件补写缺失的条件插件默认参数。应用配置 `phantom.toml` 不参与此回写。
+所有 `load_rotation()` 入口使用相同规则，包括启动加载、点击生成和直接调用。只有整份配置的结构、插件参数、宏文本、宏数量与自动键位分配、表达式与引用等全部验证通过，且内存布局分配与冻结成功后，才向 rotation 文件补写缺失的条件插件默认参数。应用配置 `phantom.toml` 不参与此回写。
 
 - 默认值唯一来源是精确版本 Python `Condition` 子类公开的 `config_defaults: ClassVar[Mapping[str, object]]`，基类默认为空映射；插件构造与配置回写共享此来源，具体契约见 [条件插件规范](../../phantom-plugin-dev/references/conditions.md#配置默认值)。不读取 `plugin.toml`，也不从模板参数推测默认值。
+- 由其他参数或输出模式派生的布局宽度不属于静态默认补写范围，具体公式见上述条件插件规范。省略 `width` 时每次构造重新推导；显式填写时优先使用配置值，之后改变数值量程不会自动覆盖已有宽度。
 - 只补缺失键，不覆盖任何显式值，包括 `false`、`0`、空字符串、空列表等；显式非法值仍报错，不能用默认值修复或绕过验证。已有嵌套字典按层递归补充缺失子键，保留已有值。
 - 必填约束不因声明子键默认值而放宽。例如 `dispel_types` 整体仍必填，仅在已有字典内将缺失的 `Magic`、`Poison`、`Disease`、`Curse`、`Stealth`、`Special`、`Enrage` 补为 `false`；已有空表会补齐这七个子键，仍表示不匹配任何类型。
 - 仅在确有默认参数需要补写时创建缺失的 `plugin_args`；无默认参数时不创建空表。没有实际补写内容时不写文件。
@@ -121,15 +119,16 @@ schema v1 支持：
 
 ## 宏与键位
 
-键位主键清单与标点语法见[宏键位语法](key-syntax.md)。加载时拒绝未知键名，解析结果由内核持有，键盘后端不解释宏。
+宏配置与自动分配遵循以下规则，`schema_version` 保持 `1`：
 
-- `key` 必填，使用大写 WoW 连字符格式，例如 `ALT-NUMPAD1`、`SHIFT-F8`；Python 端解析同一个字符串并映射到 Windows 输入。
-- `bind_key = true` 时，`macro_text` 必填。生成的 Lua 使用不可见 `SecureActionButtonTemplate` 设置 `type = "macro"` 与 `macrotext`，再通过 `SetOverrideBindingClick` 建立优先覆盖绑定。
-- 上述绑定不创建 WoW 已保存宏槽位，也不改写玩家的持久键位设置。
-- `bind_key = true` 会直接覆盖该键在当前运行期的已有动作，不检查也不提示；用户已经接受该风险。
-- `bind_key = false` 时，`macro_text` 可省略；即使填写也不生效，生成器不得为该项输出安全按钮或覆盖绑定 Lua。Python 直接发送玩家已有游戏键位。
+- 每个宏仅需 `name` 和非空 `macro_text`；`macro_text` 必须为非空字符串，不能省略。
+- 配置不再需要 `key` 和 `bind_key`。旧字段允许残留，其值完全忽略，不校验类型或内容、不警告、不自动清除；条件默认参数回写也必须保留这些字段。旧 `bind_key = false` 不再跳过宏文本校验或生成绑定。
+- 全部声明的宏（包括未被规则引用的宏）按声明顺序分配键位；每份 rotation 独立从[固定键位池](key-syntax.md#固定宏键位池)开头分配，不共享分配游标。最多允许 148 个宏，超过则拒绝加载；空宏列表继续允许。
+- 自动键位只保存在内部宏数据中，不写回配置。内核保留键位字符串和解析后的 `KeyCombination`，分别供 Lua 绑定、展示和键盘发送使用；键盘后端不解释宏。
+- 全部声明的宏均生成不可见 `SecureActionButtonTemplate`，设置 `type = "macro"` 与 `macrotext`，再通过 `SetOverrideBindingClick` 建立优先覆盖绑定。
+- 上述绑定不创建 WoW 已保存宏槽位，也不改写玩家的持久键位设置；会直接覆盖分配键位在当前运行期的已有动作，不检查也不提示。用户已接受该运行期覆盖风险，授权不包含实际游戏操作或其他外部动作。
 
-启用绑定时，生成代码必须保持以下调用语义；变量命名可以由生成器调整：
+每个宏的生成代码必须保持以下调用语义；`macro.key` 是内部自动分配的键位，变量命名可以由生成器调整：
 
 ```lua
 -- 示意已校验宏；实际生成器使用 rotation UUID 与宏序号确保名称唯一。
@@ -145,9 +144,9 @@ SetOverrideBindingClick(frame, true, macro.key, buttonName)
 
 表达式变量仅来自显式声明的 `conditions[].title`。`插件启用`、`爆发开启`、`正在延迟` 不再是内置变量或保留条件名；需要时声明对应的[状态读取插件](../../phantom-plugin-dev/references/built-in-conditions.md#通用状态读取插件)，标题可按现有命名规则自由设置。同一插件可用不同标题多次声明，未声明则不加载 Python 实例。
 
-schema_version 仍为 1；旧配置中未声明的这三个名称按未知变量拒绝，加载失败不回写，不自动补齐条件。仓库示例显式声明 enable 和 delay，保留原表达式；burst 未使用则不声明。
+schema_version 仍为 1；旧配置中未声明的这三个名称按未知变量拒绝，加载失败不回写，不自动补齐条件。正式辅助循环显式声明 enable，使用长冷却技能时另声明 burst；不添加 delay 门控。引擎专用 fixture 独立保留 enable/delay 的测试场景。
 
-这些条件不形成隐式门控。示例通过第一条 `not 插件启用 or 正在延迟` → `Idle` 跳过本轮。状态解码失败使用插件声明的兜底并继续求值。Idle 既可作为条件命中结果，也可作为末尾兜底；Sleep/Pass 仅为未来计划的 Idle 别名，本次不接入，也不增加等待语义。
+这些条件不形成隐式门控。正式辅助循环将启用条件逐条加入动作表达式；测试 fixture 也可通过首条 `not 插件启用 or 正在延迟` → `Idle` 验证跳过本轮。状态解码失败使用插件声明的兜底并继续求值。Idle 既可作为条件命中结果，也可作为末尾兜底；Sleep/Pass 仅为未来计划的 Idle 别名，本次不接入，也不增加等待语义。
 
 `rotation` 从上到下求值，第一个为真的条目胜出。每轮最多发送一个键；全部为假时本轮不执行动作。
 
@@ -165,8 +164,8 @@ schema_version 仍为 1；旧配置中未声明的这三个名称按未知变量
 - 每次加载重新分配，分类后按条件原始顺序排列，ValueBar 包含分隔；输出区域及坐标语义不变。无新增区域的插件保持 `output_type="none"` 和空 regions，不移动其他条件的坐标。成功加载后的文件写入仅按上文规则补写缺失的条件插件默认参数。
 - 本阶段校验所有结构、基本类型、UUID、职业专精、名称/引用与插件参数，加载时一次性完成表达式白名单、引用与类型校验，运行时复用 AST。
 - 条件实例、宏和规则保持配置顺序；重复规则允许，条件标题与宏名称必须唯一。
-- 键位在加载时按键盘公共解析器完整校验并冻结为 KeyCombination；合法键名见[宏键位语法](key-syntax.md)。
-- 示例为 rotations/blood-dk.toml；每次生成所有声明的条件，包括尚未被规则引用的条件。
+- 自动分配的键位在加载时按键盘公共解析器解析并冻结为 KeyCombination；配置中残留的 key/bind_key 不参与解析或校验。固定池与内部语法见[宏键位语法](key-syntax.md)。
+- 示例为 rotations/死亡骑士-鲜血.toml；每次生成所有声明的条件，包括尚未被规则引用的条件。
 
 ## 第 11–13 步求值边界
 

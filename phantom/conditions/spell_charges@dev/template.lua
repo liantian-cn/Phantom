@@ -6,10 +6,11 @@ plugin: spell_charges@dev
 
 描述：
     按候选 ID 顺序选择首个出现在玩家法术书中的技能，进入世界或法术书变化时重新选择。
-    通过 UIInitFuncs 创建宽度由 max_charges 决定的 ValueBar，将范围固定为 0 到宽度并立即刷新。
+    通过 UIInitFuncs 按独立 width 创建 ValueBar，将范围固定为 0 到 max_charges 并立即刷新。
     充能变化时把 currentCharges 直接交给数值条；未选中技能或没有充能信息时显示 0。
 
 修改记录：
+2026-09-19：拆分物理宽度与最大充能量程，保持充能比例与 Python 解码配对。
 2026-09-15：事件统一延至下一帧刷新。
 2026-09-12：生成器条件模板 @1.0，参数校验与解码见同目录 condition.py。
 2026-09-11：按解码开发前的 Lua 示例需求新增技能充能 ValueBar。
@@ -42,7 +43,7 @@ C_Spell.GetSpellCharges：返回可累积充能技能的充能信息，未找到
 参数：spellIdentifier 为 SpellIdentifier，本例使用选中的技能 ID。
 返回值：SpellChargeInfo 表；字段如下：
     currentCharges：当前可用充能层数，可能为秘密值，直接交给 ValueBar:setValue。
-    maxCharges：最大充能层数，NeverSecret；本例范围由固定 WIDTH 决定，不动态采用此字段。
+    maxCharges：最大充能层数，NeverSecret；本例范围由配置 MAX_CHARGES 决定，不动态采用此字段。
     cooldownStartTime：最近一次充能冷却开始的时间；未冷却时为 0。
     cooldownDuration：恢复一层充能所需的秒数。
     chargeModRate：冷却 UI 的更新速率。
@@ -69,7 +70,8 @@ local MIN_CHARGES = 0 -- 不可用时清空，亦为数值条范围下界
 -- 条件实例参数与位置由 Python 生成器填入。
 local SPELL_IDS = { {{spell_ids}} } -- 按优先顺序排列的候选技能 ID
 local POSITION_X = {{x1}} -- 本实例冻结的横向位置
-local WIDTH = {{width1}}                   -- 内容宽度，同时作为最大充能层数
+local WIDTH = {{width1}}          -- 冻结布局的内容宽度，与充能量程独立
+local MAX_CHARGES = {{max_charges}} -- 配置的最大充能层数，与 Python 解码量程一致
 local REVERSE = false             -- 是否反向填充
 
 local chargeBar                        -- 等待 UI 初始化创建的数值条
@@ -106,7 +108,7 @@ end
 
 local function InitializeChargeBar()
     chargeBar = ValueBar:New(POSITION_X, WIDTH, REVERSE)
-    chargeBar:setMinMaxValues(MIN_CHARGES, WIDTH) -- 最大值与内容宽度一致，不采用运行期 maxCharges
+    chargeBar:setMinMaxValues(MIN_CHARGES, MAX_CHARGES) -- 使用配置量程，不采用物理宽度或运行期 maxCharges
     SelectSpell()
     update()                 -- 立即替换构造器的默认半满状态
 end

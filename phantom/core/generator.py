@@ -7,6 +7,7 @@ Description:
 Key Variables:
     GenerationResult.directory: 本次插件输出目录。
 Change Log:
+    2026-09-19: Changed 为全部宏生成安全按钮，使用解析阶段自动分配的快捷键。
     2026-09-14: Changed 生成 bind_key 宏安全按钮，按 Lua 5.1 规则转义文本。
     2026-09-12: Added 第 10 步离线生成链路。
     2026-09-12: Fixed 生成包漏掉面板字体与图标边框资源。
@@ -40,8 +41,6 @@ def render(rotation: Rotation, addon_name: str) -> dict[str, str]:
         instance_id = str(uuid5(UUID(rotation.uuid), str(index)))
         source += "do\n" + entry.instance.generate_lua(instance_id) + "\nend\n\n"
     for index, macro in enumerate(rotation.macros):
-        if not macro.bind_key:
-            continue
         # 名称不包含用户文本；宏文本只作为字符串传给安全按钮。
         button = addon_name + "Button" + UUID(rotation.uuid).hex + str(index)
         source += (
@@ -49,7 +48,7 @@ def render(rotation: Rotation, addon_name: str) -> dict[str, str]:
             f"    local buttonName = {lua_string(button)}\n"
             '    local frame = CreateFrame("Button", buttonName, UIParent, "SecureActionButtonTemplate")\n'
             '    frame:SetAttribute("type", "macro")\n'
-            f'    frame:SetAttribute("macrotext", {lua_string(macro.macro_text or "")})\n'
+            f'    frame:SetAttribute("macrotext", {lua_string(macro.macro_text)})\n'
             '    frame:RegisterForClicks("AnyDown", "AnyUp")\n'
             f"    SetOverrideBindingClick(frame, true, {lua_string(macro.key)}, buttonName)\n"
             "end\n\n"

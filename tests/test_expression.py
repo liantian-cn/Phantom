@@ -86,7 +86,7 @@ def test_short_circuit_and_reuse(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_priority_idle_and_types(tmp_path: Path) -> None:
     path = tmp_path / "rotation.toml"
-    path.write_bytes(Path("rotations/blood-dk.toml").read_bytes())
+    path.write_bytes(Path("tests/fixtures/engine-rotation.toml").read_bytes())
     rotation = load_rotation(path)
     values: list[Value] = [100.0, 6, 2, True, 0.0, 0.0, 40.0, True, True, False]
     decision = rotation.decide(values)
@@ -106,7 +106,7 @@ def test_priority_idle_and_types(tmp_path: Path) -> None:
 
 def test_invalid_expression_does_not_write_layout(tmp_path: Path) -> None:
     path = tmp_path / "rotation.toml"
-    source = Path("rotations/blood-dk.toml").read_text(encoding="utf-8")
+    source = Path("tests/fixtures/engine-rotation.toml").read_text(encoding="utf-8")
     source = source.replace("符文数量>=1", "符文数量 + 1 > 0").replace("x = 7", "x = 99")
     path.write_text(source, encoding="utf-8")
     before = path.read_bytes()
@@ -120,7 +120,7 @@ def test_trial_rejects_failed_or_missing_capture(tmp_path: Path) -> None:
     from phantom.core.capture.contracts import CaptureResult, CaptureStatus
 
     path = tmp_path / "rotation.toml"
-    path.write_bytes(Path("rotations/blood-dk.toml").read_bytes())
+    path.write_bytes(Path("tests/fixtures/engine-rotation.toml").read_bytes())
     rotation = load_rotation(path)
     for result in (CaptureResult(), CaptureResult(status=CaptureStatus(True, "失败"))):
         with pytest.raises(ValueError):

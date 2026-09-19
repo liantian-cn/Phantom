@@ -325,7 +325,7 @@ def test_logs_bound_history_even_when_tab_hidden(tmp_path: Path) -> None:
 def rotation_app(tmp_path: Path, capture: FakeCapture, *, game: bool = False, keyboard: FakeKeyboard | None = None) -> PhantomApp:
     root = Path(__file__).resolve().parents[1]
     rotation_path = tmp_path / "blood.toml"
-    rotation_path.write_bytes((root / "rotations/blood-dk.toml").read_bytes())
+    rotation_path.write_bytes((root / "tests/fixtures/engine-rotation.toml").read_bytes())
     executable = tmp_path / "_retail_/Wow.exe"
     executable.parent.mkdir()
     executable.touch()

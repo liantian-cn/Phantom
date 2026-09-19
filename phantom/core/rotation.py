@@ -8,6 +8,7 @@ Key Variables:
     Rotation.conditions: 按配置顺序保存的独立条件实例。
     CLASS_IDS: Blizzard 职业 token 对应的亮度 ID。
 Change Log:
+    2026-09-19: Changed 按宏声明顺序分配固定快捷键，忽略旧键位字段并统一要求宏文本。
     2026-09-19: Changed 停止布局回写，全部校验成功后递归补齐插件声明的默认参数。
     2026-09-14: Changed 仅以配置条件求值，向插件传递当前帧解码器。
     2026-09-14: Changed 冻结解析后的按键组合，支持内置通用布尔表达式变量。
@@ -39,6 +40,7 @@ from phantom.core.condition.layout import allocate
 from phantom.core.condition.registry import Registry
 from phantom.core.expression import evaluate, parse_expression
 from phantom.core.keyboard.contracts import KeyCombination, parse_key
+from phantom.core.macro_keys import MACRO_KEYS
 from phantom.core.pixels import PixelDecoder
 from phantom.core.validation import Fields, Items, String
 from phantom.core.validation import Table as TableValidator
@@ -113,8 +115,7 @@ class Profile:
 class Macro:
     name: str
     key: str
-    bind_key: bool
-    macro_text: str | None
+    macro_text: str
     keys: KeyCombination = field(init=False)
 
     def __post_init__(self) -> None:
@@ -196,19 +197,17 @@ def parse_profile(value: object) -> Profile:
 def parse_macros(value: object) -> tuple[Macro, ...]:
     result: list[Macro] = []
     names: set[str] = set()
-    for table in tables(value, "macros"):
-        fields(table, {"name", "key", "bind_key"}, {"macro_text"})
+    rows = tables(value, "macros")
+    if len(rows) > len(MACRO_KEYS):
+        raise ValueError(f"宏数量 {len(rows)} 超过快捷键容量 {len(MACRO_KEYS)}")
+    for index, table in enumerate(rows):
+        # 旧键位字段只允许残留，不读取其值，也不参与分配或校验。
+        fields(table, {"name", "macro_text"}, {"key", "bind_key"})
         name = string(table, "name")
         if name in names or name == "Idle":
             raise ValueError(f"宏名称重复或使用保留名：{name}")
         names.add(name)
-        key = string(table, "key")
-        parse_key(key)
-        bind = table["bind_key"]
-        if type(bind) is not bool:
-            raise ValueError("bind_key 必须为布尔")
-        macro_text = string(table, "macro_text") if bind or "macro_text" in table else None
-        result.append(Macro(name, key, bind, macro_text))
+        result.append(Macro(name, MACRO_KEYS[index], string(table, "macro_text")))
     return tuple(result)
 
 

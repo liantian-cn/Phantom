@@ -1,3 +1,4 @@
+# 迁移前扩展观测样本的保留副本，仅用于测试，不作为正式职业循环。
 schema_version = 1
 uuid = "550e8400-e29b-41d4-a716-446655440000"
 
@@ -392,26 +393,18 @@ plugin = "interrupt_blacklist_icons@dev"
 [[macros]]
 name = "灵界打击"
 macro_text = "/cast [@target] 灵界打击"
-key = "CTRL-NUMPAD1"
-bind_key = true
 
 [[macros]]
 name = "血液沸腾"
 macro_text = "/cast 血液沸腾"
-key = "CTRL-NUMPAD2"
-bind_key = true
 
 [[macros]]
 name = "死神的抚摩"
 macro_text = "/cast 死神的抚摩"
-key = "CTRL-NUMPAD3"
-bind_key = true
 
 [[macros]]
 name = "心脏打击"
 macro_text = "/cast 心脏打击"
-key = "CTRL-NUMPAD4"
-bind_key = true
 
 [[rotation]]
 annotate = "插件关闭或延迟时跳过本轮"

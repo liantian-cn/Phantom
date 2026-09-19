@@ -318,7 +318,7 @@ def test_progress_polling_preserves_remainder_and_unit_event_filter(unit: str) -
 def test_documented_minimal_fragment_loads_and_generates(tmp_path: Path) -> None:
     document = (ROOT / ".agents/skills/phantom-plugin-dev/references/target-focus-example.md").read_text(encoding="utf-8")
     fragment = document.split("```toml\n", 1)[1].split("```", 1)[0]
-    base = (ROOT / "rotations/blood-dk.toml").read_text(encoding="utf-8").split("[[conditions]]", 1)[0]
+    base = (ROOT / "tests/fixtures/engine-rotation.toml").read_text(encoding="utf-8").split("[[conditions]]", 1)[0]
     path = tmp_path / "example.toml"
     path.write_text("macros = []\nrotation = []\n" + base + fragment, encoding="utf-8")
     rotation = load_rotation(path)
@@ -331,7 +331,7 @@ def test_combined_generation_exact_versions(tmp_path: Path) -> None:
     entries = tuple(ConditionEntry(name, f"{name}@dev", create(name)) for name in CASES)
     width = allocate([entry.instance for entry in entries])
     rotation_path = tmp_path / "rotation.toml"
-    rotation_path.write_bytes((ROOT / "rotations/blood-dk.toml").read_bytes())
+    rotation_path.write_bytes((ROOT / "tests/fixtures/engine-rotation.toml").read_bytes())
     rotation = replace(load_rotation(rotation_path), conditions=entries, macros=(), board_width=width)
     files = render(rotation, "PhantomTest")
     lua: Any = LuaRuntime()

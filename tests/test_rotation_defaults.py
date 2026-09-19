@@ -47,6 +47,46 @@ def saved_conditions(path: Path) -> list[dict[str, object]]:
 
 
 @pytest.mark.parametrize(
+    ("plugin", "arguments", "expected"),
+    [
+        ("aura_player_buff_duration", "aura_ids = [1], duration = 12", 3),
+        ("aura_target_debuff_duration", "aura_ids = [1], duration = 40", 8),
+        ("spell_charges", "spell_ids = [1], max_charges = 3", 2),
+        ("spec_power_soul_shards", "fractional = true", 25),
+    ],
+)
+def test_derived_width_is_not_written_and_explicit_override_is_preserved(tmp_path: Path, plugin: str, arguments: str, expected: int) -> None:
+    path = write_rotation(tmp_path, condition(plugin, f"plugin_args = {{ {arguments} }}\n", title="自动宽度") + condition(plugin, f"plugin_args = {{ {arguments}, width = 30 }}\n", title="显式宽度"))
+    before = path.read_bytes()
+    rotation = load_rotation(path)
+    assert [entry.instance.output.widths for entry in rotation.conditions] == [(expected,), (30,)]
+    assert path.read_bytes() == before
+    assert "width" not in cast(dict[str, object], saved_conditions(path)[0]["plugin_args"])
+    assert cast(dict[str, object], saved_conditions(path)[1]["plugin_args"])["width"] == 30
+
+
+def test_soul_shards_static_default_does_not_persist_fractional_layout(tmp_path: Path) -> None:
+    path = write_rotation(tmp_path, condition("spec_power_soul_shards"))
+    rotation = load_rotation(path)
+    assert saved_conditions(path)[0]["plugin_args"] == {"fractional": False}
+    assert rotation.conditions[0].instance.output.value_type is int
+    assert rotation.conditions[0].instance.output.output_type == "cell"
+
+
+@pytest.mark.parametrize("invalid", ["0", "-1", "true", "1.5", '"2"'])
+@pytest.mark.parametrize(
+    "plugin,arguments",
+    [("aura_player_buff_duration", "aura_ids=[1],duration=12"), ("aura_target_debuff_duration", "aura_ids=[1],duration=12"), ("spell_charges", "spell_ids=[1],max_charges=2"), ("spec_power_soul_shards", "fractional=true")],
+)
+def test_invalid_derived_width_prevents_other_defaults_writeback(tmp_path: Path, plugin: str, arguments: str, invalid: str) -> None:
+    path = write_rotation(tmp_path, condition("player_health_pct", title="待补默认") + condition(plugin, f"plugin_args = {{ {arguments}, width = {invalid} }}\n"))
+    before = path.read_bytes()
+    with pytest.raises(RotationError):
+        load_rotation(path)
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize(
     ("plugin", "args", "defaults"),
     [
         ("player_health_pct", "", {"use_predicted": True}),
@@ -133,12 +173,11 @@ def test_late_validation_failure_does_not_write(tmp_path: Path, monkeypatch: pyt
     assert path.read_bytes() == before
 
 
-def test_format_comments_macros_order_and_crlf_preserved(tmp_path: Path) -> None:
+@pytest.mark.parametrize("legacy", ["", 'key = "F1" # 保留旧字段但不生效\nbind_key = false\n'])
+def test_format_comments_macros_order_and_crlf_preserved(tmp_path: Path, legacy: str) -> None:
     path = write_rotation(tmp_path, condition("player_health_pct", "# 参数说明\n[conditions.plugin_args] # 保留表注释\n", title="生命") + condition("spell_gcd", title="冷却"))
     macro = '''[[macros]]
 name = "中文宏"
-key = "F1"
-bind_key = true
 macro_text = """
 /cast [@player] 灵界打击
 /say 中文多行宏
@@ -148,10 +187,12 @@ macro_text = """
 condition = "生命 < 50 and 冷却 == 0"
 macro = "中文宏"
 '''
+    macro = macro.replace('name = "中文宏"\n', 'name = "中文宏"\n' + legacy)
     source = path.read_text(encoding="utf-8").replace("macros = []\nrotation = []\n", "") + "\n" + macro
     path.write_bytes(source.replace("\n", "\r\n").encode("utf-8"))
     rotation = load_rotation(path)
     saved = path.read_bytes().decode("utf-8")
+    assert rotation.macros[0].key == "CTRL-NUMPAD1"
     assert "\n" not in saved.replace("\r\n", "")
     assert macro.replace("\n", "\r\n") in saved
     assert "# 中文说明：默认参数补写\r\n" in saved

@@ -8,7 +8,7 @@ min_height = 46
 log_max_lines = 1000
 
 [rotation]
-path = "rotations/blood-dk.toml"
+path = "rotations/死亡骑士-鲜血.toml"
 
 [wow]
 executable = 'E:\World of Warcraft\_retail_\Wow.exe'

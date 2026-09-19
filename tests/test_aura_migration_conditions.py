@@ -125,7 +125,7 @@ def test_invalid_aura_ids(name: str, bad: object) -> None:
         create(name, {**CASES[name], "aura_ids": bad})
 
 
-@pytest.mark.parametrize("name,field", [(name, field) for name in CASES for field in ("duration", "max_value", "width") if field in CASES[name] or (field == "width" and name.endswith("stacks"))])
+@pytest.mark.parametrize("name,field", [(name, field) for name in CASES for field in ("duration", "max_value", "width") if field in CASES[name] or (field == "width" and name.endswith(("stacks", "duration")))])
 @pytest.mark.parametrize("bad", [True, False, 0, -1, 1.5, "2", None, float("inf")])
 def test_positive_integer_parameters(name: str, field: str, bad: object) -> None:
     with pytest.raises(ValueError):
@@ -234,11 +234,26 @@ def test_custom_stacks_width_and_zero_minimum() -> None:
         assert container.slots.aura.button.width == 28
 
 
+@pytest.mark.parametrize("name", [name for name in CASES if name.endswith("duration")])
+@pytest.mark.parametrize("duration,width,expected_width", [(12, None, 3), (40, None, 8), (40, 1, 1), (40, 12, 12)])
+def test_duration_lua_uses_independent_width(name: str, duration: int, width: int | None, expected_width: int) -> None:
+    args: dict[str, object] = {**CASES[name], "duration": duration}
+    if width is not None:
+        args["width"] = width
+    plugin = create(name, args)
+    assert plugin.output.widths == (expected_width,)
+    _, state, addon = harness([plugin])
+    state.initialize(state)
+    container = next(frame for frame in state.frames.values() if frame.kind == "AuraContainer")
+    assert container.slots.aura.button.width == expected_width * 4
+    assert addon.ValueBarLength == expected_width + 1
+
+
 def test_combined_generation_and_frozen_layout(tmp_path: Path) -> None:
     entries = tuple(ConditionEntry(name, f"{name}@dev", create(name)) for name in CASES)
     width = allocate([entry.instance for entry in entries])
     rotation_path = tmp_path / "rotation.toml"
-    rotation_path.write_bytes((ROOT / "rotations/blood-dk.toml").read_bytes())
+    rotation_path.write_bytes((ROOT / "tests/fixtures/engine-rotation.toml").read_bytes())
     rotation = replace(load_rotation(rotation_path), conditions=entries, macros=(), board_width=width)
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     compile_lua: Any = lua.eval("function(source) assert(loadstring(source)); return true end")
@@ -247,5 +262,5 @@ def test_combined_generation_and_frozen_layout(tmp_path: Path) -> None:
             assert compile_lua(source), filename
             assert "{{" not in source
     bars = [entry.instance for entry in entries if entry.instance.output.output_type == "value_bar"]
-    assert [plugin.regions[0].x for plugin in bars] == [1, 14, 27, 30]
-    assert [plugin.output.widths for plugin in bars] == [(12,), (12,), (2,), (2,)]
+    assert [plugin.regions[0].x for plugin in bars] == [1, 5, 9, 12]
+    assert [plugin.output.widths for plugin in bars] == [(3,), (3,), (2,), (2,)]

@@ -8,7 +8,7 @@
 | --- | --- | --- | --- |
 | player_primary_power | 有限正数 max_power | Cell ratio × max_power，float | 0.0 |
 | spec_power_rune | 无 | Cell mean 四舍五入，0–6 int | 0 |
-| spell_charges | spell_ids、正整数 max_charges | ValueBar 宽=max_charges，ratio×上限四舍五入 | 0 |
+| spell_charges | spell_ids、正整数 max_charges，可选正整数 width | ValueBar 缺省宽=ceil(max_charges/2)，显式宽优先；ratio×量程四舍五入 | 0 |
 | spell_overlay | spell_ids | Cell 严格黑白 bool | False |
 | spell_usable | spell_ids | Cell 严格黑白 bool | False |
 | player_health_pct | use_predicted（bool，默认 true） | Cell percent，生命百分比 float | 0.0 |
@@ -106,14 +106,14 @@ AuraContainer 在世界事件调用公开的 UpdateAllAuras，平时由官方容
 | target_has_buff / focus_has_buff | aura_ids | 单槽匹配指定 Buff，仅用于可辅助侧 |
 | target_has_debuff / focus_has_debuff | aura_ids | 单槽匹配指定 Debuff，仅用于不可辅助侧 |
 | player_range_aura_units_count | spell_id、aura_id；combat_only=false | 可观察 nameplate1–40 中存活、可攻击、在技能范围内且有指定 Debuff 的数量 |
-| aura_player_buff_duration / aura_target_debuff_duration | aura_ids、正整数 duration | ValueBar 宽度为 duration，返回 ratio × duration 的 float 估计 |
+| aura_player_buff_duration / aura_target_debuff_duration | aura_ids、正整数 duration，可选正整数 width | 缺省宽=min(8,ceil(duration/4))，显式宽优先；返回 ratio × duration 的 float 估计 |
 | aura_player_buff_stacks / aura_target_debuff_stacks | aura_ids、max_value；min_value=0、width=2 | ValueBar 返回 ratio × max_value 的 float 估计；当前 min_value 仅允许 0 |
 
 Aura 身份分类与普通可辅助条件的语义不同：过滤使用 `UnitCanAssist("player", unit, true, true)`，可辅助侧允许指定 Buff，不可辅助侧允许指定 Debuff。多个 ID 使用官方单槽首个匹配，不承诺列表优先级。日常更新由官方 AuraContainer 管理。
 
 `target_has_debuff@dev`、`focus_has_debuff@dev`、`aura_target_debuff_duration@dev`、`aura_target_debuff_stacks@dev` 固定使用 `PLAYER|HARMFUL`；官方 PLAYER 包含玩家、玩家宠物和载具。没有 `player_only` 参数；重新生成后排除其他来源的同技能减益。驱散条件不使用 PLAYER 过滤。
 
-时长条直接使用官方 `SetDurationBar` 的立即插值与剩余时间方向，不特殊处理永久光环。配置 duration 必须与实际时长匹配才能准确换算；0.25 秒仅为名义像素步长，不保证延长或时长变体的绝对秒数精度。
+时长条直接使用官方 `SetDurationBar` 的立即插值与剩余时间方向，不特殊处理永久光环。配置 duration 必须与实际时长匹配才能准确换算；名义像素步长为 `duration/(4×width)`，不保证延长或时长变体的绝对秒数精度。时长与充能的派生宽度不补写，显式宽度可超过默认公式的上限；宽度改变不改变数值量程。
 
 层数条使用官方 `SetApplicationBar`，实际量程为 0..max_value，名义层数步长为 `max_value / (4 * width)`。保留 min_value 参数但仅允许 0；Warcraft Wiki 将 `minApplications` 标记为 12.1.5 新增，当前实现不使用它。零填充无法区分无光环与应用层数为零的光环。
 
@@ -126,10 +126,11 @@ Aura 身份分类与普通可辅助条件的语义不同：过滤使用 `UnitCan
 | spec_power_mana / spec_power_rage / spec_power_focus / spec_power_energy | max_power | 固定资源类型的亮度比例 × 配置最大值，float |
 | spec_power_runic_power / spec_power_lunar_power / spec_power_maelstrom | max_power | 同上 |
 | spec_power_insanity / spec_power_fury / spec_power_pain | max_power | 同上 |
-| spec_power_combo_points / spec_power_soul_shards / spec_power_holy_power | 无 | 直接灰度字节解码，int；灵魂碎片只返回完整碎片 |
+| spec_power_combo_points / spec_power_holy_power | 无 | 直接灰度字节解码，int |
+| spec_power_soul_shards | fractional=false；小数模式可选正整数 width，缺省25 | 默认 Cell 整碎片 int；fractional=true 用 ValueBar 显示原始0–50片段，Python恢复十分位碎片 float，兜底0.0 |
 | spec_power_chi / spec_power_essence / spec_power_arcane_charges | 无 | 直接灰度字节解码，int |
 
-主要资源最大值由配置提供，不从秘密值计算；灰度量化步长约为 max_power/255。次要资源在执行数值运算前检查秘密值，再检查直接编码范围，异常直接报错，不静默转为零。以上资源使用固定 Enum.PowerType，不随当前主要资源类型自动切换。
+主要资源最大值由配置提供，不从秘密值计算；灰度量化步长约为 max_power/255。直接 Cell 编码的次要资源在执行数值运算前检查秘密值，再检查编码范围，异常直接报错，不静默转为零。灵魂碎片的小数模式是显示路径例外：将原始片段直接传给 StatusBar，不在 Lua 中检查或计算秘密资源；Python按最近整数片段恢复十分位。width仅小数模式可用且不自动补写，fractional=false仍沿用旧Cell。以上资源使用固定 Enum.PowerType，不随当前主要资源类型自动切换。
 
 迁移删除旧标识 `player_has_spell@dev`、`player_has_talent@dev`、`spec_dk_rune@dev`；外部配置须自行改为 spell_known、talent_known、spec_power_rune 并重新生成。历史版本记录不改写。
 

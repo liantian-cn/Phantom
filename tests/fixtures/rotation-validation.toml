@@ -43,14 +43,11 @@ plugin = "spell_gcd@dev"
 
 [[macros]]
 name = "心脏打击"
-key = "CTRL-NUMPAD1"
-bind_key = true
 macro_text = "/cast 心脏打击"
 
 [[macros]]
 name = "灵界打击"
-key = "CTRL-NUMPAD2"
-bind_key = false
+macro_text = "/cast 灵界打击"
 
 [[rotation]]
 condition = "符文数量>=1"

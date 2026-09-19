@@ -60,8 +60,8 @@ def test_migration_plugins_generate_together(tmp_path: Path) -> None:
             assert region.x == next_cell
             next_cell += 1
     assert board_width == (max(5, next_cell - 1, next_bar - 1) + 2) * 4
-    rotation_path = tmp_path / "blood-dk.toml"
-    rotation_path.write_bytes((ROOT / "rotations/blood-dk.toml").read_bytes())
+    rotation_path = tmp_path / "engine.toml"
+    rotation_path.write_bytes((ROOT / "tests/fixtures/engine-rotation.toml").read_bytes())
     rotation = replace(load_rotation(rotation_path), conditions=entries, macros=(), board_width=board_width)
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     compile_lua: Any = lua.eval("function(source) assert(loadstring(source)); return true end")

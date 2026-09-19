@@ -103,17 +103,18 @@ def test_cooldown_entire_brightness_range(name: str) -> None:
         assert plugin.decode_value([cell(brightness)], [], [], decoder=decoder) == expected
 
 
-@pytest.mark.parametrize("white_columns", [0, 2, 4, 6, 8])
+@pytest.mark.parametrize("white_columns", [0, 1, 2, 3, 4])
 def test_charges_half_up_and_red_separator(white_columns: int) -> None:
     plugin = Registry().create("spell_charges@dev", {"spell_ids": [50842], "max_charges": 2})
     allocate([plugin])
-    pixels = np.zeros((4, 12, 3), dtype=np.uint8)
+    assert plugin.output.widths == (1,)
+    pixels = np.zeros((4, 8, 3), dtype=np.uint8)
     pixels[:, :2] = [255, 0, 0]
     pixels[:, -2:] = [255, 0, 0]
     pixels[:, 2 : 2 + white_columns] = 255
-    assert plugin.value([], [ValueBar(1, 2, pixels)], [], decoder=empty_decoder()) == math.floor(white_columns / 4 + 0.5)
+    assert plugin.value([], [ValueBar(1, 1, pixels)], [], decoder=empty_decoder()) == math.floor(white_columns / 2 + 0.5)
     pixels[:] = [255, 0, 0]
-    assert plugin.value([], [ValueBar(1, 2, pixels)], [], decoder=empty_decoder()) == 0
+    assert plugin.value([], [ValueBar(1, 1, pixels)], [], decoder=empty_decoder()) == 0
 
 
 @pytest.mark.parametrize(

@@ -23,7 +23,7 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 键
 - 截图插件：在 Windows 上捕获约定屏幕区域，向条件层提供 NumPy 数组。
 - 像素解析：`phantom/core/pixels/` 提供 `PixelDecoder`、`Cell`、`ValueBar`、`IconTile`，将完整基板按 Lua 坐标切分为独立区域，读取通用原始值，不包含条件业务公式。
 - rotation 执行器：读取条件值，按配置顺序求值，返回首个命中的宏名称。
-- rotation 内核：解析宏键位为平台中立的 KeyCombination，选择至多一个宏后交给键盘插件。
+- rotation 内核：从固定池按声明顺序为全部宏自动分配键位，保留键位字符串并解析为平台中立的 KeyCombination，选择至多一个宏后交给键盘插件。
 - 键盘插件：只发送明确按键；各自负责设备编码与目标，PostMessageW 在插件内部查找窗口，未来驱动或串口不必具有窗口目标。
 - Textual TUI：承载采集启停、游戏与采集状态、第一行通用数据展示和业务日志；支持配置指定的单份 rotation 生成和条件值；多份选择和决策展示留到后续步骤（见 [tui.md](tui.md)）。
 
@@ -75,6 +75,7 @@ phantom/
   main.py
   ui/
   core/
+    macro_keys.py
     condition/
     capture/
     keyboard/
@@ -87,7 +88,7 @@ phantom/
   captures/
 scripts/
 rotations/
-  blood-dk.toml
+  死亡骑士-鲜血.toml  # 以及其余39份职业专精辅助循环
 ```
 
 `phantom/lua/runtime/` 保存生成器使用的共享 Lua 运行时源码。这些源码会进入生成后的 WoW 插件，为条件插件生成的实例 Lua 提供公共运行能力；条件专属模板仍保存在对应的 `phantom/conditions/<name>@<version>/template.lua` 中。该目录不保存生成后的插件产物。
@@ -112,13 +113,14 @@ UI 通过截图核心注册器按 capture.plugin 创建后端，默认 gdi@dev�
 ## 单份生成器落地
 
 phantom/core/rotation.py 负责配置验证、内存布局分配与冻结，以及成功加载后的条件默认参数补写；core/condition/registry.py 负责精确加载，core/generator.py 负责生成。
+phantom/core/macro_keys.py 以 MACRO_KEYS tuple 显式保存固定键位池；rotation.py 按宏声明顺序为每份 rotation 独立分配全部宏，包括未引用宏。分配与旧字段兼容规则见[宏与键位](../../phantom-rotation-dev/references/configuration.md#宏与键位)，固定顺序见[宏键位池](../../phantom-rotation-dev/references/key-syntax.md#固定宏键位池)。
 所有 load_rotation 入口统一在完整验证和布局成功后补写 rotation，不修改 phantom.toml。默认值来自精确版本 Condition 的公开 config_defaults，构造与回写共享来源；仅补缺失键并递归补充已有嵌套字典，保留必填约束和所有显式值。无实际变更不写，使用源文件并发检查及原子替换，写入失败使加载失败；后续生成失败不回滚已补写参数。完整规则见 [配置规范](../../phantom-rotation-dev/references/configuration.md#条件参数默认值与加载回写)。
 旧 conditions[].layout 兼容接收但忽略，加载器不新增、更新或删除；布局始终根据条件输出在内存重建，分配规则和运行期冻结语义不变。
 当前单份入口输出 runtime/ 与 general/ 源码副本、完整 media/ 二进制资源、一个 UUID Lua 和同名 TOC；不复制 examples。字体与纹理由 Lua 路径访问，不加入 TOC。
 UUID Lua 开头检查玩家职业和专精，随后每个模板置于独立 do/end 作用域并注册 UIInitFuncs。
 生成所有声明的条件；可选模板只插入经过校验的参数与固定位置，无模板时保留空的实例 do/end 块。Lua 状态、面板及第一行五个 Cell 保留；enable、爆发、delay 的 Python 读取改为显式条件插件，框架只保留职业与专精匹配检查。宏文本经过 Lua 5.1 字符串转义后作为安全按钮属性，不作为可执行 Lua 插入。
 同名文件覆盖、旧文件保留，TOC 最后写入且仅列本次产物。每个目标文件使用同目录临时文件替换，避免单文件截断；不提供整个目录的事务或备份。
-UUID Lua 为 bind_key=true 的宏生成安全按钮及覆盖绑定；按钮名由插件包名、rotation UUID 与宏序号确定。bind_key=false 不生成绑定。多 rotation 选择留待后续阶段。
+UUID Lua 为全部声明的宏生成安全按钮及自动键位的覆盖绑定，包括未引用宏；按钮名由插件包名、rotation UUID 与宏序号确定。配置中的旧 key/bind_key 完全忽略，不控制生成。多 rotation 选择留待后续阶段。
 
 ## 单帧决策报告
 

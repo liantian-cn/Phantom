@@ -9,16 +9,19 @@ from lupa.lua51 import LuaRuntime  # type: ignore[import-untyped]
 from phantom.core.condition.contracts import Region
 from phantom.core.condition.registry import Registry
 from phantom.core.generator import generate, render
+from phantom.core.macro_keys import MACRO_KEYS
 from phantom.core.pixels import PixelDecoder
-from phantom.core.rotation import Macro, load_rotation
+from phantom.core.rotation import load_rotation, parse_macros
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_macro_bindings_preserve_text_and_skip_existing_keys(tmp_path: Path) -> None:
+@pytest.mark.parametrize("count", [0, 2, 148])
+def test_macro_bindings_preserve_text_and_bind_every_macro(tmp_path: Path, count: int) -> None:
     rotation = load_rotation(copy_rotation(tmp_path))
     text = '/cast [@target] 测试\n/say "quote" \\123\r\t\x00123'
-    rotation = replace(rotation, conditions=(), macros=(Macro("绑定", "CTRL-1", True, text), Macro("已有键", "ALT-F4", False, "this must never be generated")))
+    macros = parse_macros([{"name": f"宏{index}", "macro_text": text + str(index), "key": "ALT-F4", "bind_key": False} for index in range(count)])
+    rotation = replace(rotation, conditions=(), macros=macros)
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     state: Any = lua.execute("""
         local state = {buttons={}, bindings={}}
@@ -44,17 +47,18 @@ def test_macro_bindings_preserve_text_and_skip_existing_keys(tmp_path: Path) -> 
     source = render(rotation, "TestPhantom")[rotation.uuid + ".lua"]
     execute: Any = lua.eval("function(source) assert(loadstring(source))('TestPhantom', {}) end")
     execute(source)
-    assert len(state.buttons) == len(state.bindings) == 1
-    assert state.buttons[1].attributes["type"] == "macro"
-    assert state.buttons[1].attributes.macrotext == text
-    assert state.bindings[1].key == "CTRL-1"
-    assert "this must never be generated" not in source
-    assert state.buttons[1].name.startswith("TestPhantomButton")
+    assert len(state.buttons) == len(state.bindings) == count
+    for index, macro in enumerate(macros, 1):
+        assert state.buttons[index].attributes["type"] == "macro"
+        assert state.buttons[index].attributes.macrotext == macro.macro_text
+        assert state.bindings[index].key == macro.key == MACRO_KEYS[index - 1]
+        assert state.buttons[index].name.startswith("TestPhantomButton")
+    assert len({state.buttons[index].name for index in range(1, count + 1)}) == count
 
 
 def copy_rotation(tmp_path: Path) -> Path:
     path = tmp_path / "blood.toml"
-    path.write_bytes((ROOT / "rotations/blood-dk.toml").read_bytes())
+    path.write_bytes((ROOT / "tests/fixtures/engine-rotation.toml").read_bytes())
     return path
 
 
@@ -220,7 +224,7 @@ def test_generated_cooldown_curve_roundtrips_all_segments(identifier: str, secon
 
 
 def test_charge_template_uses_nondefault_width_and_position() -> None:
-    plugin = Registry().create("spell_charges@dev", {"spell_ids": [50842], "max_charges": 5})
+    plugin = Registry().create("spell_charges@dev", {"spell_ids": [50842], "max_charges": 5, "width": 5})
     plugin.freeze((Region(4, width=5),))
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     state, addon = lua.execute((ROOT / "tests/lua/conditions_harness.lua").read_text(encoding="utf-8"))

@@ -58,9 +58,9 @@ def test_memory_layout_idempotent_and_optional_class_id(tmp_path: Path) -> None:
         ("max_power = 120", "max_power = -1"),
         ("max_charges = 2", "max_charges = 2.0"),
         ("ignore_gcd = true", 'ignore_gcd = "true"'),
-        ('key = "CTRL-NUMPAD1"', 'key = "ctrl-numpad1"'),
-        ('key = "CTRL-NUMPAD1"', 'key = "CTRL-CTRL-NUMPAD1"'),
-        ("bind_key = true", "bind_key = 1"),
+        ('macro_text = "/cast 心脏打击"', ""),
+        ('macro_text = "/cast 心脏打击"', 'macro_text = "  "'),
+        ('macro_text = "/cast 心脏打击"', "macro_text = false"),
         ("schema_version = 1", "schema_version = 1\nunknown = 42"),
     ],
 )

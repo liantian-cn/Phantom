@@ -12,7 +12,7 @@
 
 ## 键位语法
 
-内核语法见 [宏键位语法](../../phantom-rotation-dev/references/key-syntax.md)，后端不重复解析或维护另一份键名表。
+内核从[固定宏键位池](../../phantom-rotation-dev/references/key-syntax.md)自动分配键位，并将解析后的 `KeyCombination` 交给后端；旧配置 key/bind_key 不参与解析或发送决策。后端不负责分配、不重复解析或维护另一份键名表。
 
 ## PostMessageW 首版
 
@@ -34,4 +34,4 @@ Windows 键码依据 [Virtual-Key Codes](https://learn.microsoft.com/en-us/windo
 
 `core/keyboard/registry.py` 按 `keyboard.plugin` 加载精确版本，默认 `post_message@dev`。每次 create 返回独立实例，按实际源码路径隔离模块；目录穿越、逃逸、版本缺失、导入失败或接口错误均抛带标识的 KeyboardPluginError，主入口在进入 UI 前报告。
 
-`send(KeyCombination)` 与 `close()` 是公共接口。内核负责宏和键位字符串解析；后端负责明确按键的设备转换和目标选择，不接收宏、rotation 或公共 HWND。详见[键盘作者契约](keyboards.md)。当前不热加载、不回退；新增其他真实后端必须属于用户请求范围。
+`send(KeyCombination)` 与 `close()` 是公共接口。内核负责宏校验、自动键位分配和键位字符串解析；后端负责明确按键的设备转换和目标选择，不接收宏、rotation 或公共 HWND。详见[键盘作者契约](keyboards.md)。当前不热加载、不回退；新增其他真实后端必须属于用户请求范围。

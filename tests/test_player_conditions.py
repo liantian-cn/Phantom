@@ -488,9 +488,9 @@ def test_dispel_maps_fill_missing_types_and_preserve_explicit_values(types: dict
 def test_all_plugins_generate_together_with_independent_layouts(tmp_path: Path) -> None:
     entries = tuple(ConditionEntry(name, f"{name}@dev", create(name)) for name in CASES)
     width = allocate([entry.instance for entry in entries])
-    # 加载器可能回写布局，只在测试副本上生成，避免改写正式循环配置。
-    rotation_path = tmp_path / "blood-dk.toml"
-    rotation_path.write_bytes((ROOT / "rotations/blood-dk.toml").read_bytes())
+    # 加载器可能补写默认参数，只在测试副本上生成，避免改写夹具。
+    rotation_path = tmp_path / "engine.toml"
+    rotation_path.write_bytes((ROOT / "tests/fixtures/engine-rotation.toml").read_bytes())
     rotation = replace(load_rotation(rotation_path), conditions=entries, macros=(), board_width=width)
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     compile_lua: Any = lua.eval("function(source) assert(loadstring(source)); return true end")

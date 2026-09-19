@@ -31,7 +31,7 @@ def describe_result(rotation: Rotation, result: CaptureResult) -> list[str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("rotation", nargs="?", type=Path, default=PROJECT_ROOT / "rotations/blood-dk.toml")
+    parser.add_argument("rotation", nargs="?", type=Path, default=PROJECT_ROOT / "rotations/死亡骑士-鲜血.toml")
     args = parser.parse_args()
     print("演示内容：同帧解码条件并按优先级单次求值，只报告宏和键位，不发送按键。", flush=True)
     try:

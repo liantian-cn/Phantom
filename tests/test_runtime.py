@@ -11,10 +11,11 @@ import pytest
 
 from phantom.core.capture.contracts import CaptureResult, CaptureStatus
 from phantom.core.capture.registry import Registry as CaptureRegistry
-from phantom.core.keyboard.contracts import KeyCombination
+from phantom.core.keyboard.contracts import KeyCombination, parse_key
 from phantom.core.keyboard.registry import Registry as KeyboardRegistry
+from phantom.core.macro_keys import MACRO_KEYS
 from phantom.core.pixels import PixelDecoder
-from phantom.core.rotation import Rotation, load_rotation
+from phantom.core.rotation import Rotation, load_rotation, parse_macros, parse_rules
 from phantom.core.runtime import RotationRuntime
 
 
@@ -27,7 +28,7 @@ def wait_for(predicate: Callable[[], bool]) -> None:
 
 def rotation_copy(tmp_path: Path) -> Rotation:
     path = tmp_path / "blood.toml"
-    path.write_bytes(Path("rotations/blood-dk.toml").read_bytes())
+    path.write_bytes(Path("tests/fixtures/engine-rotation.toml").read_bytes())
     return load_rotation(path)
 
 
@@ -109,6 +110,25 @@ def test_new_frames_idle_recovery_and_same_decision(tmp_path: Path) -> None:
     assert keyboard.closed
 
 
+@pytest.mark.parametrize("index", [0, 65, 121, 147])
+def test_runtime_sends_automatically_assigned_key(tmp_path: Path, index: int) -> None:
+    # 隔离条件布局，只验证已冻结的自动键位确实传给键盘后端。
+    macros = parse_macros([{"name": f"宏{number}", "macro_text": "/say 测试", "bind_key": False, "key": "ALT-F4"} for number in range(148)])
+    rules = parse_rules([{"condition": "True", "macro": macros[index].name}], {}, {macro.name for macro in macros})
+    rotation = replace(rotation_copy(tmp_path), conditions=(), macros=macros, rules=rules)
+    capture, keyboard = Capture(), Keyboard()
+    capture.result = frame(1)
+    runtime = RotationRuntime(capture, keyboard, rotation, 100)
+    runtime.start()
+    try:
+        wait_for(lambda: runtime.get_latest_result().decision is not None)
+        assert keyboard.sent == [parse_key(MACRO_KEYS[index])]
+        decision = runtime.get_latest_result().decision
+        assert decision is not None and decision.macro == macros[index]
+    finally:
+        runtime.stop()
+
+
 def test_stop_waits_for_release_and_drops_backlog(tmp_path: Path) -> None:
     capture, keyboard = Capture(), Keyboard()
     keyboard.release.clear()
@@ -175,7 +195,7 @@ def test_state_fallback_and_undeclared_burst(tmp_path: Path) -> None:
 
 def test_duplicate_condition_name_rejected_before_write(tmp_path: Path) -> None:
     path = tmp_path / "blood.toml"
-    source = Path("rotations/blood-dk.toml").read_text(encoding="utf-8")
+    source = Path("tests/fixtures/engine-rotation.toml").read_text(encoding="utf-8")
     source = source.replace('title = "符文能量"', 'title = "插件启用"')
     path.write_text(source, encoding="utf-8")
     before = path.read_bytes()

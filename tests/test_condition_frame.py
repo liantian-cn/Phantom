@@ -17,7 +17,7 @@ from phantom.core.rotation import ConditionEntry, Rotation, load_rotation
 
 def example(tmp_path: Path) -> Rotation:
     path = tmp_path / "rotation.toml"
-    path.write_bytes(Path("rotations/blood-dk.toml").read_bytes())
+    path.write_bytes(Path("tests/fixtures/engine-rotation.toml").read_bytes())
     return load_rotation(path)
 
 
