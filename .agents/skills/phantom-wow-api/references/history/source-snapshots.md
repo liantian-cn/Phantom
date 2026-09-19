@@ -14,7 +14,7 @@ The material was consolidated on 2026-09-05 and checked against these local refe
 
 These repositories are read-only references. Do not modify, fetch, pull, reset, switch branches, or commit in them unless the user explicitly requests an update. The two Lua example repositories have limited value and are not design bases, implementation constraints or API evidence; consulting them is optional.
 
-The 42 pre-consolidation Markdown files are preserved outside the project at `/workspaces/phantom-5796e240-context-original-20260905.tar.gz` with SHA-256 `cd9137d4c6922c37e7fdf1b528c9113944b42c7bd8905567fe384bb57f7eeb54`.
+The 42 pre-consolidation Markdown files are preserved outside the project in the archive `phantom-5796e240-context-original-20260905.tar.gz` with SHA-256 `cd9137d4c6922c37e7fdf1b528c9113944b42c7bd8905567fe384bb57f7eeb54`.
 
 ## 2026-09-12 reference verification
 

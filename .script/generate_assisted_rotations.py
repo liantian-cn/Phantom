@@ -1,7 +1,8 @@
 """用途：仅按冻结的辅助战斗 TXT 显示顺序生成四十份中文循环，并可保存独立来源测试快照。
 
 不读取 CSV、不推断隐藏字段、不加载循环或安装游戏插件。缺失冷却标签按零处理。
-示例：.venv/Scripts/python .script/generate_assisted_rotations.py --freeze-source
+示例：.venv/Scripts/python .script/generate_assisted_rotations.py --source "<来源目录>" --freeze-source
+将 <来源目录> 替换为 @WowAssistedCombatReveal/output 对应的实际目录；脚本不解析引用标记。
 """
 
 from __future__ import annotations
@@ -19,7 +20,6 @@ from typing import Any
 from uuid import NAMESPACE_URL, uuid5
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SOURCE = ROOT.parent / "WowAssistedCombatReveal/output"
 SOURCE_FIXTURE = ROOT / "tests/fixtures/assisted_rotations_source.json"
 RULE_PREFIX = "ASSISTED_COMBAT_RULE_TYPE_"
 
@@ -382,12 +382,12 @@ def freeze_sources(sources: list[Source]) -> None:
     SOURCE_FIXTURE.write_text(json.dumps(fixture, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE, help="包含职业/专精.txt 的来源目录")
+    parser.add_argument("--source", type=Path, required=True, help="@WowAssistedCombatReveal/output 对应的实际目录，包含职业/专精.txt；不解析引用标记")
     parser.add_argument("--destination", type=Path, default=ROOT / "rotations", help="中文 TOML 输出目录")
     parser.add_argument("--freeze-source", action="store_true", help="显式更新仓库内独立来源 fixture")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     sources = read_sources(args.source)
     # 完整解析、映射全部来源后才写文件，未知规则不会留下半批结果。
     outputs = [Builder(source).build() for source in sources]

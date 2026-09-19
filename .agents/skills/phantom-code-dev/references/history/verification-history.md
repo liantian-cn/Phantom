@@ -36,7 +36,7 @@ Ruff 命令增加 scripts 目录。运行依赖新增 tomlkit==0.15.1，开发�
 测试使用 lupa.lua51 编译全部生成 Lua，执行真实生成条件模板与 API doubles，再把输出构造成完整 NumPy 基板验证 Python 业务值。
 特别覆盖 GCD 不查询法术书、固定 61304/false、无 duration 输出黑色、普通技能筛选和职业专精不匹配不注册条件。
 TUI run_test 覆盖无游戏生成、错误后修复重试、同帧条件值、暂停/专精不匹配清空、慢速生成期间响应与退出等待。
-实际 `E:\World of Warcraft\_retail_\Interface\AddOns\Phantom` 已生成 23 个文件（含 6 个 media 资源），TOC 引用 16 个存在的 Lua，全部通过 Lua 5.1 解析，未引用 examples。
+实际游戏安装目录下的 `Interface/AddOns/Phantom` 已生成 23 个文件（含 6 个 media 资源），TOC 引用 16 个存在的 Lua，全部通过 Lua 5.1 解析，未引用 examples。
 没有启动游戏、安装宏绑定或发送按键；该记录仅证明离线生成与算法，不证明游戏端 API/渲染。
 
 ## 插件职责重构验收（2026-09-13）

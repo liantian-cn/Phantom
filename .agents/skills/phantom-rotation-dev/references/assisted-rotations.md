@@ -2,7 +2,7 @@
 
 ## 冻结来源与范围
 
-2026-09-19 用户确认：将 WowAssistedCombatReveal 的 `output` TXT 转换为 13 职业、40 专精的配置。TXT 是循环步骤、条件、名称、ID、冷却标签的唯一来源，保留其显示顺序；不根据 CSV 的 `OrderIndex` 重排，也不恢复 TXT 未显示的参数。无条件源步骤保留原位置，可能使其后面的步骤不可达，这是本次已确认的源顺序政策。
+2026-09-19 用户确认：将 `@WowAssistedCombatReveal/output` 的 TXT 转换为 13 职业、40 专精的配置。TXT 是循环步骤、条件、名称、ID、冷却标签的唯一来源，保留其显示顺序；不根据 CSV 的 `OrderIndex` 重排，也不恢复 TXT 未显示的参数。无条件源步骤保留原位置，可能使其后面的步骤不可达，这是本次已确认的源顺序政策。
 
 - 文件为 `职业-专精.toml`，title 同文件主名，description 为 `职业一键辅助`。
 - 宏名称为技能名称，宏文本为 `/cast 技能名称`；同名宏复用，检测条件仍区分技能 ID。
@@ -41,6 +41,12 @@
 ## 再生成与验证
 
 `.script/generate_assisted_rotations.py` 从外部只读 TXT 重新生成配置，脚本保存本次冻结的转换表。新增源规则无法识别时必须报错，不静默跳过。
+
+调用时必须通过 `--source` 显式传入 `@WowAssistedCombatReveal/output` 对应的实际目录，不假定外部仓库与本项目同级。`@...` 仅为文档和会话引用标记，脚本不会解析该标记。示例中的 `<来源目录>` 需在调用时替换；仅显式指定 `--freeze-source` 时更新冻结 fixture：
+
+```powershell
+.venv/Scripts/python .script/generate_assisted_rotations.py --source "<来源目录>"
+```
 
 常驻测试不依赖外部参考目录：检查冻结的专精集合、来源摘要、条件及动作顺序、门控、UUID、宏、默认参数、布局、内存 Lua 渲染与 Lua 5.1 语法。加载一律操作测试副本，不安装到游戏目录，不发送按键；离线通过不能替代游戏内渲染、事件和循环效果验证。
 

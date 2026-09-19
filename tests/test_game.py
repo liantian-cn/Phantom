@@ -6,17 +6,18 @@ import pytest
 from phantom.core.game import GameMonitor, GameStatus, detect_game, is_retail_wow
 
 
+# 路径均为虚构样例，仅验证 Windows/UNC 语法，不读取实际文件系统。
 @pytest.mark.parametrize(
     ("name", "path", "expected"),
     [
-        ("Wow.exe", r"E:\World of Warcraft\_retail_\Wow.exe", True),
-        ("WOW.EXE", r"D:\Games\_RETAIL_\WOW.EXE", True),
-        ("wow.exe", r"\\server\games\_retail_\wow.exe", True),
-        ("wow.exe", r"E:\World of Warcraft\_classic_\wow.exe", False),
-        ("wow.exe", r"E:\_retail_\other\wow.exe", False),
-        ("wow.exe", r"E:\_retail_\wow.exe.bak", False),
+        ("Wow.exe", r"X:\Synthetic Game\_retail_\Wow.exe", True),
+        ("WOW.EXE", r"X:\Synthetic Game\_RETAIL_\WOW.EXE", True),
+        ("wow.exe", r"\\synthetic-server\synthetic-games\_retail_\wow.exe", True),
+        ("wow.exe", r"X:\Synthetic Game\_classic_\wow.exe", False),
+        ("wow.exe", r"X:\Synthetic Game\_retail_\other\wow.exe", False),
+        ("wow.exe", r"X:\Synthetic Game\_retail_\wow.exe.bak", False),
         ("wow.exe", r"_retail_\wow.exe", False),
-        ("notwow.exe", r"E:\_retail_\wow.exe", False),
+        ("notwow.exe", r"X:\Synthetic Game\_retail_\wow.exe", False),
         ("wow.exe", "", False),
     ],
 )
@@ -39,11 +40,11 @@ class Process:
 
 
 def test_detection_handles_exit_denied_path_and_multiple_games(monkeypatch: pytest.MonkeyPatch) -> None:
-    processes = [Process("wow.exe", psutil.NoSuchProcess(123)), Process("wow.exe", psutil.AccessDenied(456)), Process("wow.exe", r"E:\_classic_\wow.exe")]
+    processes = [Process("wow.exe", psutil.NoSuchProcess(123)), Process("wow.exe", psutil.AccessDenied(456)), Process("wow.exe", r"X:\Synthetic Game\_classic_\wow.exe")]
     monkeypatch.setattr(psutil, "process_iter", lambda: iter(processes))
     assert not detect_game().running
     assert "无法核验" in detect_game().description
-    processes.append(Process("wow.exe", r"F:\Games\_retail_\wow.exe"))
+    processes.append(Process("wow.exe", r"X:\Synthetic Game\_retail_\wow.exe"))
     assert detect_game() == GameStatus(True)
     processes.clear()
     assert detect_game() == GameStatus()

@@ -319,6 +319,28 @@ def generator() -> dict[str, Any]:
     return runpy.run_path(str(ROOT / ".script/generate_assisted_rotations.py"))
 
 
+def test_generator_requires_explicit_source(generator: dict[str, Any], tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    destination = tmp_path / "output"
+    with pytest.raises(SystemExit) as error:
+        generator["main"](["--destination", str(destination)])
+    assert error.value.code == 2
+    assert "--source" in capsys.readouterr().err
+    assert not destination.exists()
+
+
+def test_generator_cli_uses_explicit_source(sources: dict[str, str], generator: dict[str, Any], tmp_path: Path) -> None:
+    source_directory = tmp_path / "source"
+    destination = tmp_path / "output"
+    for relative_path, text in sources.items():
+        path = source_directory / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    generator["main"](["--source", str(source_directory), "--destination", str(destination)])
+    assert {path.name for path in destination.iterdir()} == {stem + ".toml" for _, stem, *_ in EXPECTED}
+    for path in destination.iterdir():
+        assert path.read_text(encoding="utf-8") == (ROOT / "rotations" / path.name).read_text(encoding="utf-8")
+
+
 def test_reproducible_generation_from_frozen_text(sources: dict[str, str], generator: dict[str, Any]) -> None:
     for spec, stem, *_ in EXPECTED:
         source = generator["parse_source"](spec + ".txt", sources[spec + ".txt"])
