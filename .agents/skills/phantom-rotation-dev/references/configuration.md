@@ -21,7 +21,7 @@
 
 ## 完整示例
 
-此处 `health_pct@dev` 是说明 `unit_token` 参数的假设插件，不是内置插件；正式配置示例见 `rotations/死亡骑士-鲜血.toml`，批量来源和近似边界见 [辅助循环转换](assisted-rotations.md)。
+此处 `health_pct@dev` 是说明 `unit_token` 参数的假设插件，不是内置插件；正式配置示例见 `rotations/死亡骑士-鲜血.toml`。38 份历史 TXT 配置的来源和近似边界见 [辅助循环转换](assisted-rotations.md)，鲜血与防护的新 JSON 策略见 [Shigure 迁移记录](../../phantom-shigure-migration/references/confirmed-tank-migration.md)，两者不能相互套用授权。
 
 ```toml
 schema_version = 1
@@ -144,9 +144,9 @@ SetOverrideBindingClick(frame, true, macro.key, buttonName)
 
 表达式变量仅来自显式声明的 `conditions[].title`。`插件启用`、`爆发开启`、`正在延迟` 不再是内置变量或保留条件名；需要时声明对应的[状态读取插件](../../phantom-plugin-dev/references/built-in-conditions.md#通用状态读取插件)，标题可按现有命名规则自由设置。同一插件可用不同标题多次声明，未声明则不加载 Python 实例。
 
-schema_version 仍为 1；旧配置中未声明的这三个名称按未知变量拒绝，加载失败不回写，不自动补齐条件。正式辅助循环显式声明 enable，使用长冷却技能时另声明 burst；不添加 delay 门控。引擎专用 fixture 独立保留 enable/delay 的测试场景。
+schema_version 仍为 1；旧配置中未声明的这三个名称按未知变量拒绝，加载失败不回写，不自动补齐条件。38 份历史 TXT 配置按其已授权策略显式声明 enable，长冷却动作另要求 burst、不添加 delay 门控；这不是所有正式配置的统一策略。新 JSON 迁移按各自冻结决定处理状态。引擎专用 fixture 独立保留 enable/delay 的测试场景。
 
-这些条件不形成隐式门控。正式辅助循环将启用条件逐条加入动作表达式；测试 fixture 也可通过首条 `not 插件启用 or 正在延迟` → `Idle` 验证跳过本轮。状态解码失败使用插件声明的兜底并继续求值。Idle 既可作为条件命中结果，也可作为末尾兜底；Sleep/Pass 仅为未来计划的 Idle 别名，本次不接入，也不增加等待语义。
+这些条件不形成隐式门控。配置可以逐条显式加入启用条件，也可采用首条 `not 插件启用` → `Idle`；鲜血与防护采用后者并显式保留末尾 Idle。测试 fixture 也可通过首条 `not 插件启用 or 正在延迟` → `Idle` 验证跳过本轮。状态解码失败使用插件声明的兜底并继续求值。Idle 既可作为条件命中结果，也可作为末尾兜底；Sleep/Pass 仅为未来计划的 Idle 别名，本次不接入，也不增加等待语义。
 
 `rotation` 从上到下求值，第一个为真的条目胜出。每轮最多发送一个键；全部为假时本轮不执行动作。
 

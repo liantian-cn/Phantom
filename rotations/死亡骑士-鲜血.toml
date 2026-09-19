@@ -1,22 +1,9 @@
-# 此文件由 .script/generate_assisted_rotations.py 按冻结 TXT 显示顺序生成。
-# 唯一规则来源：deathknight/blood.txt；未读取 CSV 或补充隐藏字段。
-# 所有叶子条件按 AND 保留顺序；无冷却标签按 0 秒；仅启用与动作冷却 >= 60 秒的爆发门控。
-# 天赋条件按技能 ID 查询已知/法术书状态，不解析天赋树。
-# 资源可支付/成功施放规则映射 spell_usable 的 isUsable；不保证所有实际施放条件。
-# 目标光环限定不可辅助目标的 PLAYER|HARMFUL 减益；PLAYER 包含玩家、宠物和载具，排除其他来源。
-# 技能射程规则使用当前步骤动作 ID 对 target 的射程结果，无效射程返回 False。
-# 玩家光环限定 HELPFUL 增益；TXT 的增益/减益合称按现有插件能力映射。
-# 距离条件近似为当前步骤技能射程，忽略 TXT 码数；无效技能/无目标/nil 射程也返回 False。
-# 充能 max_charges=2 是本批阈值所需显示量程，不宣称技能真实上限为 2。
-# 资源 max_power 为固定参考，须按天赋调整；临时上限变化会有误差，Cell 量化步长约为 max_power/255。
-# 本专精固定资源参考：鲜血符文能量 115。
-# 层数使用固定显示量程；超量程饱和，零填充不能区分无光环与零层。
 schema_version = 1
 uuid = "15a37eea-e9f2-59cc-8e83-bbfd03fe866e"
 
 [profile]
 title = "死亡骑士-鲜血"
-description = "死亡骑士一键辅助"
+description = "作者：liantian-cn"
 unit_class = "DEATHKNIGHT"
 unit_class_id = 6
 unit_spec = 1
@@ -26,149 +13,140 @@ title = "插件启用"
 plugin = "enable@dev"
 
 [[conditions]]
-title = "已学会死神印记_439843"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [439843]
+title = "玩家战斗中"
+plugin = "player_in_combat@dev"
 
 [[conditions]]
-title = "死神印记_439843可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [439843]
+title = "玩家施法进度"
+plugin = "player_cast_progress@dev"
 
 [[conditions]]
-title = "死神印记_439843冷却"
+title = "玩家正在蓄力"
+plugin = "player_is_empowering@dev"
+
+[[conditions]]
+title = "目标存在"
+plugin = "target_is_exists@dev"
+
+[[conditions]]
+title = "目标存活"
+plugin = "target_is_alive@dev"
+
+[[conditions]]
+title = "目标可攻击"
+plugin = "target_can_attack@dev"
+
+[[conditions]]
+title = "目标可协助"
+plugin = "target_can_assist@dev"
+
+[[conditions]]
+title = "玩家生命值"
+plugin = "player_health_pct@dev"
+[conditions.plugin_args]
+use_predicted = true
+
+[[conditions]]
+title = "符文能量"
+plugin = "spec_power_runic_power@dev"
+[conditions.plugin_args]
+max_power = 120
+
+[[conditions]]
+title = "焦点可打断"
+plugin = "focus_cast_interruptible@dev"
+
+[[conditions]]
+title = "心灵冰冻冷却"
+plugin = "spell_cooldown@dev"
+[conditions.plugin_args]
+spell_ids = [47528]
+ignore_gcd = true
+
+[[conditions]]
+title = "焦点存在"
+plugin = "focus_is_exists@dev"
+
+[[conditions]]
+title = "焦点存活"
+plugin = "focus_is_alive@dev"
+
+[[conditions]]
+title = "焦点可攻击"
+plugin = "focus_can_attack@dev"
+
+[[conditions]]
+title = "焦点可协助"
+plugin = "focus_can_assist@dev"
+
+[[conditions]]
+title = "目标可打断"
+plugin = "target_cast_interruptible@dev"
+
+[[conditions]]
+title = "白骨之盾剩余时间"
+plugin = "aura_player_buff_duration@dev"
+[conditions.plugin_args]
+aura_ids = [195181]
+duration = 30
+width = 8
+player_only = true
+
+[[conditions]]
+title = "白骨之盾层数"
+plugin = "aura_player_buff_stacks@dev"
+[conditions.plugin_args]
+aura_ids = [195181]
+max_value = 12
+min_value = 0
+width = 3
+player_only = true
+
+[[conditions]]
+title = "死神印记冷却"
 plugin = "spell_cooldown@dev"
 [conditions.plugin_args]
 spell_ids = [439843]
 ignore_gcd = true
 
 [[conditions]]
-title = "目标有死神印记_434765减益"
-plugin = "target_has_debuff@dev"
-[conditions.plugin_args]
-aura_ids = [434765]
-
-[[conditions]]
-title = "死神印记_439843对目标在射程内"
-plugin = "spell_in_range@dev"
-[conditions.plugin_args]
-spell_id = 439843
-unit_token = "target"
-
-[[conditions]]
-title = "已学会精髓分裂"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [195182]
-
-[[conditions]]
-title = "精髓分裂可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [195182]
-
-[[conditions]]
-title = "精髓分裂冷却"
+title = "符文刃舞冷却"
 plugin = "spell_cooldown@dev"
 [conditions.plugin_args]
-spell_ids = [195182]
+spell_ids = [49028]
 ignore_gcd = true
 
 [[conditions]]
-title = "玩家有破灭增益"
+title = "爆发开启"
+plugin = "in_burst@dev"
+
+[[conditions]]
+title = "玩家正在移动"
+plugin = "player_is_moving@dev"
+
+[[conditions]]
+title = "符文"
+plugin = "spec_power_rune@dev"
+
+[[conditions]]
+title = "死神的抚摩冷却"
+plugin = "spell_cooldown@dev"
+[conditions.plugin_args]
+spell_ids = [195292]
+ignore_gcd = true
+
+[[conditions]]
+title = "圣光潜力冷却就绪"
+plugin = "item_cooldown_ready@dev"
+[conditions.plugin_args]
+item_id = 241308
+
+[[conditions]]
+title = "玩家有破灭"
 plugin = "player_has_buff@dev"
 [conditions.plugin_args]
-buff_ids = [441416]
-
-[[conditions]]
-title = "精髓分裂对目标在射程内"
-plugin = "spell_in_range@dev"
-[conditions.plugin_args]
-spell_id = 195182
-unit_token = "target"
-
-[[conditions]]
-title = "已学会吞噬"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [1263824]
-
-[[conditions]]
-title = "吞噬可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [1263824]
-
-[[conditions]]
-title = "吞噬冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [1263824]
-ignore_gcd = true
-
-[[conditions]]
-title = "目标在吞噬技能范围内"
-plugin = "target_in_range@dev"
-[conditions.plugin_args]
-spell_id = 1263824
-
-[[conditions]]
-title = "目标在枯萎凋零_43265技能范围内"
-plugin = "target_in_range@dev"
-[conditions.plugin_args]
-spell_id = 43265
-
-[[conditions]]
-title = "玩家有枯萎凋零_188290增益"
-plugin = "player_has_buff@dev"
-[conditions.plugin_args]
-buff_ids = [188290]
-
-[[conditions]]
-title = "已学会枯萎凋零_43265"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [43265]
-
-[[conditions]]
-title = "枯萎凋零_43265可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [43265]
-
-[[conditions]]
-title = "枯萎凋零_43265冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [43265]
-ignore_gcd = true
-
-[[conditions]]
-title = "目标在血液沸腾技能范围内"
-plugin = "target_in_range@dev"
-[conditions.plugin_args]
-spell_id = 50842
-
-[[conditions]]
-title = "已学会血液沸腾"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [50842]
-
-[[conditions]]
-title = "血液沸腾可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [50842]
-
-[[conditions]]
-title = "血液沸腾冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [50842]
-ignore_gcd = true
+buff_ids = [441426, 447954, 441424, 441378, 441416]
+player_only = true
 
 [[conditions]]
 title = "血液沸腾充能"
@@ -179,296 +157,230 @@ max_charges = 2
 width = 1
 
 [[conditions]]
-title = "已学会灵界打击"
-plugin = "talent_known@dev"
+title = "目标有血之疫病"
+plugin = "target_has_debuff@dev"
 [conditions.plugin_args]
-spell_ids = [49998]
+aura_ids = [55078]
 
 [[conditions]]
-title = "灵界打击可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [49998]
-
-[[conditions]]
-title = "灵界打击冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [49998]
-ignore_gcd = true
-
-[[conditions]]
-title = "玩家符文能量"
-plugin = "spec_power_runic_power@dev"
-[conditions.plugin_args]
-max_power = 115
-
-[[conditions]]
-title = "灵界打击对目标在射程内"
-plugin = "spell_in_range@dev"
+title = "目标在灵界打击范围内"
+plugin = "target_in_range@dev"
 [conditions.plugin_args]
 spell_id = 49998
-unit_token = "target"
 
 [[conditions]]
-title = "已学会符文打击"
-plugin = "talent_known@dev"
+title = "目标生命值"
+plugin = "target_health_pct@dev"
 [conditions.plugin_args]
-spell_ids = [316239]
+use_predicted = true
 
 [[conditions]]
-title = "符文打击可用"
-plugin = "spell_usable@dev"
+title = "枯萎凋零充能"
+plugin = "spell_charges@dev"
 [conditions.plugin_args]
-spell_ids = [316239]
+spell_ids = [43265]
+max_charges = 2
+width = 1
 
 [[conditions]]
-title = "符文打击对目标在射程内"
-plugin = "spell_in_range@dev"
-[conditions.plugin_args]
-spell_id = 316239
-unit_token = "target"
-
-[[conditions]]
-title = "符文打击冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [316239]
-ignore_gcd = true
-
-[[conditions]]
-title = "玩家有吸血鬼打击增益"
+title = "玩家有赤色天灾"
 plugin = "player_has_buff@dev"
 [conditions.plugin_args]
-buff_ids = [433899]
+buff_ids = [81141, 81136]
+player_only = true
 
 [[conditions]]
-title = "目标在符文打击技能范围内"
-plugin = "target_in_range@dev"
-[conditions.plugin_args]
-spell_id = 316239
-
-[[conditions]]
-title = "玩家有萨莱因之赐增益"
+title = "玩家有枯萎凋零"
 plugin = "player_has_buff@dev"
 [conditions.plugin_args]
-buff_ids = [434153]
+buff_ids = [188290]
+player_only = true
 
 [[conditions]]
-title = "爆发开启"
-plugin = "in_burst@dev"
-
-[[conditions]]
-title = "已学会符文刃舞"
-plugin = "talent_known@dev"
-[conditions.plugin_args]
-spell_ids = [49028]
-
-[[conditions]]
-title = "符文刃舞可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [49028]
-
-[[conditions]]
-title = "符文刃舞冷却"
-plugin = "spell_cooldown@dev"
-[conditions.plugin_args]
-spell_ids = [49028]
-ignore_gcd = true
-
-[[conditions]]
-title = "目标在符文刃舞技能范围内"
-plugin = "target_in_range@dev"
-[conditions.plugin_args]
-spell_id = 49028
-
-[[conditions]]
-title = "玩家白骨之盾层数"
-plugin = "aura_player_buff_stacks@dev"
-[conditions.plugin_args]
-aura_ids = [195181]
-max_value = 12
-min_value = 0
-width = 3
-
-[[conditions]]
-title = "玩家有白骨之盾增益"
+title = "玩家有沸点"
 plugin = "player_has_buff@dev"
 [conditions.plugin_args]
-buff_ids = [195181]
+buff_ids = [1265790, 1265982, 1265968]
+player_only = true
 
 [[conditions]]
-title = "已学会死神的抚摩"
-plugin = "talent_known@dev"
+title = "玩家有午夜舞步"
+plugin = "player_has_buff@dev"
 [conditions.plugin_args]
-spell_ids = [195292]
+buff_ids = [1264351, 1264405, 1264568, 1264407]
+player_only = true
 
 [[conditions]]
-title = "死神的抚摩可用"
-plugin = "spell_usable@dev"
-[conditions.plugin_args]
-spell_ids = [195292]
-
-[[conditions]]
-title = "死神的抚摩冷却"
+title = "亡者复生冷却"
 plugin = "spell_cooldown@dev"
 [conditions.plugin_args]
-spell_ids = [195292]
+spell_ids = [46585]
 ignore_gcd = true
-
-[[conditions]]
-title = "死神的抚摩对目标在射程内"
-plugin = "spell_in_range@dev"
-[conditions.plugin_args]
-spell_id = 195292
-unit_token = "target"
-
-[[conditions]]
-title = "玩家当前血量百分比"
-plugin = "player_health_pct@dev"
-[conditions.plugin_args]
-use_predicted = false
 
 [[conditions]]
 title = "打断黑名单图标"
 plugin = "interrupt_blacklist_icons@dev"
 
 [[macros]]
-name = "死神印记"
-macro_text = "/cast 死神印记"
-
-[[macros]]
-name = "精髓分裂"
-macro_text = "/cast 精髓分裂"
-
-[[macros]]
-name = "吞噬"
-macro_text = "/cast 吞噬"
-
-[[macros]]
-name = "枯萎凋零"
-macro_text = "/cast 枯萎凋零"
-
-[[macros]]
-name = "血液沸腾"
-macro_text = "/cast 血液沸腾"
-
-[[macros]]
 name = "灵界打击"
 macro_text = "/cast 灵界打击"
 
 [[macros]]
-name = "符文打击"
-macro_text = "/cast 符文打击"
+name = "焦点心灵冰冻"
+macro_text = "/cast [@focus] 心灵冰冻"
+
+[[macros]]
+name = "目标心灵冰冻"
+macro_text = "/cast [@target] 心灵冰冻"
+
+[[macros]]
+name = "死神印记"
+macro_text = "/cast 死神印记"
 
 [[macros]]
 name = "符文刃舞"
 macro_text = "/cast 符文刃舞"
 
 [[macros]]
+name = "精髓分裂"
+macro_text = "/cast 精髓分裂"
+
+[[macros]]
 name = "死神的抚摩"
 macro_text = "/cast 死神的抚摩"
 
-# 来源 deathknight/blood.txt:2，步骤 0，动作 ID 439843，TXT 冷却 45 秒。
+[[macros]]
+name = "圣光潜力"
+macro_text = "/cast item:241308\n/cast item:241309"
+
+[[macros]]
+name = "血液沸腾"
+macro_text = "/cast 血液沸腾"
+
+[[macros]]
+name = "枯萎凋零"
+macro_text = "/cast [@player] 枯萎凋零"
+
+[[macros]]
+name = "心脏打击"
+macro_text = "/cast 心脏打击"
+
+[[macros]]
+name = "亡者复生"
+macro_text = "/cast 亡者复生"
+
 [[rotation]]
-condition = "(插件启用 == True) and (已学会死神印记_439843 == True) and (死神印记_439843可用 == True) and (死神印记_439843冷却 == 0) and (目标有死神印记_434765减益 == False) and (死神印记_439843对目标在射程内 == True)"
+condition = "not 插件启用"
+macro = "Idle"
+
+[[rotation]]
+condition = "not 玩家战斗中"
+macro = "Idle"
+
+[[rotation]]
+condition = "玩家施法进度 > 0"
+macro = "Idle"
+
+[[rotation]]
+condition = "玩家正在蓄力"
+macro = "Idle"
+
+[[rotation]]
+condition = "not (目标存在 and 目标存活 and 目标可攻击 and not 目标可协助)"
+macro = "Idle"
+
+[[rotation]]
+condition = "玩家生命值 <= 55 and 符文能量 >= 42"
+macro = "灵界打击"
+
+[[rotation]]
+condition = "焦点可打断 and 心灵冰冻冷却 == 0 and (焦点存在 and 焦点存活 and 焦点可攻击 and not 焦点可协助)"
+macro = "焦点心灵冰冻"
+
+[[rotation]]
+condition = "目标可打断 and 心灵冰冻冷却 == 0"
+macro = "目标心灵冰冻"
+
+[[rotation]]
+condition = "(白骨之盾剩余时间 <= 5 or 白骨之盾层数 <= 5) and (死神印记冷却 == 0)"
 macro = "死神印记"
-annotate = "来源步骤 0：死神印记（ID 439843）"
 
-# 来源 deathknight/blood.txt:8，步骤 1，动作 ID 195182，TXT 冷却 0 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (已学会精髓分裂 == True) and (精髓分裂可用 == True) and (精髓分裂冷却 == 0) and (玩家有破灭增益 == True) and (精髓分裂对目标在射程内 == True)"
-macro = "精髓分裂"
-annotate = "来源步骤 1：精髓分裂（ID 195182）"
-
-# 来源 deathknight/blood.txt:14，步骤 2，动作 ID 1263824，TXT 冷却 45 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (已学会吞噬 == True) and (吞噬可用 == True) and (吞噬冷却 == 0) and (目标在吞噬技能范围内 == True)"
-macro = "吞噬"
-annotate = "来源步骤 2：吞噬（ID 1263824）"
-
-# 来源 deathknight/blood.txt:19，步骤 3，动作 ID 43265，TXT 冷却 0 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (目标在枯萎凋零_43265技能范围内 == True) and (玩家有枯萎凋零_188290增益 == False) and (已学会枯萎凋零_43265 == True) and (枯萎凋零_43265可用 == True) and (枯萎凋零_43265冷却 == 0)"
-macro = "枯萎凋零"
-annotate = "来源步骤 3：枯萎凋零（ID 43265）"
-
-# 来源 deathknight/blood.txt:25，步骤 4，动作 ID 50842，TXT 冷却 0 秒。
-# 来源行 30：AURA_COUNT_NEAR_PLAYER_LESS；按冻结方案仅删除此条件，保留步骤。原文：若玩家周围 50 码内带有增益/减益 '血之疫病[id:55078]' 的目标数量小于等于 0 个
-[[rotation]]
-condition = "(插件启用 == True) and (目标在血液沸腾技能范围内 == True) and (已学会血液沸腾 == True) and (血液沸腾可用 == True) and (血液沸腾冷却 == 0) and (血液沸腾充能 >= 2)"
-macro = "血液沸腾"
-annotate = "来源步骤 4：血液沸腾（ID 50842）"
-
-# 来源 deathknight/blood.txt:32，步骤 5，动作 ID 49998，TXT 冷却 0 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (已学会灵界打击 == True) and (灵界打击可用 == True) and (灵界打击冷却 == 0) and (玩家符文能量 >= 80) and (灵界打击对目标在射程内 == True)"
-macro = "灵界打击"
-annotate = "来源步骤 5：灵界打击（ID 49998）"
-
-# 来源 deathknight/blood.txt:38，步骤 6，动作 ID 316239，TXT 冷却 0 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (已学会符文打击 == True) and (符文打击可用 == True) and (符文打击对目标在射程内 == True)"
-macro = "符文打击"
-annotate = "来源步骤 6：符文打击（ID 316239）"
-
-# 来源 deathknight/blood.txt:42，步骤 7，动作 ID 316239，TXT 冷却 0 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (已学会符文打击 == True) and (符文打击可用 == True) and (符文打击冷却 == 0) and (玩家有吸血鬼打击增益 == True) and (符文打击对目标在射程内 == True) and (目标在符文打击技能范围内 == True)"
-macro = "符文打击"
-annotate = "来源步骤 7：符文打击（ID 316239）"
-
-# 来源 deathknight/blood.txt:49，步骤 8，动作 ID 316239，TXT 冷却 0 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (已学会符文打击 == True) and (符文打击可用 == True) and (符文打击冷却 == 0) and (玩家有萨莱因之赐增益 == True) and (符文打击对目标在射程内 == True) and (目标在符文打击技能范围内 == True)"
-macro = "符文打击"
-annotate = "来源步骤 8：符文打击（ID 316239）"
-
-# 来源 deathknight/blood.txt:56，步骤 9，动作 ID 316239，TXT 冷却 0 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (目标在符文打击技能范围内 == True)"
-macro = "符文打击"
-annotate = "来源步骤 9：符文打击（ID 316239）"
-
-# 来源 deathknight/blood.txt:58，步骤 10，动作 ID 49028，TXT 冷却 120 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (爆发开启 == True) and (已学会符文刃舞 == True) and (符文刃舞可用 == True) and (符文刃舞冷却 == 0) and (目标在符文刃舞技能范围内 == True)"
+condition = "符文刃舞冷却 == 0 and 爆发开启 and not 玩家正在移动"
 macro = "符文刃舞"
-annotate = "来源步骤 10：符文刃舞（ID 49028）"
 
-# 来源 deathknight/blood.txt:63，步骤 11，动作 ID 195182，TXT 冷却 0 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (已学会精髓分裂 == True) and (精髓分裂可用 == True) and (精髓分裂冷却 == 0) and (精髓分裂对目标在射程内 == True) and (玩家白骨之盾层数 <= 6)"
+condition = "(白骨之盾剩余时间 <= 5 or 白骨之盾层数 <= 5) and (符文 >= 3)"
 macro = "精髓分裂"
-annotate = "来源步骤 11：精髓分裂（ID 195182）"
 
-# 来源 deathknight/blood.txt:69，步骤 12，动作 ID 195182，TXT 冷却 0 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (已学会精髓分裂 == True) and (精髓分裂可用 == True) and (精髓分裂冷却 == 0) and (精髓分裂对目标在射程内 == True) and (玩家有白骨之盾增益 == False)"
-macro = "精髓分裂"
-annotate = "来源步骤 12：精髓分裂（ID 195182）"
-
-# 来源 deathknight/blood.txt:75，步骤 13，动作 ID 195292，TXT 冷却 6 秒。
-[[rotation]]
-condition = "(插件启用 == True) and (已学会死神的抚摩 == True) and (死神的抚摩可用 == True) and (死神的抚摩冷却 == 0) and (死神的抚摩对目标在射程内 == True)"
+condition = "(白骨之盾剩余时间 <= 5 or 白骨之盾层数 <= 5) and (死神的抚摩冷却 == 0)"
 macro = "死神的抚摩"
-annotate = "来源步骤 13：死神的抚摩（ID 195292）"
 
-# 来源 deathknight/blood.txt:80，步骤 14，动作 ID 43265，TXT 冷却 0 秒。
-# TXT 原无条件步骤，仍在原位置并保留启用/适用爆发门控。
 [[rotation]]
-condition = "(插件启用 == True)"
+condition = "圣光潜力冷却就绪 and 爆发开启 and not 玩家正在移动"
+macro = "圣光潜力"
+
+[[rotation]]
+condition = "符文 >= 2 and 玩家有破灭"
+macro = "精髓分裂"
+
+[[rotation]]
+condition = "血液沸腾充能 >= 1 and not 目标有血之疫病 and 目标在灵界打击范围内"
+macro = "血液沸腾"
+
+[[rotation]]
+condition = "死神印记冷却 == 0 and 目标生命值 >= 20"
+macro = "死神印记"
+
+[[rotation]]
+condition = "枯萎凋零充能 == 2 and 玩家有赤色天灾"
 macro = "枯萎凋零"
-annotate = "来源步骤 14：枯萎凋零（ID 43265）"
 
-# 来源 deathknight/blood.txt:81，步骤 15，动作 ID 49998，TXT 冷却 0 秒。
 [[rotation]]
-condition = "(插件启用 == True) and (已学会灵界打击 == True) and (灵界打击可用 == True) and (灵界打击冷却 == 0) and (灵界打击对目标在射程内 == True) and (玩家当前血量百分比 <= 50)"
+condition = "not 玩家有枯萎凋零 and 枯萎凋零充能 == 2 and not 玩家正在移动"
+macro = "枯萎凋零"
+
+[[rotation]]
+condition = "not 玩家有枯萎凋零 and 玩家有赤色天灾 and not 玩家正在移动"
+macro = "枯萎凋零"
+
+[[rotation]]
+condition = "血液沸腾充能 >= 1 and 玩家有沸点"
+macro = "血液沸腾"
+
+[[rotation]]
+condition = "符文能量 >= 100"
 macro = "灵界打击"
-annotate = "来源步骤 15：灵界打击（ID 49998）"
+
+[[rotation]]
+condition = "玩家有午夜舞步 and 符文 >= 1"
+macro = "心脏打击"
+
+[[rotation]]
+condition = "符文 >= 3"
+macro = "心脏打击"
+
+[[rotation]]
+condition = "死神的抚摩冷却 == 0 and 白骨之盾层数 <= 9"
+macro = "死神的抚摩"
+
+[[rotation]]
+condition = "亡者复生冷却 == 0"
+macro = "亡者复生"
+
+[[rotation]]
+condition = "血液沸腾充能 == 2"
+macro = "血液沸腾"
+
+[[rotation]]
+condition = "符文 >= 1 and not 玩家有破灭"
+macro = "心脏打击"
+
+[[rotation]]
+condition = "血液沸腾充能 >= 1"
+macro = "血液沸腾"
 
 [[rotation]]
 condition = ""
 macro = "Idle"
-annotate = "末尾兜底"

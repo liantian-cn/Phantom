@@ -17,6 +17,7 @@
 | spell_in_range | 正整数 spell_id、unit_token（target/focus/mouseover） | 指定技能对指定单位的射程结果，严格黑白 bool | False |
 | spell_cooldown | spell_ids、布尔 ignore_gcd | Cell 分段剩余秒数 float | 375.0 |
 | spell_gcd | 无 | Cell 分段剩余秒数 float | 375.0 |
+| item_cooldown_ready | 正整数 item_id | 指定物品非银行库存大于零、有效冷却启用且无剩余时间，严格黑白 bool | False |
 
 spell_ids 是非空正整数列表，普通法术取首个法术书匹配候选。
 spell_gcd 固定 GetSpellCooldownDuration(61304,false)，不查询法术书，不接受技能或 ignore_gcd 参数。
@@ -70,12 +71,13 @@ AuraContainer 和吸收 StatusBar 是该区域的显示实现，不另分配 Val
 | talent_known | spell_ids | bool：与 spell_known 完全相同，按技能 ID 判断 |
 | player_damage_absorb | threshold | bool：伤害吸收量严格超过阈值 |
 | player_heal_absorb | threshold | bool：治疗吸收量严格超过阈值 |
-| player_has_buff | buff_ids | bool：任一指定 HELPFUL 增益存在 |
+| player_has_buff | buff_ids；可选 player_only=true | bool：任一指定增益存在，默认 HELPFUL\|PLAYER |
 
 参数约束：`spell_id` 为正整数；`spell_ids`、`buff_ids` 为非空正整数列表；`slot_id` 只接受 13/14。
 `threshold` 为 0–9007199254740990 的整数，保证 Lua 数值中的 N 和 N+1 可精确区分；拒绝布尔值、小数和负数。
 `dispel_types` 为必填 bool 映射，键限定 Magic、Poison、Disease、Curse、Stealth、Special、Enrage；未列出为 false，空表和全 false 均不匹配。成功加载 rotation 时仅补写已有映射内缺失的七种类型子键为 false；整体缺失仍报错，显式值不覆盖，详见[配置默认值](conditions.md#配置默认值)。
 所有插件拒绝多余字段，参数名称统一使用 snake_case。
+`player_has_buff@dev` 增加可选 `player_only`，默认 true：使用 `HELPFUL|PLAYER`；false 使用 `HELPFUL`。PLAYER 包含玩家、玩家宠物和载具。
 
 布尔值必须严格全黑/全白，异常兜底 False。职责灰度字节 0/85/170/255 分别表示 NONE/TANK/HEALER/DAMAGER，其他值或秘密职责返回 NONE。
 近战计数灰度为 count/40，Python 用非负数四舍五入恢复；秘密或 nil 的距离结果不计数。进度通过黑白颜色曲线求值后直接渲染，Python 读取 Cell.percent。
@@ -92,6 +94,7 @@ AuraContainer 在世界事件调用公开的 UpdateAllAuras，平时由官方容
 
 施法目标完整保留旧项目按名称匹配、秘密目标暂留旧值、成功/停止/失败清空和每秒兜底清空行为，因此长施法也可能提前变为空字符串。
 三种物品就绪条件使用 enabled、零冷却、usable 且 not noMana，不增加背包数量检查。
+`item_cooldown_ready@dev` 是独立的通用单物品条件：`C_Item.GetItemCount(item_id, false, false, false, false) > 0`，且 `GetItemCooldown` 的 start/duration 为非负有限数、enabled 为 bool true、无剩余冷却才为 True。不查 usable、不计各类银行或物品使用次数。仅使用静态公开 ID 的已核验普通返回路径，API 异常或普通数据无效均表示未确认就绪；两个 API 的 `SecretArguments = "AllowedWhenUntainted"` 是参数秘密性元数据，当前定义未标记秘密返回，不增加秘密性检测或输出映射。事件下一帧刷新，另有一秒随机错峰兜底。
 技能/天赋只判断 IsSpellKnown 或 IsSpellInSpellBook，不解析天赋树；后者可包含覆盖技能，不保证技能此刻可施放。
 
 ## 官方辅助条件关联迁移（2026-09-18）
@@ -106,14 +109,19 @@ AuraContainer 在世界事件调用公开的 UpdateAllAuras，平时由官方容
 | target_has_buff / focus_has_buff | aura_ids | 单槽匹配指定 Buff，仅用于可辅助侧 |
 | target_has_debuff / focus_has_debuff | aura_ids | 单槽匹配指定 Debuff，仅用于不可辅助侧 |
 | player_range_aura_units_count | spell_id、aura_id；combat_only=false | 可观察 nameplate1–40 中存活、可攻击、在技能范围内且有指定 Debuff 的数量 |
-| aura_player_buff_duration / aura_target_debuff_duration | aura_ids、正整数 duration，可选正整数 width | 缺省宽=min(8,ceil(duration/4))，显式宽优先；返回 ratio × duration 的 float 估计 |
+| aura_player_buff_duration | aura_ids、有限正数 duration；可选正整数 width、player_only=true | 缺省宽=min(8,max(1,ceil(duration/4)))，显式宽优先；返回 ratio × duration 的 float 估计 |
+| aura_target_debuff_duration | aura_ids、正整数 duration，可选正整数 width | 缺省宽=min(8,ceil(duration/4))，显式宽优先；返回 ratio × duration 的 float 估计 |
 | aura_player_buff_stacks / aura_target_debuff_stacks | aura_ids、max_value；min_value=0、width=2 | ValueBar 返回 ratio × max_value 的 float 估计；当前 min_value 仅允许 0 |
 
 Aura 身份分类与普通可辅助条件的语义不同：过滤使用 `UnitCanAssist("player", unit, true, true)`，可辅助侧允许指定 Buff，不可辅助侧允许指定 Debuff。多个 ID 使用官方单槽首个匹配，不承诺列表优先级。日常更新由官方 AuraContainer 管理。
 
 `target_has_debuff@dev`、`focus_has_debuff@dev`、`aura_target_debuff_duration@dev`、`aura_target_debuff_stacks@dev` 固定使用 `PLAYER|HARMFUL`；官方 PLAYER 包含玩家、玩家宠物和载具。没有 `player_only` 参数；重新生成后排除其他来源的同技能减益。驱散条件不使用 PLAYER 过滤。
 
-时长条直接使用官方 `SetDurationBar` 的立即插值与剩余时间方向，不特殊处理永久光环。配置 duration 必须与实际时长匹配才能准确换算；名义像素步长为 `duration/(4×width)`，不保证延长或时长变体的绝对秒数精度。时长与充能的派生宽度不补写，显式宽度可超过默认公式的上限；宽度改变不改变数值量程。
+玩家增益存在、层数、时长三个插件均接受 `player_only`，默认 true 使用 `HELPFUL|PLAYER`，显式 false 使用 `HELPFUL`。这是已确认的默认语义变化，不批量为其他循环补参数；加载时仍遵循通用默认值补写契约。
+
+时长条直接使用官方 `SetDurationBar` 的立即插值与剩余时间方向，不特殊处理永久或无限 DurationObject，也不保证其满条。玩家增益 duration 允许有限正小数，拒绝 bool、NaN、Inf；目标减益 duration 仍只允许正整数。配置 duration 必须与实际时长匹配才能准确换算；名义像素步长为 `duration/(4×width)`，不保证延长或时长变体的绝对秒数精度。时长与充能的派生宽度不补写，显式宽度可超过默认公式的上限；宽度改变不改变数值量程。
+
+本次玩家时长配置量程为白骨之盾 duration=30/width=8、正义盾击 duration=13.5/width=4、奉献 duration=4/width=2。奉献条的8个内容像素对应0..4秒，每增加一列纯白像素换算0.5秒；这是解码量程验证，不代表游戏中实际光环时长或永久光环渲染已验收。
 
 层数条使用官方 `SetApplicationBar`，实际量程为 0..max_value，名义层数步长为 `max_value / (4 * width)`。保留 min_value 参数但仅允许 0；Warcraft Wiki 将 `minApplications` 标记为 12.1.5 新增，当前实现不使用它。零填充无法区分无光环与应用层数为零的光环。
 

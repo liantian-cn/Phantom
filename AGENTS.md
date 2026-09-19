@@ -7,4 +7,5 @@
 - [核心代码、TUI、像素](.agents/skills/phantom-code-dev/SKILL.md)
 - [条件、截图、键盘插件](.agents/skills/phantom-plugin-dev/SKILL.md)
 - [循环配置与优先级](.agents/skills/phantom-rotation-dev/SKILL.md)
+- [Shigure迁移工具](.agents/skills/phantom-shigure-migration/SKILL.md)
 - [WoW API 与源码核验](.agents/skills/phantom-wow-api/SKILL.md)

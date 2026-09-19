@@ -7,6 +7,7 @@ plugin: player_has_buff@dev
     参考 04_player_buff.lua，单 slot 匹配任一 ID，白色贴图覆盖黑底；不读取 aura 数据或显示状态。
     参数校验和配对解码见 condition.py；本实例使用冻结坐标，不继承旧项目分类色。
 修改记录：
+2026-09-19：增加默认开启的 player_only 来源过滤。
 2026-09-15：事件统一延至下一帧刷新。
 2026-09-15：按已确认计划新增玩家条件插件。
 ]]
@@ -21,7 +22,9 @@ local insert = table.insert     -- 注册 UI 初始化回调
 local ipairs = ipairs           -- 遍历配置的候选技能 ID
 
 --[[
-用途与签名：AuraContainer:AddAuraSlot(key, "HELPFUL", options)；options.candidateFilters.includeSpellIDs 为技能 ID 布尔映射；玩家 HELPFUL 身份过滤允许。UpdateAllAuras() 请求刷新。
+用途与签名：AuraContainer:AddAuraSlot(key, filter, options)；options.candidateFilters.includeSpellIDs 为技能 ID 布尔映射；玩家 HELPFUL 身份过滤允许。UpdateAllAuras() 请求刷新。
+player_only 默认 true，filter 为 HELPFUL|PLAYER；false 为 HELPFUL。PLAYER 包括玩家、玩家宠物和载具。
+来源过滤于 2026-09-19 核验同 revision 的 Blizzard_FrameXMLUtil/AuraUtil.lua 与 Blizzard_AuraContainerUtil.lua。
 业务限制：参考 04_player_buff.lua，单 slot 匹配任一 ID，白色贴图覆盖黑底；不读取 aura 数据或显示状态。
 核验日期：2026-09-15；本地 @wow-ui-source，12.1.0.69587。
 源码 revision：a89e9d0ceb7f6cd31e8fc5ca7df1a338ac0b1b58。
@@ -50,7 +53,7 @@ local UNIT_TOKEN = "player"       -- 本版本固定玩家单位
 local SLOT_KEY = "aura"           -- 容器独立，因此固定键不会跨实例冲突
 local AURA_TEXTURE = "Interface\\AddOns\\" .. addonName .. "\\media\\aura\\aura_border_full.tga"
 local BUFF_IDS = { {{buff_ids}} } -- 任一配置增益存在即匹配
-local AURA_FILTER = "HELPFUL"
+local AURA_FILTER = {{aura_filter}} -- 已验证的玩家来源筛选
 
 local container
 local eventFrame = CreateFrame("Frame")
