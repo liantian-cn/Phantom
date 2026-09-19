@@ -1,0 +1,75 @@
+name: 同步 develop 到 main
+
+on:
+  workflow_run:
+    workflows: [Develop push]
+    types: [completed]
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: 发布过滤后的文件快照
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 读取 main 的发布工作流
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: 构建快照并同步
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin \
+            '+refs/heads/develop:refs/remotes/origin/develop' \
+            '+refs/heads/main:refs/remotes/origin/main'
+          source_sha=$(git rev-parse refs/remotes/origin/develop)
+          base_sha=$(git rev-parse refs/remotes/origin/main)
+
+          # 独立索引构建文件树，不切换源分支，也不执行 develop 中的代码。
+          # 排队的旧触发也读取最新 develop，避免旧版本回写 main。
+          export GIT_INDEX_FILE="$RUNNER_TEMP/phantom-publish.index"
+          git read-tree "$source_sha"
+          git rm -r --cached --ignore-unmatch -- \
+            ':(top,literal).opencode' \
+            ':(top,literal).script' \
+            ':(top,literal)demo' \
+            ':(top,literal)tests' \
+            ':(top,literal)phantom.toml'
+
+          # main 独有的同步工作流必须保留，否则下一次推送无法接续发布。
+          workflow_path=.github/workflows/sync-main.yml
+          workflow_blob=$(git rev-parse "$base_sha:$workflow_path")
+          git update-index --add --cacheinfo "100644,$workflow_blob,$workflow_path"
+          tree_sha=$(git write-tree)
+
+          if [ "$tree_sha" = "$(git rev-parse "$base_sha^{tree}")" ]; then
+            echo 'main 已是最新快照，无需提交。' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # 只以 main 为父提交，排除项不会随 develop 的提交历史进入 main。
+          commit_sha=$(git commit-tree "$tree_sha" -p "$base_sha" \
+            -m "发布 develop 快照 $source_sha")
+          # 普通快进推送；若 main 被并发修改则失败，不覆盖他人提交。
+          git push origin "$commit_sha:refs/heads/main"
+          printf '已将 develop `%s` 的过滤快照发布到 main `%s`。\n' \
+            "$source_sha" "$commit_sha" >> "$GITHUB_STEP_SUMMARY"
