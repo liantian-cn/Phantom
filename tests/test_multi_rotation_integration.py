@@ -2,12 +2,14 @@ import shutil
 import tomllib
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 from lupa.lua51 import LuaRuntime  # type: ignore[import-untyped]
 
 from phantom.core.configuration import load_config
 from phantom.core.generator import generate_rotations
 from phantom.core.rotation_catalog import load_rotations
+from phantom.core.specializations import SPECIALIZATION_BY_PROFILE
 
 
 def test_all_forty_rotations_discover_persist_and_generate_one_addon(tmp_path: Path) -> None:
@@ -43,8 +45,18 @@ def test_all_forty_rotations_discover_persist_and_generate_one_addon(tmp_path: P
     toc = (generated.directory / "Phantom.toc").read_text(encoding="utf-8")
     files = [line.replace("\\", "/") for line in toc.splitlines() if line and not line.startswith("##")]
     assert len(files) == len(set(files))
-    assert {name for name in files if "/" not in name} == {f"{item.uuid}.lua" for item in loaded.rotations}
-    assert files.count("runtime/11_specialization_reload.lua") == 1
+    assert len(files) == 16 + sum(len(item.conditions) + 1 for item in loaded.rotations)
+    assert len({Path(name).stem for name in files}) == len(files)
+    assert all(UUID(Path(name).stem).version == 4 for name in files)
+    expected_directories = {SPECIALIZATION_BY_PROFILE[(item.profile.unit_class, item.profile.unit_spec)].key.replace(".", "_") for item in loaded.rotations}
+    assert {Path(name).parent.as_posix() for name in files} == {"runtime", "general"} | expected_directories
+    offset = 16
+    for item in loaded.rotations:
+        directory_name = SPECIALIZATION_BY_PROFILE[(item.profile.unit_class, item.profile.unit_spec)].key.replace(".", "_")
+        for name in files[offset : offset + len(item.conditions) + 1]:
+            assert Path(name).parent.as_posix() == directory_name
+        offset += len(item.conditions) + 1
+    assert sum("original: runtime\\11_specialization_reload.lua" in (generated.directory / name).read_text(encoding="utf-8") for name in files) == 1
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     compile_lua: Any = lua.eval("function(source) local chunk, err = loadstring(source); assert(chunk, err); return true end")
     for name in files:

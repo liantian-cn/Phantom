@@ -47,8 +47,8 @@ Windows 截图插件 → 条件实例解码 → rotation 白名单求值 → 键
 - 包名读取 addon.name，必须匹配 `[A-Za-z][A-Za-z0-9_]*`。
 - 插件目录和 `.toc` 文件使用完全相同的包名。
 - 通用能力写入共享基础模块。
-- 每份 rotation 生成一个 `<uuid>.lua`，其中 UUID 使用带连字符的标准 RFC 4122 文本。
-- 每个 UUID Lua 在加载开头检查 `unit_class` 和 `unit_spec`；不匹配时立即 `return`，不加载其余逻辑。
+- 每份 rotation 使用 `Specialization.key` 将点替换为下划线的专精目录，例如 `druid_restoration/`；每个条件声明实例各生成一个随机 UUID4 Lua，另生成一个独立的随机 UUID4 宏绑定 Lua。
+- 每个专精目录内的 Lua 在加载开头检查 `unit_class` 和 `unit_spec`；不匹配时立即 `return`，不加载其余逻辑。文件名 UUID 使用带连字符的标准 RFC 4122 文本，不使用 rotation 配置 UUID。
 - `unit_spec` 是 `GetSpecialization()` 返回的专精顺序索引，取值为 1、2、3 或 4。
 - 切换专精后需要执行 `/reload`。当前不支持运行期热切换。
 
@@ -116,11 +116,12 @@ phantom/core/rotation.py 负责配置验证、内存布局分配与冻结，以�
 phantom/core/macro_keys.py 以 MACRO_KEYS tuple 显式保存固定键位池；rotation.py 按宏声明顺序为每份 rotation 独立分配全部宏，包括未引用宏。分配与旧字段兼容规则见[宏与键位](../../phantom-rotation-dev/references/configuration.md#宏与键位)，固定顺序见[宏键位池](../../phantom-rotation-dev/references/key-syntax.md#固定宏键位池)。
 所有 load_rotation 入口统一在完整验证和布局成功后补写 rotation，不修改 phantom.toml。默认值来自精确版本 Condition 的公开 config_defaults，构造与回写共享来源；仅补缺失键并递归补充已有嵌套字典，保留必填约束和所有显式值。无实际变更不写，使用源文件并发检查及原子替换，写入失败使加载失败；后续生成失败不回滚已补写参数。完整规则见 [配置规范](../../phantom-rotation-dev/references/configuration.md#条件参数默认值与加载回写)。
 旧 conditions[].layout 兼容接收但忽略，加载器不新增、更新或删除；布局始终根据条件输出在内存重建，分配规则和运行期冻结语义不变。
-集合入口输出 runtime/ 与 general/ 源码副本、完整 media/ 二进制资源、所有已加载组合的 UUID Lua 和同名 TOC；保留单份生成包装入口。不复制 examples。字体与纹理由 Lua 路径访问，不加入 TOC。
-UUID Lua 开头检查玩家职业和专精，随后每个模板置于独立 do/end 作用域并注册 UIInitFuncs。
-生成所有声明的条件；可选模板只插入经过校验的参数与固定位置，无模板时保留空的实例 do/end 块。Lua 状态、面板及第一行五个 Cell 保留；enable、爆发、delay 的 Python 读取改为显式条件插件，框架只保留职业与专精匹配检查。宏文本经过 Lua 5.1 字符串转义后作为安全按钮属性，不作为可执行 Lua 插入。
-同名文件覆盖、旧文件保留，TOC 最后写入且仅列本次产物。每个目标文件使用同目录临时文件替换，避免单文件截断；不提供整个目录的事务或备份。
-UUID Lua 为全部声明的宏生成安全按钮及自动键位的覆盖绑定，包括未引用宏；按钮名由插件包名、rotation UUID 与宏序号确定。配置中的旧 key/bind_key 完全忽略，不控制生成。运行器按同帧职业专精自动路由；切专精通过标准不可取消弹窗要求手动确认 /reload，不增加等待重载停键机制。
+集合入口输出 runtime/ 与 general/ 源码副本、完整 media/ 二进制资源、所有已加载组合的专精目录和同名 TOC；保留单份生成包装入口。不复制 examples。字体与纹理路径不变，由 Lua 路径访问，不加入 TOC。
+runtime/、general/ 的每个原始 Lua 文件各输出一个随机 UUID4.lua，生成副本文件头 uuid 同步文件名，original 保留源码溯源；不修改手写源码 uuid。每次 render/generate 全部重新随机分配，包内 UUID 不碰撞；检测到碰撞立即失败，不能静默覆盖。rotation 配置 uuid 不因生成而变化。
+生成所有声明的条件，不去重、不跳过未引用条件。每个条件单独作为 Lua chunk 加载，文件头包含 UUID 标识和职业专精守卫，并保留统一 namespace 兼容；生成器不再添加外围 do/end，模板内部结构不改。可选模板只插入经过校验的参数与固定位置，无模板时仍产出带标识和守卫的文件；零区域与模板有无相互独立。Lua 状态、面板及第一行五个 Cell 保留；enable、爆发、delay 的 Python 读取改为显式条件插件，框架只保留职业与专精匹配检查。
+TOC 顺序为 runtime 源码文件名排序、general 源码文件名排序，然后按 rotation 输入顺序依次列该专精的条件声明顺序与宏文件；不按随机文件名排序。
+完整校验、渲染、资源读取成功且输出路径与整个旧树安全检查通过后，清空本 addon 目录全部内容（含隐藏、手工文件和旧子目录），不触碰兄弟目录。拒绝插件根及中间 Interface/AddOns 路径、旧树内的 symlink/junction/reparse point；目录位置为普通文件也拒绝。预准备或检查失败保留旧包。清理或写入失败立即停止，不重试、不回滚；TOC 最后写入且仅列本次产物。每个目标文件使用同目录临时文件替换，避免单文件截断；不提供整个目录的事务或备份。
+每专精独立宏文件为全部声明的宏生成安全按钮及自动键位的覆盖绑定，包括未引用宏；空宏列表也输出该文件，函数调用结构避免 148 宏触发 Lua chunk 局部变量上限。按钮名由插件包名、rotation UUID 与宏序号确定。宏文本经过 Lua 5.1 字符串转义后作为安全按钮属性，不作为可执行 Lua 插入。配置中的旧 key/bind_key 完全忽略，不控制生成。运行器按同帧职业专精自动路由；切专精通过标准不可取消弹窗要求手动确认 /reload，不增加等待重载停键机制。
 
 ## 单帧决策报告
 

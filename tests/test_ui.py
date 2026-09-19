@@ -553,7 +553,9 @@ macro = "法师动作"
             await app.workers.wait_for_complete()
             await pilot.pause()
             toc = (executable.parent / "Interface/AddOns/Phantom/Phantom.toc").read_text(encoding="utf-8")
-            assert all(f"{rotation.uuid}.lua" in toc for rotation in app.rotations)
+            references = [line for line in toc.splitlines() if line and not line.startswith("##")]
+            assert sum(name.startswith("deathknight_blood\\") for name in references) == len(app.rotations[0].conditions) + 1
+            assert sum(name.startswith("mage_fire\\") for name in references) == len(app.rotations[1].conditions) + 1
 
             app.start_collection()
             capture.result = execution_frame(1)

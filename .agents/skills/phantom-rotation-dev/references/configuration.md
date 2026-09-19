@@ -79,7 +79,7 @@ macro = "审判"
 ## 标识和引用
 
 - `schema_version` 当前必须为整数 `1`。未来结构升级通过显式迁移完成，不得猜测字段形状。
-- `uuid` 必须是带连字符的标准 RFC 4122 UUID 文本，并用于生成 `<uuid>.lua`。
+- `uuid` 必须是带连字符的标准 RFC 4122 UUID 文本，标识 rotation 并参与宏按钮命名；生成文件使用每次重新分配的随机 UUID4，不因生成修改配置 uuid。每个专精目录内每个条件实例独立一份 Lua，另有一个宏绑定 Lua，详见[生成器落地](../../phantom-code-dev/references/architecture.md#生成器落地)。
 - `profile.unit_class` 使用 Blizzard 的大写职业 token。
 - `profile.unit_spec` 使用 `GetSpecialization()` 的顺序索引；DRUID 允许 1–4，其余 12 个职业允许 1–3，总计固定 40 个组合，DEMONHUNTER 的 3 为 devourer。
 - schema v1 不包含 `unit_talents`。

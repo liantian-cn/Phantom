@@ -139,13 +139,17 @@ class Plugin(Condition):
     decoder.pix_array[:4, 12:16] = 255
     assert plugin.value(*plugin.raw_value(decoder), decoder=decoder) is True
     rotation = replace(example(tmp_path), conditions=(ConditionEntry("reader", "test@dev", plugin),), macros=())
-    generated = render(rotation, "Test")[rotation.uuid + ".lua"]
+    files = {name: source for name, source in render(rotation, "Test").items() if name.startswith("deathknight_blood/")}
+    assert len(files) == 2
+    name, generated = next(iter(files.items()))
+    assert f"uuid: {Path(name).stem}\n" in generated
     lua: Any = LuaRuntime(unpack_returned_tuples=True)
     lua.execute('UnitClass = function() return "", "DEATHKNIGHT" end; C_SpecializationInfo = {GetSpecialization=function() return 1 end}')
     run: Any = lua.eval('function(source) local addon={visits=0}; assert(loadstring(source))("Test", addon); return addon.visits end')
     assert run(generated) == (1 if template else 0)
+    assert "\ndo\n" not in generated
     if not template:
-        assert "do\n\nend" in generated
+        assert generated.endswith("local addonName, addonTable = ...\n\n")
 
 
 def test_none_output_validation_and_mixed_layout() -> None:
@@ -208,6 +212,12 @@ def test_renamed_duplicate_and_omitted_states(tmp_path: Path) -> None:
     assert rotation.board_width == 36
     assert [entry.title for entry in rotation.conditions[-4:]] == ["允许执行", "等待中", "另一开关", "爆发开启"]
     assert rotation.conditions[-4].instance is not rotation.conditions[-2].instance
+    files = {name: source for name, source in render(rotation, "Test").items() if name.startswith("deathknight_blood/")}
+    assert len(files) == len(rotation.conditions) + 1
+    # 同插件不同声明不去重，未被表达式引用的状态实例也占独立文件。
+    condition_sources = list(files.values())[:-1]
+    assert all(source.endswith("local addonName, addonTable = ...\n\n") for source in condition_sources[-4:])
+    assert len(set(condition_sources[-4:])) == 4
     decoder = frame()
     assert rotation.trial(decoder).macro is None
     decoder.pix_array[:4, 12:16] = 255
