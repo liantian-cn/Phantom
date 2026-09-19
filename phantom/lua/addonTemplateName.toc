@@ -15,6 +15,7 @@ runtime\07_cell.lua
 runtime\08_value_bar.lua
 runtime\09_icon_tile.lua
 runtime\10_mask.lua
+runtime\11_specialization_reload.lua
 general\01_player_class.lua
 general\02_player_specialization.lua
 general\03_enable.lua
