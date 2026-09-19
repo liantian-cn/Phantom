@@ -11,7 +11,7 @@ description: 编写、调整或审查 Phantom rotation TOML、条件组合、宏
 
 1. 读取目标 TOML 与 [配置规范](references/configuration.md) 的相关章节。`rotations/死亡骑士-鲜血.toml` 是正式配置示例，不是所有职业的默认优先级；其余 38 份的历史 TXT 映射边界见 [辅助循环转换](references/assisted-rotations.md)。Shigure JSON 与技能 Lua 迁移使用 [Shigure迁移工具](../phantom-shigure-migration/SKILL.md)，先盘点源语义与授权差异。
 2. 明确用户的职业专精、战斗场景、优先级及宏文本；仅对会改变策略的缺失信息追问。不凭现有示例推断其他技能、天赋或最优循环。
-3. 按需查 [内置条件目录](../phantom-plugin-dev/references/built-in-conditions.md)，再核对候选 `phantom/conditions/<完整标识>/plugin.toml` 和实现，确认参数、返回类型、兜底和可用边界。不要给现有插件虚构参数或能力。
+3. 按需查 [内置条件目录](../phantom-plugin-dev/references/built-in-conditions.md)，再核对候选 `phantom/conditions/<完整标识>/plugin.toml` 和实现，确认参数、返回类型、兜底和可用边界。光环时长按[配置精度标准](references/configuration.md#光环时长的配置精度)区分秒数与剩余百分比；秒数默认显式填写 `width=max(1,ceil(duration/2))`，用户指定宽度优先。不要给现有插件虚构参数或能力。
 4. 宏仅需配置 `name` 和非空 `macro_text`；内核按声明顺序自动分配[固定宏键位池](references/key-syntax.md)，包括未引用宏。规则从上到下首条命中，每帧最多一个动作；启用、爆发、延迟均是显式条件，不自动添加隐藏门控。
 5. 缺少所需条件能力时说明缺口，按任务授权范围使用 [插件开发](../phantom-plugin-dev/SKILL.md)；需要改表达式或运行引擎时使用 [代码开发](../phantom-code-dev/SKILL.md)。
 

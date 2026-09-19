@@ -15,7 +15,7 @@ description: Shigure迁移工具：将用户提供的 Shigure JSON 规则与技�
 
 1. **盘点输入。** 记录 JSON 版本、职业专精、英雄天赋适用范围、技能 Lua 标识；按原序号列出全部 `Rules` 的 `Enabled`、动作、`Unit`、主条件、`SubConditions`、引用及未识别字段。关联技能和光环的完整 ID 组，标明缺失定义。读 [源语义](references/source-semantics.md)；每条规则都有去向，所有未知项已列出，才完成盘点。
 2. **冻结语义与顺序。** 将主条件与子条件组组合为 `主条件 and (子条件1 or 子条件2 …)`，保留表达式内 `&&` 高于 `||` 的结合关系；无子条件时只用主条件。按源序号建立保留、排除、合并及目标序号对照，逐项解释单位、量程、暂停和门控差异。疑似错误单列，不顺手修复；优先级审计必须覆盖多条件同时为真及前置无条件规则的遮蔽。全部改变均有用户决定后才落地；本次两坦克的冻结策略见 [迁移案例](references/confirmed-tank-migration.md)。
-3. **核对插件契约。** 使用 [循环 skill](../phantom-rotation-dev/SKILL.md) 和 [内置条件目录](../phantom-plugin-dev/references/built-in-conditions.md)，逐一检查精确 `包名@版本` 的 `plugin.toml`、Python 及 Lua 实现，记录参数、返回类型、兜底、来源过滤和数值范围。先复用已有插件；能力缺口先报告并获批准，再进入 [插件 skill](../phantom-plugin-dev/SKILL.md)。不把“参数近似”写成全域等价，不用新插件绕过尚未确认的语义。
+3. **核对插件契约。** 使用 [循环 skill](../phantom-rotation-dev/SKILL.md) 和 [内置条件目录](../phantom-plugin-dev/references/built-in-conditions.md)，逐一检查精确 `包名@版本` 的 `plugin.toml`、Python 及 Lua 实现，记录参数、返回类型、兜底、来源过滤和数值范围。新编写的光环秒数条件按[配置精度标准](../phantom-rotation-dev/references/configuration.md#光环时长的配置精度)显式选宽，用户指定值优先；剩余百分比条件选用固定五单位的 `duration_pct` 插件，不擅自改变源阈值单位。先复用已有插件；能力缺口先报告并获批准，再进入 [插件 skill](../phantom-plugin-dev/SKILL.md)。不把“参数近似”写成全域等价，不用新插件绕过尚未确认的语义。
 4. **整理宏与规则。** 按 [宏参考](references/macros.md) 核对中文动作、物品多行宏、显式单位及检测 ID 与动作的差异；未写 `Unit` 时不擅加单位。保留已有配置 UUID，标题及作者信息遵循任务要求；条件和宏引用全部可解析、顺序对照全部闭合后，才完成 TOML。
 5. **离线验证。** 先只读解析正式 TOML，再在测试副本调用 `load_rotation()`，允许且核对精确版本默认值的正常补写；内存 `render()` 并使用 `lupa.lua51` 检查每个 Lua chunk。按 [测试规则](../phantom-code-dev/references/testing.md) 验证条件边界、AND/OR、首命中、Idle、宏和多 ID 组，以及源序号到目标规则的完整对应。根据改动完成 pytest、类型与 ruff 检查，正式配置不得作为可能回写的验证输入。
 6. **交付审计。** 报告输入版本、规则数变化、所有授权差异、疑似源错误、未验证项和检查结果。未知语义未解决时不能声称迁移完成。离线验证不启动运行器、不发送游戏按键、不安装插件；游戏内像素、秘密值路径和循环效果须单独验收。

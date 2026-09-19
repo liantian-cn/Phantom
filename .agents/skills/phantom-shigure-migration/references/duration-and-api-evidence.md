@@ -6,6 +6,8 @@
 
 现有 duration 条以剩余比例乘配置的 `duration` 恢复估计量。刷新续时、实际总时长变化和像素量化均可改变估计，不能宣称返回精确绝对剩余秒数。本次参数见[冻结案例](confirmed-tank-migration.md#资源与光环)。
 
+2026-09-20 起，新编写 rotation 的秒数条遵循[配置精度标准](../../phantom-rotation-dev/references/configuration.md#光环时长的配置精度)：默认显式 `width=max(1,ceil(duration/2))`，用户可覆盖。这是 skill 的配置建议，不改变插件省略宽度时的旧公式，也不追溯改写上面的冻结案例。若策略需要剩余百分比，使用固定 width=5、返回 `ratio×100` 的对应 buff/debuff `duration_pct` 插件；不以百分比自动替换已有秒数条件。
+
 ### 公开时长线索
 
 | 对象 | 查询资料与结论 | 限制 |
