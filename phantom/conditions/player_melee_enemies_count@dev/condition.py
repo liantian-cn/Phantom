@@ -13,9 +13,13 @@ Description:
 Key Variables:
     spell_id: 用于检测近战范围的技能 ID，正整数。
 Change Log:
+    2026-09-19: Changed 显式声明配置默认值，构造与配置补写共用默认来源。
     2026-09-18: Changed 增加 combat_only、技能有效性及非死亡筛选。
     2026-09-15: Added 按已确认的玩家条件迁移计划新增 player_melee_enemies_count@dev。
 """
+
+from collections.abc import Mapping
+from typing import ClassVar
 
 from phantom.core.condition.base import Condition
 from phantom.core.condition.contracts import Output
@@ -26,10 +30,12 @@ from phantom.core.validation import Boolean, Fields, PositiveInteger
 class Plugin(Condition):
     """玩家近战范围敌人数量；参数、像素解码及异常兜底均属于本插件。"""
 
+    config_defaults: ClassVar[Mapping[str, object]] = {"combat_only": False}
+
     def __init__(self, args: dict[str, object]) -> None:
         Fields(frozenset({"spell_id"}), frozenset({"combat_only"})).validate(args, "plugin_args")
         self.spell_id: int = PositiveInteger().validate(args["spell_id"], "spell_id")
-        self.combat_only: bool = Boolean().validate(args.get("combat_only", False), "combat_only")
+        self.combat_only: bool = Boolean().validate(args.get("combat_only", self.config_defaults["combat_only"]), "combat_only")
         super().__init__(Output("cell", value_type=int))
 
     def template_parameters(self) -> dict[str, str]:

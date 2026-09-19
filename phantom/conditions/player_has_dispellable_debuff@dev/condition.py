@@ -2,7 +2,7 @@
 Summary:
     玩家是否有指定类型可驱散减益。
 Description:
-    参数：键限定 Magic/Poison/Disease/Curse/Stealth/Special/Enrage；未列出为 false，空表或全 false 不匹配。
+    参数：dispel_types 父表必填，键限定 Magic/Poison/Disease/Curse/Stealth/Special/Enrage；加载成功后补齐缺失子键为 false，空表或全 false 不匹配。
     输出：cell，1 个区域，bool scalar；4×4 像素，采样内部 2×2。
     API：AuraContainer:AddAuraSlot(key, "HARMFUL|RAID_PLAYER_DISPELLABLE", options)；options.candidateFilters.includeDispelTypes 为类型布尔映射，容器管理显示；UpdateAllAuras() 请求刷新。
     同时要求玩家可驱散与类型匹配；空表或全 false 匹配不到任何减益。不读取秘密 AuraData。
@@ -12,8 +12,12 @@ Description:
 Key Variables:
     dispel_types: 键限定 Magic/Poison/Disease/Curse/Stealth/Special/Enrage；未列出为 false，空表或全 false 不匹配。
 Change Log:
+    2026-09-19: Changed 显式声明驱散子键默认值，保留父表必填并按实例合并校验。
     2026-09-15: Added 按已确认的玩家条件迁移计划新增 player_has_dispellable_debuff@dev。
 """
+
+from collections.abc import Mapping
+from typing import ClassVar
 
 from phantom.core.condition.base import Condition
 from phantom.core.condition.contracts import Output
@@ -24,12 +28,16 @@ from phantom.core.validation import Boolean, Fields, Table
 class Plugin(Condition):
     """玩家是否有指定类型可驱散减益；参数、像素解码及异常兜底均属于本插件。"""
 
+    config_defaults: ClassVar[Mapping[str, object]] = {"dispel_types": {"Magic": False, "Poison": False, "Disease": False, "Curse": False, "Stealth": False, "Special": False, "Enrage": False}}
+
     def __init__(self, args: dict[str, object]) -> None:
         Fields(frozenset({"dispel_types"})).validate(args, "plugin_args")
-        allowed = frozenset({"Magic", "Poison", "Disease", "Curse", "Stealth", "Special", "Enrage"})
+        defaults = Table().validate(self.config_defaults["dispel_types"], "config_defaults.dispel_types")
+        allowed = frozenset(defaults)
         values = Table().validate(args["dispel_types"], "dispel_types")
         Fields(frozenset(), allowed).validate(values, "dispel_types")
-        self.dispel_types: dict[str, bool] = {key: Boolean().validate(value, f"dispel_types.{key}") for key, value in values.items()}
+        # 用户值覆盖默认值后严格校验；新字典保证实例独立且不修改默认声明。
+        self.dispel_types: dict[str, bool] = {key: Boolean().validate(value, f"dispel_types.{key}") for key, value in (defaults | values).items()}
         super().__init__(Output("cell", value_type=bool))
 
     def template_parameters(self) -> dict[str, str]:

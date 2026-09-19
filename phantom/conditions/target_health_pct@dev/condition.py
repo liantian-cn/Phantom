@@ -8,8 +8,12 @@ Description:
 Key Variables:
     use_predicted: 是否使用预测生命值。
 Change Log:
+    2026-09-19: Changed 显式声明配置默认值，构造与配置补写共用默认来源。
     2026-09-18: Added 目标生命百分比条件。
 """
+
+from collections.abc import Mapping
+from typing import ClassVar
 
 from phantom.core.condition.base import Condition
 from phantom.core.condition.contracts import Output
@@ -20,9 +24,11 @@ from phantom.core.validation import Boolean, Fields
 class Plugin(Condition):
     """校验预测选项并解释灰度生命百分比。"""
 
+    config_defaults: ClassVar[Mapping[str, object]] = {"use_predicted": True}
+
     def __init__(self, args: dict[str, object]) -> None:
         Fields(frozenset(), frozenset({"use_predicted"})).validate(args, "plugin_args")
-        self.use_predicted: bool = Boolean().validate(args.get("use_predicted", True), "use_predicted")
+        self.use_predicted: bool = Boolean().validate(args.get("use_predicted", self.config_defaults["use_predicted"]), "use_predicted")
         super().__init__(Output("cell", value_type=float))
 
     def template_parameters(self) -> dict[str, str]:

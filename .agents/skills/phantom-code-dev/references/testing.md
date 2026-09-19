@@ -9,6 +9,8 @@ Phantom 最终运行在 Windows，而日常开发环境是 WSL2 与 Docker。容
 ## 优先测试内容
 
 - TOML schema、唯一标题/宏名称、UUID、职业/专精和键位校验。
+- rotation 默认参数补写：全部校验及布局成功后才写、所有 load_rotation 入口一致、构造与回写共享 config_defaults、递归补充已有嵌套字典、保留 false/0/合法空值、拒绝非法显式值及缺失必填字段；dispel_types 整体必填且只补七个缺失子键为 false。
+- rotation 写入边界：无默认不创建空 plugin_args、无变更不写、保留注释和其他内容、原子替换、并发源检查、写入失败导致加载失败、后续生成失败不回滚；旧 conditions[].layout 兼容忽略且不增改删，内存布局保持原规则，phantom.toml 不受影响。
 - 白名单 AST 的允许节点、拒绝节点、优先级、条件引用和类型检查。
 - rotation 自上而下首个命中、每轮最多一个动作和无命中行为。
 - Cell 中间 2×2 与 Icon Tile 中间 6×6 的裁剪。
@@ -67,7 +69,7 @@ Phantom 最终运行在 Windows，而日常开发环境是 WSL2 与 Docker。容
 | 键盘 | 键盘与 runtime 测试；按下/逆序释放、部分失败、停止等待和窗口唯一性 |
 
 生成 Lua 使用 `lupa.lua51` 解析，现有 API doubles 配合真实 Cell/IconTile 等消费者验证；doubles 不能证明 WoW 的全部秘密值和访问限制。
-rotation 离线检查使用临时副本：`load_rotation()` 可能回写 layout，不能把正式配置当成只读验证输入。
+rotation 离线检查使用临时副本：`load_rotation()` 可能补写缺失的条件插件默认参数，不能把正式配置当成只读验证输入；旧 layout 字段只兼容接收并忽略，不回写布局。
 Windows 消息测试仅对测试创建的隐藏窗口发送。真实游戏按键、宏绑定、渲染和闭环验收单独报告。
 
 独立 demo 统一先说明演示内容、等待 3 秒、采集 5 秒：`demo/demo.py` 验证截图，`demo/demo01.py` 验证像素，`demo/demo02.py [rotation.toml]` 用最后结果解码求值并只报告，不发送按键。

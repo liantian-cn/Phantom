@@ -468,19 +468,21 @@ def test_managed_aura_slot_contract_and_world_refresh(name: str, filter_string: 
     elif name == "player_has_buff":
         assert dict(slot.options.candidateFilters.includeSpellIDs.items()) == {188298: True, 188290: True}
     else:
-        assert dict(slot.options.candidateFilters.includeDispelTypes.items()) == {"Magic": True, "Poison": False}
+        assert dict(slot.options.candidateFilters.includeDispelTypes.items()) == {"Magic": True, "Poison": False, "Disease": False, "Curse": False, "Stealth": False, "Special": False, "Enrage": False}
     emit(state, "PLAYER_ENTERING_WORLD")
     state.flushTimers(state)
     assert container.refreshes == 1
 
 
 @pytest.mark.parametrize("types", [{}, {"Magic": False}, {key: True for key in ("Magic", "Poison", "Disease", "Curse", "Stealth", "Special", "Enrage")}])
-def test_dispel_maps_preserve_empty_and_false_entries(types: dict[str, bool]) -> None:
+def test_dispel_maps_fill_missing_types_and_preserve_explicit_values(types: dict[str, bool]) -> None:
     plugin = create("player_has_dispellable_debuff", {"dispel_types": types})
     _, state, _ = harness([plugin])
     candidates = state.cells[1].children[1].slots.aura.options.candidateFilters
     assert candidates.includeDispelTypes is not None
-    assert dict(candidates.includeDispelTypes.items()) == types
+    # 缺失类型显式补 false，空表仍不匹配，已有 true/false 不被默认值覆盖。
+    expected = dict.fromkeys(("Magic", "Poison", "Disease", "Curse", "Stealth", "Special", "Enrage"), False) | types
+    assert dict(candidates.includeDispelTypes.items()) == expected
 
 
 def test_all_plugins_generate_together_with_independent_layouts(tmp_path: Path) -> None:

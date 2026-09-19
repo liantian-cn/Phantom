@@ -103,8 +103,9 @@
 应用配置增加 rotation.path（默认空）、wow.executable（默认空）、addon.name（默认 Phantom）。
 路径相对于应用配置目录解析，包名匹配 [A-Za-z][A-Za-z0-9_]*。
 未配置 rotation 保留基础采集；未配置 rotation 或游戏路径时禁用生成并说明原因。
-启动加载 rotation，失败在界面和日志说明，可修复后重新生成；不静默显示旧条件。
-生成按钮不要求游戏进程存在；点击时后台重读 rotation、校验、布局回写、生成。
+启动加载 rotation，完成全部校验和内存布局后补写缺失的条件默认参数；失败在界面和日志说明，可修复后重新生成，不静默显示旧条件。
+生成按钮不要求游戏进程存在；点击时后台重读 rotation、完成全部校验和内存布局、补写缺失的条件默认参数，再生成。启动和点击生成均遵循 load_rotation 的统一[回写规则](../../phantom-rotation-dev/references/configuration.md#条件参数默认值与加载回写)，不修改 phantom.toml，也不新增、更新或删除旧 conditions[].layout。
+默认参数补写时的源文件并发修改或写入失败使加载失败；加载成功后的生成失败不回滚已补写参数，无缺失默认参数时不写 rotation。
 采集、停止、生成或退出期间禁止重复生成，生成期间禁止启动采集；正常退出等待生成结束。
 输出路径为 Wow.exe.parent/Interface/AddOns/addon.name，要求现存 _retail_/Wow.exe。
 同名产物覆盖，旧文件保留且新 TOC 不引用；生成失败说明错误，清除失效的内存条件布局。

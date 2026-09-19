@@ -111,7 +111,9 @@ UI 通过截图核心注册器按 capture.plugin 创建后端，默认 gdi@dev�
 
 ## 单份生成器落地
 
-phantom/core/rotation.py 负责配置和布局回写，core/condition/registry.py 负责精确加载，core/generator.py 负责生成。
+phantom/core/rotation.py 负责配置验证、内存布局分配与冻结，以及成功加载后的条件默认参数补写；core/condition/registry.py 负责精确加载，core/generator.py 负责生成。
+所有 load_rotation 入口统一在完整验证和布局成功后补写 rotation，不修改 phantom.toml。默认值来自精确版本 Condition 的公开 config_defaults，构造与回写共享来源；仅补缺失键并递归补充已有嵌套字典，保留必填约束和所有显式值。无实际变更不写，使用源文件并发检查及原子替换，写入失败使加载失败；后续生成失败不回滚已补写参数。完整规则见 [配置规范](../../phantom-rotation-dev/references/configuration.md#条件参数默认值与加载回写)。
+旧 conditions[].layout 兼容接收但忽略，加载器不新增、更新或删除；布局始终根据条件输出在内存重建，分配规则和运行期冻结语义不变。
 当前单份入口输出 runtime/ 与 general/ 源码副本、完整 media/ 二进制资源、一个 UUID Lua 和同名 TOC；不复制 examples。字体与纹理由 Lua 路径访问，不加入 TOC。
 UUID Lua 开头检查玩家职业和专精，随后每个模板置于独立 do/end 作用域并注册 UIInitFuncs。
 生成所有声明的条件；可选模板只插入经过校验的参数与固定位置，无模板时保留空的实例 do/end 块。Lua 状态、面板及第一行五个 Cell 保留；enable、爆发、delay 的 Python 读取改为显式条件插件，框架只保留职业与专精匹配检查。宏文本经过 Lua 5.1 字符串转义后作为安全按钮属性，不作为可执行 Lua 插入。

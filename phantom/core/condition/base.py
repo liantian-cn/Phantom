@@ -1,17 +1,20 @@
 """
 Summary:
-    管理条件布局冻结、原始区域读取与业务值兜底。
+    管理条件配置默认值、布局冻结、原始区域读取与业务值兜底。
 Description:
-    参数校验和业务解码由插件组合实现；此基类只维护条件生命周期。
+    参数校验和业务解码由插件组合实现；基类提供默认值声明入口并维护条件生命周期。
 Key Variables:
     Condition._regions: 本实例冻结的输出区域。
 Change Log:
+    2026-09-19: Added 可持久化的配置默认值声明，未声明的插件保持空默认值。
     2026-09-14: Changed 支持同帧解码器、零区域冻结与可选 Lua 模板。
     2026-09-13: Changed 按确认计划拆分条件核心职责。
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from pathlib import Path
+from typing import ClassVar
 
 from phantom.core.condition.contracts import Output, Raw, Region, Value
 from phantom.core.condition.template import render_template
@@ -19,6 +22,9 @@ from phantom.core.pixels import Cell, IconTile, PixelDecoder, ValueBar
 
 
 class Condition(ABC):
+    # 插件构造与 rotation 补写共用此声明；嵌套表按键补齐，不修改共享默认值。
+    config_defaults: ClassVar[Mapping[str, object]] = {}
+
     def __init__(self, output: Output) -> None:
         self._output: Output = output
         self._regions: tuple[Region, ...] = ()

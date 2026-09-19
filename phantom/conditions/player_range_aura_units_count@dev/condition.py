@@ -11,8 +11,12 @@ Key Variables:
     aura_id: 必须为 NeverSecret 的减益技能。
     combat_only: 是否排除脱战单位。
 Change Log:
+    2026-09-19: Changed 显式声明配置默认值，构造与配置补写共用默认来源。
     2026-09-18: Added 按冻结迁移约定新增条件。
 """
+
+from collections.abc import Mapping
+from typing import ClassVar
 
 from phantom.core.condition.base import Condition
 from phantom.core.condition.contracts import Output
@@ -23,11 +27,13 @@ from phantom.core.validation import Boolean, Fields, PositiveInteger
 class Plugin(Condition):
     """仅统计可观察敌人减益，不代表全部附近单位。"""
 
+    config_defaults: ClassVar[Mapping[str, object]] = {"combat_only": False}
+
     def __init__(self, args: dict[str, object]) -> None:
         Fields(frozenset({"spell_id", "aura_id"}), frozenset({"combat_only"})).validate(args, "plugin_args")
         self.spell_id: int = PositiveInteger().validate(args["spell_id"], "spell_id")
         self.aura_id: int = PositiveInteger().validate(args["aura_id"], "aura_id")
-        self.combat_only: bool = Boolean().validate(args.get("combat_only", False), "combat_only")
+        self.combat_only: bool = Boolean().validate(args.get("combat_only", self.config_defaults["combat_only"]), "combat_only")
         super().__init__(Output("cell", value_type=int))
 
     def template_parameters(self) -> dict[str, str]:

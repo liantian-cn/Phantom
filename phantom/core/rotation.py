@@ -1,13 +1,14 @@
 """
 Summary:
-    加载单份 rotation、核验引用并持久化重新分配的条件布局。
+    加载单份 rotation、核验引用并补写缺失的条件插件默认参数。
 Description:
-    先校验用户内容和精确版本参数，再冻结输出；布局只是可重建的排错信息。
-    TOML Kit 保留注释，仅修改 layout；表达式加载时完成白名单及类型校验。
+    先校验用户内容和精确版本参数，再冻结内存布局；旧 layout 兼容保留但不使用或更新。
+    TOML Kit 按键补写默认值并保留用户显式配置；表达式加载时完成白名单及类型校验。
 Key Variables:
     Rotation.conditions: 按配置顺序保存的独立条件实例。
     CLASS_IDS: Blizzard 职业 token 对应的亮度 ID。
 Change Log:
+    2026-09-19: Changed 停止布局回写，全部校验成功后递归补齐插件声明的默认参数。
     2026-09-14: Changed 仅以配置条件求值，向插件传递当前帧解码器。
     2026-09-14: Changed 冻结解析后的按键组合，支持内置通用布尔表达式变量。
     2026-09-13: Changed 加载时校验表达式类型并提供单帧优先级试运行。
@@ -23,12 +24,14 @@ import os
 import re
 import tempfile
 import tomllib
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from uuid import UUID
 
 import tomlkit
-from tomlkit.items import AoT, Table
+from tomlkit.container import OutOfOrderTableProxy
+from tomlkit.items import AoT, InlineTable, Table
 
 from phantom.core.condition.base import Condition
 from phantom.core.condition.contracts import Output, Value
@@ -78,6 +81,23 @@ def atomic_write(path: Path, content: str | bytes) -> None:
         os.replace(temporary, path)
     finally:
         Path(temporary).unlink(missing_ok=True)
+
+
+def fill_config_defaults(table: Table | InlineTable | OutOfOrderTableProxy, defaults: Mapping[str, object]) -> bool:
+    """只补缺失键，原位修改 TOML 节点以保留显式值、键顺序和注释。"""
+    changed = False
+    for key, default in defaults.items():
+        if key not in table:
+            # 新默认值先按行内值转换，避免点分键下的嵌套表或表数组生成脱离父级的表头。
+            inline = tomlkit.inline_table()
+            inline[key] = default
+            table[key] = inline[key]
+            changed = True
+        else:
+            current = table[key]
+            if isinstance(current, (Table, InlineTable, OutOfOrderTableProxy)) and isinstance(default, Mapping):
+                changed = fill_config_defaults(current, default) or changed
+    return changed
 
 
 @dataclass(frozen=True)
@@ -245,7 +265,7 @@ def load_rotation(path: Path, registry: Registry | None = None) -> Rotation:
             entries.append(ConditionEntry(title, plugin, loader.create(plugin, args)))
         rules = parse_rules(document["rotation"], {entry.title: entry.instance.output for entry in entries}, {macro.name for macro in macros})
         board_width = allocate([entry.instance for entry in entries])
-        # 所有用户内容与插件均通过后才回写排错坐标，失败配置不被部分修改。
+        # 先由插件检查必填字段和显式值；全部校验及布局成功后才补写默认值。
         editable = tomlkit.parse(source)
         condition_tables = editable["conditions"]
         changed = False
@@ -253,14 +273,22 @@ def load_rotation(path: Path, registry: Registry | None = None) -> Rotation:
             assert isinstance(condition_tables, AoT)
             for table, entry in zip(condition_tables, entries):
                 assert isinstance(table, Table)
-                layout = entry.instance.layout()
-                if table.get("layout") != layout:
-                    table["layout"] = layout
-                    changed = True
+                defaults = entry.instance.config_defaults
+                if not defaults:
+                    continue
+                if "plugin_args" not in table:
+                    table["plugin_args"] = tomlkit.table()
+                arguments = table["plugin_args"]
+                assert isinstance(arguments, (Table, InlineTable, OutOfOrderTableProxy))
+                changed = fill_config_defaults(arguments, defaults) or changed
         if changed:
             if path.read_bytes().decode("utf-8") != source:
                 raise ValueError("配置在加载期间被修改，请重新加载")
-            atomic_write(path, tomlkit.dumps(editable))
+            content = tomlkit.dumps(editable)
+            # TOML Kit 新节点默认使用 LF；纯 CRLF 文件延续原风格，混合换行不全量规整。
+            if "\r\n" in source and "\n" not in source.replace("\r\n", ""):
+                content = content.replace("\r\n", "\n").replace("\n", "\r\n")
+            atomic_write(path, content)
         return Rotation(path, identifier, profile, tuple(entries), macros, rules, board_width)
     except (OSError, ValueError, TypeError, SyntaxError, OverflowError) as error:
         raise RotationError(f"Rotation {path}：{error}") from error

@@ -8,7 +8,7 @@ recommended_condition_name = "目标敌人可驱散增益存在状态"
 [parameters.dispel_types]
 type = "dict[str, bool]"
 required = true
-description = "Magic/Poison/Disease/Curse/Stealth/Special/Enrage 七键；未列出为 false，空表或全 false 不匹配。"
+description = "dispel_types 父表必填；键限定 Magic/Poison/Disease/Curse/Stealth/Special/Enrage，值必须为严格布尔值。加载成功后将缺失子键补齐为 false；空表或全 false 不匹配。"
 
 [returns]
 type = "bool"

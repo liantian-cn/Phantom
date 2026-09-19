@@ -137,7 +137,8 @@ def test_dispel_filters_and_enemy_gate(unit: str, types: dict[str, bool]) -> Non
     container = next(frame for frame in state.frames.values() if frame.kind == "AuraContainer")
     assert container.hidden is True
     assert container.slots.aura.filter == "HELPFUL|RAID_PLAYER_DISPELLABLE"
-    assert dict(container.slots.aura.options.candidateFilters.includeDispelTypes.items()) == types
+    expected = dict.fromkeys(("Magic", "Poison", "Disease", "Curse", "Stealth", "Special", "Enrage"), False) | types
+    assert dict(container.slots.aura.options.candidateFilters.includeDispelTypes.items()) == expected
     for enemy in (False, True):
         state.units[unit] = lua.table_from({"enemy": enemy, "attackable": not enemy})
         state.event(state, f"PLAYER_{unit.upper()}_CHANGED")

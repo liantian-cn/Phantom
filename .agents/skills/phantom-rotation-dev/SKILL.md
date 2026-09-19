@@ -19,7 +19,7 @@ description: 编写、调整或审查 Phantom rotation TOML、条件组合、宏
 
 ## 离线验证
 
-- 在临时目录复制 TOML 后调用 `phantom.core.rotation.load_rotation()`；该函数可能回写 layout，不能对正式文件执行声称只读的检查。
+- 在临时目录复制 TOML 后调用 `phantom.core.rotation.load_rotation()`；全部校验和内存布局成功后，该函数可能补写缺失的条件插件默认参数，不能对正式文件执行声称只读的检查。旧 `conditions[].layout` 兼容接收但忽略，不新增、更新或删除；完整回写边界见[配置规范](references/configuration.md#条件参数默认值与加载回写)。
 - 用 `phantom.core.generator.render()` 在内存生成，并用已有 Lua 5.1 检查方式验证语法；不调用安装入口向游戏目录写入。
 - 检查标题、引用、类型、精确插件参数、宏键位及 Idle；对改动的优先级验证多个条件同时为真、全部未命中及关键兜底场景。测试方法见 [测试规则](../phantom-code-dev/references/testing.md)。
 - 不启动 `RotationRuntime` 或发送实际游戏按键来完成离线检查。配置中的 `bind_key=true` 沿用已确认的运行期覆盖语义，不扩大为其他外部动作授权。

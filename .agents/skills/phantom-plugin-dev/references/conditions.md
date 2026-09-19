@@ -20,6 +20,16 @@
 `decode_value(cells, value_bars, icon_tiles, *, decoder: PixelDecoder)` 的同帧参数及异常边界见 [基类契约](#基类契约)。插件可用 `decoder.getCell(x, y)`、`decoder.getValueBar(x, width)`、`decoder.getIconTile(x)` 读取额外区域，坐标与宽度沿用像素协议。
 每个插件解释其 `fallback_value()` 的业务含义；框架分配区域越界和插件解码异常的不同处理见 [核心边界](#核心边界)。
 
+## 配置默认值
+
+`Condition` 公开类属性 `config_defaults: ClassVar[Mapping[str, object]]`，基类默认空映射。精确版本插件通过该属性声明可补写到 rotation 的参数默认值，构造时的缺省值与加载回写必须共享此来源，不维护两套默认常量。它与解码失败时的 `fallback_value()` 是不同契约。
+
+- 默认值使用 TOML 可表示的 Python 原生值，嵌套表使用 `dict`；不得放入布局、Lua 字符串片段或运行期对象，也不得在实例构造或回写时修改共享默认声明。
+- 声明只描述默认值，不替代字段、类型、范围及必填检查；已有显式值一律保留，非法值仍拒绝。不得用真假值判断代替缺失键判断，`false`、`0` 和合法空值都不是缺失。
+- 支持在已有嵌套字典中递归补充缺失子键；不得以默认字典替换已有显式值或修复非法类型。`dispel_types` 整体仍必填，只有其已有字典内的七种类型子键默认 `false`，缺少整个字段仍报错。
+- 不声明默认值的插件沿用空映射，缺失的 `plugin_args` 不因此生成空表。默认值来自 Python 公开契约，不读取作者自述 `plugin.toml`，不反推 `template_parameters()` 或 Lua 模板。
+- 所有 `load_rotation()` 入口在整份配置验证及布局冻结成功后统一补写；无变更不写、源文件并发检查、原子替换与失败语义见 [配置规范](../../phantom-rotation-dev/references/configuration.md#条件参数默认值与加载回写)。条件插件构造本身不负责写配置文件。
+
 ## 无 Lua 与零区域插件
 
 `template.lua` 可省略，生成器保留空的实例 `do/end` 块。存在模板时仍正常渲染并检查路径与占位符错误，不将损坏模板当成缺失模板。
@@ -76,7 +86,7 @@ Lua 编码和 Python 解码属于同一版本契约。缩放、精度节点、�
 
 每次在配置中使用条件插件都会创建独立实例。核心维护 `conditions[title] = instance`。实例必须按以下顺序建立：
 
-1. 校验 `plugin_args`。
+1. 校验 `plugin_args`，缺省参数使用本版本 `config_defaults`，保留必填约束和显式值验证。
 2. 根据参数计算 `output_type`、`output_count`、`value_type` 和 `value_shape`。
 3. 由布局器分配连续区域并冻结位置与数量。
 4. 生成本实例对应的 Lua。

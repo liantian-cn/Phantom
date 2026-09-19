@@ -74,7 +74,7 @@ AuraContainer 和吸收 StatusBar 是该区域的显示实现，不另分配 Val
 
 参数约束：`spell_id` 为正整数；`spell_ids`、`buff_ids` 为非空正整数列表；`slot_id` 只接受 13/14。
 `threshold` 为 0–9007199254740990 的整数，保证 Lua 数值中的 N 和 N+1 可精确区分；拒绝布尔值、小数和负数。
-`dispel_types` 为必填 bool 映射，键限定 Magic、Poison、Disease、Curse、Stealth、Special、Enrage；未列出为 false，空表和全 false 均不匹配。
+`dispel_types` 为必填 bool 映射，键限定 Magic、Poison、Disease、Curse、Stealth、Special、Enrage；未列出为 false，空表和全 false 均不匹配。成功加载 rotation 时仅补写已有映射内缺失的七种类型子键为 false；整体缺失仍报错，显式值不覆盖，详见[配置默认值](conditions.md#配置默认值)。
 所有插件拒绝多余字段，参数名称统一使用 snake_case。
 
 布尔值必须严格全黑/全白，异常兜底 False。职责灰度字节 0/85/170/255 分别表示 NONE/TANK/HEALER/DAMAGER，其他值或秘密职责返回 NONE。
